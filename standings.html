@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Simuladores Inercia</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FLogiconR.png?alt=media&token=1b8aa73a-e5f9-450b-8bdb-50d1e8e769c5">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="standings.css">
+
+</head>
+
+<body>
+
+  <div class="bg-grid"></div>
+
+  <header class="navbar">
+
+    <div class="container nav-wrapper">
+
+      <a href="index.html" class="logo">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+      </a>
+
+      <nav class="nav-links">
+        <a href="standings.html">
+          Resultados
+        </a>
+
+        <a href="reservas.html">
+          Reservas
+        </a>
+
+        <a href="contacto.html">
+          Contacto
+        </a>
+
+      </nav>
+
+      <div class="nav-right">
+
+        <a href="standings.html" class="live-status">
+        <div class="user-box">
+
+          <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fuser.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="">
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </header>
+
+  <section class="hero-header">
+
+    <div>
+
+      <span class="section-label">
+        CAMPEONATO DE FORMULA 1
+      </span>
+
+      <h1>
+        RESULTADOS
+      </h1>
+
+    </div>
+
+  </section>
+
+  <main class="standings-wrapper">
+
+    <div class="table-header">
+
+      <span>POS</span>
+      <span>PILOTO</span>
+      <span>INTENTOS</span>
+      <span>TIEMPO</span>
+
+    </div>
+
+    <div id="leaderboard" class="leaderboard"></div>
+
+  </main>
+
+  <script src="standings.js"></script>
+
+</body>
+</html>
