@@ -113,4 +113,4 @@ const url = "/api/standings"
 }
 
 loadStandings()
-setInterval(loadStandings, 4000)
+setInterval(loadStandings, 3600)
