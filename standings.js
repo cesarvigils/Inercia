@@ -116,4 +116,4 @@ async function loadStandings() {
 }
 
 loadStandings()
-setInterval(loadStandings, 43200000)
+setInterval(loadStandings, 4000)
