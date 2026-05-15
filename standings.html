@@ -22,35 +22,56 @@
 
   <div class="bg-grid"></div>
 
-  <header class="navbar">
+<header class="navbar">
 
-    <div class="container nav-wrapper">
+  <div class="container nav-wrapper">
 
-      <a href="index.html" class="logo">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+    <a href="index.html" class="logo">
+
+      <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+
+    </a>
+
+    <nav class="nav-links">
+
+      <a href="standings.html">
+        Resultados
       </a>
 
-      <nav class="nav-links">
-        <a href="standings.html">
-          Resultados
-        </a>
+      <a href="reservas.html">
+        Reservas
+      </a>
 
-        <a href="reservas.html">
-          Reservas
-        </a>
+      <a href="contacto.html">
+        Contacto
+      </a>
 
-        <a href="contacto.html">
-          Contacto
-        </a>
+    </nav>
 
-      </nav>
+    <div class="nav-right">
 
-      <div class="nav-right">
+      <a href="standings.html" class="live-status">
 
-        <a href="standings.html" class="live-status">
-        <div class="user-box">
+        <span class="live-dot"></span>
 
-          <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fuser.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="">
+        <p>
+          LIVE
+        </p>
+
+      </a>
+
+      <button id="open-auth" class="nav-btn">
+        Login
+      </button>
+
+      <div id="user-ui" class="user-auth hidden-auth">
+
+        <div class="user-profile">
+
+          <img
+            id="navbar-pfp"
+            src="assets/default-user.png"
+            alt="">
 
         </div>
 
@@ -58,7 +79,99 @@
 
     </div>
 
-  </header>
+  </div>
+
+</header>
+<div id="auth-overlay" class="auth-overlay hidden-auth">
+
+  <div class="auth-modal">
+
+    <button id="close-auth" class="close-auth">
+      ✕
+    </button>
+
+    <div class="auth-tabs">
+
+      <button id="login-tab" class="auth-tab active-tab">
+        Login
+      </button>
+
+      <button id="register-tab" class="auth-tab">
+        Registro
+      </button>
+
+    </div>
+
+    <div id="login-form" class="auth-form">
+
+      <h2>
+        Bienvenido de nuevo.
+      </h2>
+
+      <p>
+        Inicia sesión para competir y reservar.
+      </p>
+
+      <input
+        id="login-email"
+        type="email"
+        placeholder="Correo electrónico">
+
+      <input
+        id="login-password"
+        type="password"
+        placeholder="Contraseña">
+
+      <button id="login-btn" class="auth-submit">
+        Iniciar Sesión
+      </button>
+
+      <button id="google-login" class="google-btn">
+
+        <img src="FIREBASE_GOOGLE_ICON" alt="">
+
+        <span>
+          Continuar con Google
+        </span>
+
+      </button>
+
+    </div>
+
+    <div id="register-form" class="auth-form hidden-auth">
+
+      <h2>
+        Crea tu perfil.
+      </h2>
+
+      <p>
+        Únete a la comunidad Inercia.
+      </p>
+
+      <input
+        id="register-name"
+        type="text"
+        placeholder="Nombre de usuario">
+
+      <input
+        id="register-email"
+        type="email"
+        placeholder="Correo electrónico">
+
+      <input
+        id="register-password"
+        type="password"
+        placeholder="Contraseña">
+
+      <button id="register-btn" class="auth-submit">
+        Crear Cuenta
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 
   <section class="hero-header">
 
@@ -93,6 +206,8 @@
 
   <script src="standings.js"></script>
 <script src="config.js"></script>
+<script type="module" src="firebase-auth.js"></script>
 <script type="module" src="standings.js"></script>
+<script type="module" src="firebase-auth.js"></script>
 </body>
 </html>
