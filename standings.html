@@ -12,43 +12,70 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FLogiconR.png?alt=media&token=1b8aa73a-e5f9-450b-8bdb-50d1e8e769c5">
-  <link rel="stylesheet" href="styles.css">
+
+  <link rel="stylesheet" href="/styles.css">
+
 </head>
 
 <body>
 
   <div class="bg-grid"></div>
 
-<header class="navbar">
+  <header class="navbar">
 
-  <div class="container nav-wrapper">
+    <div class="container nav-wrapper">
 
-    <a href="index.html" class="logo">
+      <a href="/" class="logo">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+      </a>
 
-      <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+      <nav class="nav-links">
+        <a href="/standings">Resultados</a>
+        <a href="/reservas">Reservas</a>
+        <a href="/contacto">Contacto</a>
+      </nav>
 
-    </a>
+      <div class="nav-right">
 
-    <nav class="nav-links">
-<a href="/standings">Resultados</a>
-<a href="/reservas">Reservas</a>
-<a href="/contacto">Contacto</a>
-    </nav>
+        <div class="nav-auth">
 
-    <div class="nav-right">
-      <button id="open-auth" class="nav-btn">
-        Login
-      </button>
+          <button id="open-auth" class="nav-btn">
+            Login
+          </button>
 
-      <div id="user-ui" class="user-auth hidden-auth">
+          <button id="profile-trigger" class="profile-trigger hidden-auth">
+            <img id="navbar-pfp" src="/assets/default-user.png" alt="">
+          </button>
 
-        <div class="user-profile">
+          <div id="profile-menu" class="profile-menu hidden-auth">
 
-          <img
-            id="navbar-pfp"
-            src="assets/default-user.png"
-            alt="">
+            <div class="profile-avatar-wrap">
+              <img id="profile-menu-pfp" src="/assets/default-user.png" alt="">
+            </div>
+
+            <h3 id="profile-menu-name">
+              Piloto
+            </h3>
+
+            <p id="profile-menu-email">
+              correo@email.com
+            </p>
+
+            <p id="profile-menu-phone">
+              Sin teléfono
+            </p>
+
+            <a href="/perfil" class="profile-link">
+              Mi Perfil
+            </a>
+
+            <button id="logout-btn" class="logout-btn">
+              Cerrar Sesión
+            </button>
+
+          </div>
 
         </div>
 
@@ -56,99 +83,79 @@
 
     </div>
 
-  </div>
+  </header>
 
-</header>
-<div id="auth-overlay" class="auth-overlay hidden-auth">
+  <div id="auth-overlay" class="auth-overlay hidden-auth">
 
-  <div class="auth-modal">
+    <div class="auth-modal">
 
-    <button id="close-auth" class="close-auth">
-      ✕
-    </button>
-
-    <div class="auth-tabs">
-
-      <button id="login-tab" class="auth-tab active-tab">
-        Login
+      <button id="close-auth" class="close-auth">
+        ✕
       </button>
 
-      <button id="register-tab" class="auth-tab">
-        Registro
-      </button>
+      <div class="auth-tabs">
 
-    </div>
+        <button id="login-tab" class="auth-tab active-tab">
+          Login
+        </button>
 
-    <div id="login-form" class="auth-form">
+        <button id="register-tab" class="auth-tab">
+          Registro
+        </button>
 
-      <h2>
-        Bienvenido de nuevo.
-      </h2>
+      </div>
 
-      <p>
-        Inicia sesión para competir y reservar.
-      </p>
+      <div id="login-form" class="auth-form">
 
-      <input
-        id="login-email"
-        type="email"
-        placeholder="Correo electrónico">
+        <h2>
+          Bienvenido de nuevo.
+        </h2>
 
-      <input
-        id="login-password"
-        type="password"
-        placeholder="Contraseña">
+        <p>
+          Inicia sesión para competir y reservar.
+        </p>
 
-      <button id="login-btn" class="auth-submit">
-        Iniciar Sesión
-      </button>
+        <input id="login-email" type="email" placeholder="Correo electrónico">
 
-      <button id="google-login" class="google-btn">
+        <input id="login-password" type="password" placeholder="Contraseña">
 
-        <img src="FIREBASE_GOOGLE_ICON" alt="">
+        <button id="login-btn" class="auth-submit">
+          Iniciar Sesión
+        </button>
 
-        <span>
-          Continuar con Google
-        </span>
+        <button id="google-login" class="google-btn">
+          <span>
+            Continuar con Google
+          </span>
+        </button>
 
-      </button>
+      </div>
 
-    </div>
+      <div id="register-form" class="auth-form hidden-auth">
 
-    <div id="register-form" class="auth-form hidden-auth">
+        <h2>
+          Crea tu perfil.
+        </h2>
 
-      <h2>
-        Crea tu perfil.
-      </h2>
+        <p>
+          Únete a la comunidad Inercia.
+        </p>
 
-      <p>
-        Únete a la comunidad Inercia.
-      </p>
+        <input id="register-name" type="text" placeholder="Nombre de usuario">
 
-      <input
-        id="register-name"
-        type="text"
-        placeholder="Nombre de usuario">
+        <input id="register-email" type="email" placeholder="Correo electrónico">
 
-      <input
-        id="register-email"
-        type="email"
-        placeholder="Correo electrónico">
+        <input id="register-password" type="password" placeholder="Contraseña">
 
-      <input
-        id="register-password"
-        type="password"
-        placeholder="Contraseña">
+        <button id="register-btn" class="auth-submit">
+          Crear Cuenta
+        </button>
 
-      <button id="register-btn" class="auth-submit">
-        Crear Cuenta
-      </button>
+      </div>
 
     </div>
 
   </div>
-
-</div>
 
   <section class="hero-header">
 
@@ -166,6 +173,34 @@
 
   </section>
 
+  <div class="standings-topbar">
+
+    <div class="standings-dropdown">
+
+      <select id="category-select">
+
+        <option value="ALL">
+          Todos
+        </option>
+
+        <option value="M">
+          Masculino
+        </option>
+
+        <option value="F">
+          Femenino
+        </option>
+
+        <option value="TEAM">
+          Team Inercia
+        </option>
+
+      </select>
+
+    </div>
+
+  </div>
+
   <main class="standings-wrapper">
 
     <div class="table-header">
@@ -178,34 +213,12 @@
     </div>
 
     <div id="leaderboard" class="leaderboard"></div>
+
   </main>
-  <div class="standings-topbar">
 
-  <div class="standings-dropdown">
+  <script type="module" src="./firebase-auth.js"></script>
+  <script type="module" src="./standings.js"></script>
 
-    <select id="category-select">
-
-      <option value="M">
-        Masculino
-      </option>
-
-      <option value="F">
-        Femenino
-      </option>
-
-      <option value="TEAM">
-        Team Inercia
-      </option>
-<option value="ALL">
-  Todos
-</option>
-    </select>
-
-  </div>
-
-</div>
-
-<script type="module" src="./firebase-auth.js"></script>
-<script type="module" src="./standings.js"></script>
 </body>
+
 </html>
