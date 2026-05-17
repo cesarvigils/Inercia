@@ -1736,21 +1736,27 @@ h2 {
 
   object-fit: contain;
 }
+
 .standings-topbar {
 
-  width: min(1200px, 92%);
+  position: sticky;
 
-  margin-left: 8vw;
+  top: 90px;
+  z-index: 20;
+  position: absolute;
 
-  margin-bottom: 0.5rem;
-  margin-top: 1rem;
 
+  right: 4vw;
   display: flex;
 
   justify-content: flex-end;
 
-  align-items: center;
+  margin-bottom: 1rem;
+
+  background:
+    transparent;
 }
+
 .standings-dropdown {
   margin-left: auto;
   position: relative;
@@ -1902,4 +1908,8 @@ h2 {
 .standings-dropdown.team-selected select {
 
   padding-left: 3.3rem;
+}
+.leaderboard-section {
+
+  position: relative;
 }
