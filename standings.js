@@ -133,9 +133,8 @@ async function loadStandings() {
 
       const esTeamInercia =
         nombre.includes("(T)")
-              const esTeamInercia =
         nombre.includes("(S)")
-        
+
 
       // FILTROS
 
