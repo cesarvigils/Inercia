@@ -62,13 +62,13 @@ if (currentFilter === "TEAM") {
 
 function parseTime(time) {
 
-  if (!time) return "NT"
+  if (!time) return Infinity
 
   const parts =
     time.split(":")
 
   if (parts.length < 2)
-    return "NT"
+    return Infinity
 
   const minutes =
     parseInt(parts[0])
@@ -105,8 +105,9 @@ async function loadStandings() {
 
     if (!data.values) return
 
-const fragment =
-  document.createDocumentFragment()
+    const fragment =
+      document.createDocumentFragment()
+
     let drivers = []
 
     data.values.forEach((driver) => {
@@ -135,45 +136,43 @@ const fragment =
 
       // FILTROS
 
-// FILTROS
+      if (
+        currentFilter === "ALL"
+      ) {
 
-if (
-  currentFilter === "ALL"
-) {
+        // mostrar todos
 
-  // mostrar todos
+      }
 
-}
+      else if (
+        currentFilter === "M"
+      ) {
 
-else if (
-  currentFilter === "M"
-) {
+        if (genero !== "M") {
+          return
+        }
 
-  if (genero !== "M") {
-    return
-  }
+      }
 
-}
+      else if (
+        currentFilter === "F"
+      ) {
 
-else if (
-  currentFilter === "F"
-) {
+        if (genero !== "F") {
+          return
+        }
 
-  if (genero !== "F") {
-    return
-  }
+      }
 
-}
+      else if (
+        currentFilter === "TEAM"
+      ) {
 
-else if (
-  currentFilter === "TEAM"
-) {
+        if (!esTeamInercia) {
+          return
+        }
 
-  if (!esTeamInercia) {
-    return
-  }
-
-}
+      }
 
       let nombreFinal = nombre
 
@@ -253,8 +252,13 @@ else if (
 
       `
 
-fragment.appendChild(row)
+      fragment.appendChild(row)
+
     })
+
+    leaderboard.innerHTML = ""
+
+    leaderboard.appendChild(fragment)
 
   } catch (error) {
 
@@ -263,9 +267,7 @@ fragment.appendChild(row)
   }
 
 }
-leaderboard.innerHTML = ""
 
-leaderboard.appendChild(fragment)
 loadStandings()
 
-setInterval(loadStandings, 3600)
+setInterval(loadStandings, 3000)
