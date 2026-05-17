@@ -1,192 +1,126 @@
-export default async
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
 
 import {
-
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendEmailVerification,
   updateProfile,
   onAuthStateChanged,
-  signOut,
   GoogleAuthProvider,
   signInWithPopup
-
-
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
-const provider =
-  new GoogleAuthProvider()
 
-document
-  .getElementById("google-login")
-  .onclick = async () => {
-
-    await signInWithPopup(
-      auth,
-      provider
-    )
-
-    overlay.classList.add(
-      "hidden-auth"
-    )
-
-}
 const firebaseConfig = {
-
-  apiKey:
-    process.env.FIREBASE_API_KEY,
-
-  authDomain:
-    process.env.FIREBASE_AUTH_DOMAIN,
-
-  projectId:
-    process.env.FIREBASE_PROJECT_ID,
-
-  storageBucket:
-    process.env.FIREBASE_STORAGE_BUCKET,
-
-  messagingSenderId:
-    process.env.FIREBASE_MESSAGING_SENDER_ID,
-
-  appId:
-    process.env.FIREBASE_APP_ID
-
-
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-const app =
-  initializeApp(firebaseConfig)
+const app = initializeApp(firebaseConfig)
+const auth = getAuth(app)
+const provider = new GoogleAuthProvider()
 
-const auth =
-  getAuth(app)
+const overlay = document.getElementById("auth-overlay")
+const openAuth = document.getElementById("open-auth")
+const closeAuth = document.getElementById("close-auth")
+const loginTab = document.getElementById("login-tab")
+const registerTab = document.getElementById("register-tab")
+const loginForm = document.getElementById("login-form")
+const registerForm = document.getElementById("register-form")
+const googleLogin = document.getElementById("google-login")
+const registerBtn = document.getElementById("register-btn")
+const loginBtn = document.getElementById("login-btn")
 
-const overlay =
-  document.getElementById("auth-overlay")
-
-const openAuth =
-  document.getElementById("open-auth")
-
-const closeAuth =
-  document.getElementById("close-auth")
-
-const loginTab =
-  document.getElementById("login-tab")
-
-const registerTab =
-  document.getElementById("register-tab")
-
-const loginForm =
-  document.getElementById("login-form")
-
-const registerForm =
-  document.getElementById("register-form")
-
-openAuth.onclick = () => {
-
-  overlay.classList.remove("hidden-auth")
+if (openAuth && overlay) {
+  openAuth.addEventListener("click", () => {
+    overlay.classList.remove("hidden-auth")
+  })
 }
 
-closeAuth.onclick = () => {
-
-  overlay.classList.add("hidden-auth")
-}
-
-loginTab.onclick = () => {
-
-  loginTab.classList.add("active-tab")
-
-  registerTab.classList.remove("active-tab")
-
-  loginForm.classList.remove("hidden-auth")
-
-  registerForm.classList.add("hidden-auth")
-}
-
-registerTab.onclick = () => {
-
-  registerTab.classList.add("active-tab")
-
-  loginTab.classList.remove("active-tab")
-
-  registerForm.classList.remove("hidden-auth")
-
-  loginForm.classList.add("hidden-auth")
-}
-
-document
-  .getElementById("register-btn")
-  .onclick = async () => {
-
-    const name =
-      document.getElementById("register-name").value
-
-    const email =
-      document.getElementById("register-email").value
-
-    const password =
-      document.getElementById("register-password").value
-
-    const cred =
-      await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      )
-
-    await updateProfile(
-      cred.user,
-      {
-        displayName: name
-      }
-    )
-
-    await sendEmailVerification(
-      cred.user
-    )
-
-    alert(
-      "Verificación enviada al correo."
-    )
-
-}
-
-document
-  .getElementById("login-btn")
-  .onclick = async () => {
-
-    const email =
-      document.getElementById("login-email").value
-
-    const password =
-      document.getElementById("login-password").value
-
-    const cred =
-      await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      )
-
-    if (!cred.user.emailVerified) {
-
-      alert(
-        "Verifica tu correo primero."
-      )
-
-      return
-    }
-
+if (closeAuth && overlay) {
+  closeAuth.addEventListener("click", () => {
     overlay.classList.add("hidden-auth")
+  })
+}
+
+if (loginTab && registerTab && loginForm && registerForm) {
+  loginTab.addEventListener("click", () => {
+    loginTab.classList.add("active-tab")
+    registerTab.classList.remove("active-tab")
+    loginForm.classList.remove("hidden-auth")
+    registerForm.classList.add("hidden-auth")
+  })
+
+  registerTab.addEventListener("click", () => {
+    registerTab.classList.add("active-tab")
+    loginTab.classList.remove("active-tab")
+    registerForm.classList.remove("hidden-auth")
+    loginForm.classList.add("hidden-auth")
+  })
+}
+
+if (googleLogin && overlay) {
+  googleLogin.addEventListener("click", async () => {
+    try {
+      await signInWithPopup(auth, provider)
+      overlay.classList.add("hidden-auth")
+    } catch (error) {
+      console.error(error)
+      alert("No se pudo iniciar sesión con Google.")
+    }
+  })
+}
+
+if (registerBtn) {
+  registerBtn.addEventListener("click", async () => {
+    try {
+      const name = document.getElementById("register-name").value
+      const email = document.getElementById("register-email").value
+      const password = document.getElementById("register-password").value
+
+      const cred = await createUserWithEmailAndPassword(auth, email, password)
+
+      await updateProfile(cred.user, {
+        displayName: name
+      })
+
+      await sendEmailVerification(cred.user)
+
+      alert("Verificación enviada al correo.")
+    } catch (error) {
+      console.error(error)
+      alert("No se pudo crear la cuenta.")
+    }
+  })
+}
+
+if (loginBtn && overlay) {
+  loginBtn.addEventListener("click", async () => {
+    try {
+      const email = document.getElementById("login-email").value
+      const password = document.getElementById("login-password").value
+
+      const cred = await signInWithEmailAndPassword(auth, email, password)
+
+      if (!cred.user.emailVerified) {
+        alert("Verifica tu correo primero.")
+        return
+      }
+
+      overlay.classList.add("hidden-auth")
+    } catch (error) {
+      console.error(error)
+      alert("No se pudo iniciar sesión.")
+    }
+  })
 }
 
 onAuthStateChanged(auth, (user) => {
-
-  if (user) {
-
-    document
-      .getElementById("open-auth")
-      .style.display = "none"
+  if (openAuth) {
+    openAuth.style.display = user ? "none" : "inline-flex"
   }
-
 })
