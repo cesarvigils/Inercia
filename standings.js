@@ -1,19 +1,92 @@
+const RANGE =
+  "5. Mayo Canada!A15:Z"
 
-const RANGE = "5. Mayo Canada!A15:Z"
 const ICONO_T =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FTeam%20Inercia%20Casco%20REV2.png?alt=media&token=18016ad1-2185-48c6-a9e5-500f2a6fb9db"
+
 const ICONO_S =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FTeam%20Inercia%20Casco%20REV2.png?alt=media&token=18016ad1-2185-48c6-a9e5-500f2a6fb9db"
+
 const leaderboard =
   document.getElementById("leaderboard")
+
+const categorySelect =
+  document.getElementById("category-select")
+
+const dropdownWrapper =
+  document.querySelector(
+    ".standings-dropdown"
+  )
+
+let currentFilter =
+  categorySelect.value
 
 const COLUMNAS = {
 
   nombre: 2, // C
-    genero: 5, // F
-
-  horas: 6,  // G
+  genero: 5, // F
   tiempo: 7  // H
+
+}
+
+categorySelect.onchange = () => {
+
+  currentFilter =
+    categorySelect.value
+
+  if (currentFilter === "TEAM") {
+
+    dropdownWrapper.classList.add(
+      "team-selected"
+    )
+
+  } else {
+
+    dropdownWrapper.classList.remove(
+      "team-selected"
+    )
+
+  }
+
+  loadStandings()
+
+}
+
+if (currentFilter === "TEAM") {
+
+  dropdownWrapper.classList.add(
+    "team-selected"
+  )
+
+}
+
+function parseTime(time) {
+
+  if (!time) return Infinity
+
+  const parts =
+    time.split(":")
+
+  if (parts.length < 2)
+    return Infinity
+
+  const minutes =
+    parseInt(parts[0])
+
+  const seconds =
+    parseFloat(parts[1])
+
+  return (minutes * 60) + seconds
+
+}
+
+function formatGap(gap) {
+
+  if (gap <= 0) {
+    return "LEADER"
+  }
+
+  return `+${gap.toFixed(3)}`
 
 }
 
@@ -21,7 +94,9 @@ async function loadStandings() {
 
   try {
 
-const url = "/api/standings"
+    const url =
+      "/api/standings"
+
     const response =
       await fetch(url)
 
@@ -32,18 +107,52 @@ const url = "/api/standings"
 
     leaderboard.innerHTML = ""
 
-    data.values.forEach((driver, index) => {
+    let drivers = []
+
+    data.values.forEach((driver) => {
 
       const nombre =
         driver[COLUMNAS.nombre]
 
-      const horas =
-        driver[COLUMNAS.horas]
+      const genero =
+        (driver[COLUMNAS.genero] || "")
+        .trim()
+        .toUpperCase()
 
       const tiempo =
         driver[COLUMNAS.tiempo]
 
       if (!nombre || nombre.trim() === "") {
+        return
+      }
+
+      if (!tiempo || tiempo.trim() === "") {
+        return
+      }
+
+      const esTeamInercia =
+        nombre.includes("(T)")
+
+      // FILTROS
+
+      if (
+        currentFilter === "M" &&
+        genero !== "M"
+      ) {
+        return
+      }
+
+      if (
+        currentFilter === "F" &&
+        genero !== "F"
+      ) {
+        return
+      }
+
+      if (
+        currentFilter === "TEAM" &&
+        !esTeamInercia
+      ) {
         return
       }
 
@@ -56,6 +165,7 @@ const url = "/api/standings"
             "(T)",
             `<img src="${ICONO_T}" class="driver-tag-icon">`
           )
+
       }
 
       if (nombreFinal.includes("(S)")) {
@@ -65,7 +175,31 @@ const url = "/api/standings"
             "(S)",
             `<img src="${ICONO_S}" class="driver-tag-icon">`
           )
+
       }
+
+      drivers.push({
+
+        nombreFinal,
+        tiempo,
+        parsedTime:
+          parseTime(tiempo)
+
+      })
+
+    })
+
+    drivers.sort((a, b) =>
+      a.parsedTime - b.parsedTime
+    )
+
+    const leaderTime =
+      drivers[0]?.parsedTime || 0
+
+    drivers.forEach((driver, index) => {
+
+      const gap =
+        driver.parsedTime - leaderTime
 
       const row =
         document.createElement("div")
@@ -85,17 +219,17 @@ const url = "/api/standings"
         <div class="driver-info">
 
           <h3>
-            ${nombreFinal}
+            ${driver.nombreFinal}
           </h3>
 
         </div>
 
         <div class="lap-time">
-          ${horas || "-"}
+          ${driver.tiempo}
         </div>
 
         <div class="gap">
-          ${tiempo || "-"}
+          ${formatGap(gap)}
         </div>
 
       `
@@ -113,4 +247,5 @@ const url = "/api/standings"
 }
 
 loadStandings()
+
 setInterval(loadStandings, 3600)
