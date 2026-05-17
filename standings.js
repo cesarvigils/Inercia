@@ -62,13 +62,13 @@ if (currentFilter === "TEAM") {
 
 function parseTime(time) {
 
-  if (!time) return Infinity
+  if (!time) return "NT"
 
   const parts =
     time.split(":")
 
   if (parts.length < 2)
-    return Infinity
+    return "NT"
 
   const minutes =
     parseInt(parts[0])
@@ -105,8 +105,8 @@ async function loadStandings() {
 
     if (!data.values) return
 
-    leaderboard.innerHTML = ""
-
+const fragment =
+  document.createDocumentFragment()
     let drivers = []
 
     data.values.forEach((driver) => {
@@ -135,26 +135,45 @@ async function loadStandings() {
 
       // FILTROS
 
-      if (
-        currentFilter === "M" &&
-        genero !== "M"
-      ) {
-        return
-      }
+// FILTROS
 
-      if (
-        currentFilter === "F" &&
-        genero !== "F"
-      ) {
-        return
-      }
+if (
+  currentFilter === "ALL"
+) {
 
-      if (
-        currentFilter === "TEAM" &&
-        !esTeamInercia
-      ) {
-        return
-      }
+  // mostrar todos
+
+}
+
+else if (
+  currentFilter === "M"
+) {
+
+  if (genero !== "M") {
+    return
+  }
+
+}
+
+else if (
+  currentFilter === "F"
+) {
+
+  if (genero !== "F") {
+    return
+  }
+
+}
+
+else if (
+  currentFilter === "TEAM"
+) {
+
+  if (!esTeamInercia) {
+    return
+  }
+
+}
 
       let nombreFinal = nombre
 
@@ -234,8 +253,7 @@ async function loadStandings() {
 
       `
 
-      leaderboard.appendChild(row)
-
+fragment.appendChild(row)
     })
 
   } catch (error) {
@@ -245,7 +263,9 @@ async function loadStandings() {
   }
 
 }
+leaderboard.innerHTML = ""
 
+leaderboard.appendChild(fragment)
 loadStandings()
 
 setInterval(loadStandings, 3600)
