@@ -1,13 +1,10 @@
 const RANGE =
   "5. Mayo Canada!A15:Z"
 
-const ICONO_T =
+const ICONO_TEAM =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FTeam%20Inercia%20Casco%20REV2.png?alt=media&token=18016ad1-2185-48c6-a9e5-500f2a6fb9db"
 
-const ICONO_S =
-  "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FTeam%20Inercia%20Casco%20REV2.png?alt=media&token=18016ad1-2185-48c6-a9e5-500f2a6fb9db"
-
-const leaderboard =
+let leaderboard =
   document.getElementById("leaderboard")
 
 const categorySelect =
@@ -24,6 +21,7 @@ let currentFilter =
 const COLUMNAS = {
 
   nombre: 2, // C
+  team: 4,   // E
   genero: 5, // F
   tiempo: 7  // H
 
@@ -62,7 +60,8 @@ if (currentFilter === "TEAM") {
 
 function parseTime(time) {
 
-  if (!time) return Infinity
+  if (!time)
+    return Infinity
 
   const parts =
     time.split(":")
@@ -105,15 +104,17 @@ async function loadStandings() {
 
     if (!data.values) return
 
-    const fragment =
-      document.createDocumentFragment()
-
     let drivers = []
 
     data.values.forEach((driver) => {
 
       const nombre =
         driver[COLUMNAS.nombre]
+
+      const team =
+        (driver[COLUMNAS.team] || "")
+        .trim()
+        .toUpperCase()
 
       const genero =
         (driver[COLUMNAS.genero] || "")
@@ -132,9 +133,7 @@ async function loadStandings() {
       }
 
       const esTeamInercia =
-        nombre.includes("(T)")
-        nombre.includes("(S)")
-
+        team === "TEAM"
 
       // FILTROS
 
@@ -176,25 +175,20 @@ async function loadStandings() {
 
       }
 
-      let nombreFinal = nombre
+      let nombreFinal =
+        nombre
 
-      if (nombreFinal.includes("(T)")) {
+      if (esTeamInercia) {
 
-        nombreFinal =
-          nombreFinal.replace(
-            "(T)",
-            `<img src="${ICONO_T}" class="driver-tag-icon">`
-          )
+        nombreFinal = `
 
-      }
+          <img
+            src="${ICONO_TEAM}"
+            class="driver-tag-icon">
 
-      if (nombreFinal.includes("(S)")) {
+          ${nombre}
 
-        nombreFinal =
-          nombreFinal.replace(
-            "(S)",
-            `<img src="${ICONO_S}" class="driver-tag-icon">`
-          )
+        `
 
       }
 
@@ -202,6 +196,7 @@ async function loadStandings() {
 
         nombreFinal,
         tiempo,
+
         parsedTime:
           parseTime(tiempo)
 
@@ -216,6 +211,9 @@ async function loadStandings() {
     const leaderTime =
       drivers[0]?.parsedTime || 0
 
+    const fragment =
+      document.createDocumentFragment()
+
     drivers.forEach((driver, index) => {
 
       const gap =
@@ -224,10 +222,16 @@ async function loadStandings() {
       const row =
         document.createElement("div")
 
-      row.classList.add("driver-row")
+      row.classList.add(
+        "driver-row"
+      )
 
       if (index === 0) {
-        row.classList.add("top-driver")
+
+        row.classList.add(
+          "top-driver"
+        )
+
       }
 
       row.innerHTML = `
@@ -258,11 +262,13 @@ async function loadStandings() {
 
     })
 
-    leaderboard.innerHTML = ""
+    leaderboard.replaceChildren(
+      ...fragment.children
+    )
 
-    leaderboard.appendChild(fragment)
+  }
 
-  } catch (error) {
+  catch (error) {
 
     console.error(error)
 
@@ -272,4 +278,7 @@ async function loadStandings() {
 
 loadStandings()
 
-setInterval(loadStandings, 3600000)
+setInterval(
+  loadStandings,
+  3000
+)
