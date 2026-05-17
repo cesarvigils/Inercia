@@ -280,5 +280,5 @@ loadStandings()
 
 setInterval(
   loadStandings,
-  3000
+  3600000
 )
