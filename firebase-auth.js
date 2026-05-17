@@ -8,6 +8,7 @@ import {
   updateProfile,
   onAuthStateChanged,
   GoogleAuthProvider,
+  signOut,
   signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
 
@@ -119,8 +120,53 @@ if (loginBtn && overlay) {
   })
 }
 
+const profileTrigger = document.getElementById("profile-trigger")
+const profileMenu = document.getElementById("profile-menu")
+const logoutBtn = document.getElementById("logout-btn")
+
+const navbarPfp = document.getElementById("navbar-pfp")
+const profileMenuPfp = document.getElementById("profile-menu-pfp")
+const profileMenuName = document.getElementById("profile-menu-name")
+const profileMenuEmail = document.getElementById("profile-menu-email")
+const profileMenuPhone = document.getElementById("profile-menu-phone")
+
+if (profileTrigger && profileMenu) {
+  profileTrigger.addEventListener("click", () => {
+    profileMenu.classList.toggle("hidden-auth")
+  })
+}
+
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    await signOut(auth)
+    window.location.reload()
+  })
+}
+
 onAuthStateChanged(auth, (user) => {
-  if (openAuth) {
-    openAuth.style.display = user ? "none" : "inline-flex"
+  if (user) {
+    openAuth?.classList.add("hidden-auth")
+    profileTrigger?.classList.remove("hidden-auth")
+
+    const photo = user.photoURL || "/assets/default-user.png"
+
+    if (navbarPfp) navbarPfp.src = photo
+    if (profileMenuPfp) profileMenuPfp.src = photo
+
+    if (profileMenuName) {
+      profileMenuName.textContent = user.displayName || "Piloto"
+    }
+
+    if (profileMenuEmail) {
+      profileMenuEmail.textContent = user.email || "Sin correo"
+    }
+
+    if (profileMenuPhone) {
+      profileMenuPhone.textContent = user.phoneNumber || "Sin teléfono"
+    }
+  } else {
+    openAuth?.classList.remove("hidden-auth")
+    profileTrigger?.classList.add("hidden-auth")
+    profileMenu?.classList.add("hidden-auth")
   }
 })
