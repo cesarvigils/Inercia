@@ -1213,23 +1213,15 @@ h2 {
   align-items: center;
 }
 .table-header {
-
   padding: 0.6rem 1rem;
-
   background:
     rgba(255,255,255,0.03);
-
   border-bottom:
     1px solid rgba(255,255,255,0.06);
-
   font-family: 'Rajdhani', sans-serif;
-
   font-size: 1rem;
-
   font-weight: 700;
-
   letter-spacing: 2px;
-
   color:
     rgba(255,255,255,0.5);
 }
@@ -2014,4 +2006,65 @@ h2 {
     right: -10px;
     width: 290px;
   }
+  .hero-header h1 {
+  margin-top: 1rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2.5rem, 7vw, 7rem);
+  line-height: .85;
+  letter-spacing: 0.2px;
+  color: white;
+  padding-bottom: 50px;
+}
+.standings-dropdown {
+  margin-left: auto;
+  margin-right: 150px;
+  position: relative;
+  width: 240px;
+    font-family: 'Orbitron', sans-serif;
+
+  font-size: .9rem;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+  margin-top:8.2rem;
+}
+.standings-wrapper {
+
+  width: min(950px, 92%);
+  margin-top: -100px;
+  margin-left: 4vw;
+
+  margin-right: auto;
+
+  border-radius: 15px;
+
+  overflow: hidden;
+
+  border:
+    1px solid rgba(255,255,255,0.06);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12,12,12,0.98),
+      rgba(8,8,8,0.98)
+    );
+}
+.table-header {
+  padding: 0.6rem 0.7rem;
+  background:
+    rgba(255,255,255,0.03);
+  border-bottom:
+    1px solid rgba(255,255,255,0.06);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color:
+    rgba(255,255,255,0.5);
+
+}
 }
