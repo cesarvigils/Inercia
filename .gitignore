@@ -31,3 +31,6 @@ yarn-error.log*
 .env.local
 .env.*.local
 config.js
+node_modules
+dist
+.env
