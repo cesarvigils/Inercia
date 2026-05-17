@@ -1913,3 +1913,105 @@ h2 {
 
   position: relative;
 }
+.nav-auth {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-trigger {
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  background: #ff8c1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-trigger img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-menu {
+  position: absolute;
+  top: 62px;
+  right: 0;
+  width: 320px;
+  padding: 2rem 1.5rem;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(20,20,20,.98), rgba(8,8,8,.98));
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 25px 70px rgba(0,0,0,.55);
+  text-align: center;
+  z-index: 9999;
+}
+
+.profile-avatar-wrap {
+  width: 86px;
+  height: 86px;
+  margin: 0 auto 1.2rem;
+  border-radius: 50%;
+  background: #ff8c1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-wrap img {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-menu h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.25rem;
+  color: white;
+  margin-bottom: .3rem;
+}
+
+.profile-menu p {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.65);
+}
+
+.profile-link,
+.logout-btn {
+  margin-top: 1.4rem;
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  text-decoration: none;
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.logout-btn {
+  color: #ff8c1a;
+}
+
+.hidden-auth {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .profile-menu {
+    right: -10px;
+    width: 290px;
+  }
+}
