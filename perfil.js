@@ -30,16 +30,21 @@ const db = getDatabase(app)
 const profilePhoto = document.getElementById("profile-photo")
 const profileName = document.getElementById("profile-name")
 const profileEmail = document.getElementById("profile-email")
-const photoInput = document.getElementById("photo-input")
 const phoneInput = document.getElementById("phone-input")
 const saveProfile = document.getElementById("save-profile")
 const recordsContainer = document.getElementById("profile-records")
+const photoUpload = document.getElementById("photo-upload")
+const avatarBox = document.querySelector(".profile-avatar-box")
 
 const COLUMNAS = {
   nombre: 2,
   genero: 5,
   tiempo: 7
 }
+
+let uploadedPhoto = ""
+let currentPhoto = "/assets/default-user.png"
+let saveHandlerAttached = false
 
 function normalizeName(value) {
   return String(value || "")
@@ -64,6 +69,8 @@ function parseTime(time) {
 }
 
 async function loadRecordsForUser(displayName) {
+  if (!recordsContainer) return
+
   const response = await fetch("/api/standings")
   const data = await response.json()
 
@@ -111,6 +118,35 @@ async function loadRecordsForUser(displayName) {
   })
 }
 
+if (avatarBox && photoUpload) {
+  avatarBox.addEventListener("click", () => {
+    photoUpload.click()
+  })
+
+  photoUpload.addEventListener("change", (event) => {
+    const file = event.target.files[0]
+
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      alert("Selecciona una imagen válida.")
+      return
+    }
+
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      uploadedPhoto = reader.result
+
+      if (profilePhoto) {
+        profilePhoto.src = uploadedPhoto
+      }
+    }
+
+    reader.readAsDataURL(file)
+  })
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "/"
@@ -127,38 +163,46 @@ onAuthStateChanged(auth, async (user) => {
   const displayName =
     savedData.name || user.displayName || "Piloto"
 
-  const photo =
+  currentPhoto =
     savedData.photoURL || user.photoURL || "/assets/default-user.png"
 
   const phone =
     savedData.phone || ""
 
-  profileName.textContent = displayName
-  profileEmail.textContent = user.email || "Sin correo"
-  profilePhoto.src = photo
-  photoInput.value = photo
-  phoneInput.value = phone
+  if (profileName) profileName.textContent = displayName
+  if (profileEmail) profileEmail.textContent = user.email || "Sin correo"
+  if (profilePhoto) profilePhoto.src = currentPhoto
+  if (phoneInput) phoneInput.value = phone
 
   await loadRecordsForUser(displayName)
 
-  saveProfile.addEventListener("click", async () => {
-    const newPhoto = photoInput.value.trim()
-    const newPhone = phoneInput.value.trim()
+  if (!saveHandlerAttached && saveProfile) {
+    saveHandlerAttached = true
 
-    await set(userRef, {
-      uid: user.uid,
-      name: displayName,
-      email: user.email,
-      phone: newPhone,
-      photoURL: newPhoto
+    saveProfile.addEventListener("click", async () => {
+      const newPhone = phoneInput ? phoneInput.value.trim() : ""
+      const newPhoto = uploadedPhoto || currentPhoto
+
+      await set(userRef, {
+        uid: user.uid,
+        name: displayName,
+        email: user.email,
+        phone: newPhone,
+        photoURL: newPhoto
+      })
+
+      await updateProfile(user, {
+        photoURL: newPhoto
+      })
+
+      currentPhoto = newPhoto
+      uploadedPhoto = ""
+
+      if (profilePhoto) {
+        profilePhoto.src = newPhoto || "/assets/default-user.png"
+      }
+
+      alert("Perfil actualizado.")
     })
-
-    await updateProfile(user, {
-      photoURL: newPhoto
-    })
-
-    profilePhoto.src = newPhoto || "/assets/default-user.png"
-
-    alert("Perfil actualizado.")
-  })
+  }
 })
