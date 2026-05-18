@@ -143,7 +143,7 @@ async function loadRecordsForUser(displayName) {
 
     row.innerHTML = `
       <span>#${index + 1}</span>
-      <span>Formula 1 Canadá</span>
+      <span>Circuit Gilles Villeneuve</span>
       <span class="record-time">${record.tiempo}</span>
       <span class="record-category">${record.categoria}</span>
     `
