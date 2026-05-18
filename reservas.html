@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Reservas | Inercia</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/styles.css">
@@ -17,6 +20,7 @@
 
   <header class="navbar">
     <div class="container nav-wrapper">
+
       <a href="/" class="logo">
         <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
       </a>
@@ -26,42 +30,39 @@
         <a href="/reservas">Reservas</a>
         <a href="/contacto">Contacto</a>
       </nav>
+
     </div>
   </header>
 
   <section class="booking-hero">
-    <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftriple.jpg?alt=media&token=1e32c117-cd24-43c3-9724-5efae4cd1b70" alt="">
+
+    <img src="FIREBASE_HERO_RESERVAS" alt="Reservas Inercia">
+
     <div class="booking-hero-overlay"></div>
 
     <div class="booking-hero-content">
       <span>RESERVAS</span>
       <h1>Reservá tu simulador.</h1>
-      <p>Elegí fecha, hora y tipo de experiencia.</p>
+      <p>Elegí fecha, hora y hasta 8 simuladores.</p>
     </div>
+
   </section>
 
   <main class="booking-page">
 
-    <section class="booking-panel">
-      <h2>1. Seleccioná el tipo</h2>
+    <section class="booking-panel rig-panel">
+      <h2>1. Seleccioná simuladores</h2>
 
-      <div class="type-grid">
-        <button class="type-card active" data-type="standard" data-price="200">
-          <h3>Standard</h3>
-          <p>Simulador individual</p>
-          <strong>L 200.00</strong>
-        </button>
+      <p class="booking-note">
+        Standard L 200.00 · Premium L 350.00 · Máximo 8 simuladores.
+      </p>
 
-        <button class="type-card" data-type="premium" data-price="350">
-          <h3>Premium</h3>
-          <p>Experiencia avanzada</p>
-          <strong>L 350.00</strong>
-        </button>
-      </div>
+      <div id="rig-grid" class="rig-grid"></div>
     </section>
 
     <section class="booking-panel">
       <h2>2. Seleccioná la fecha</h2>
+
       <input id="booking-date" class="booking-date" type="date">
     </section>
 
@@ -79,31 +80,39 @@
       </div>
     </section>
 
-    <section class="booking-panel">
-      <h2>4. Seleccioná simulador</h2>
-
-      <div id="rig-grid" class="rig-grid"></div>
-    </section>
-
     <aside class="booking-summary">
       <h2>Detalle de la reserva</h2>
 
       <div class="summary-card">
+
         <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49" alt="">
+
         <div>
-          <h3 id="summary-title">Standard - Rig#1</h3>
-          <p id="summary-date">Seleccioná fecha y hora</p>
+          <h3 id="summary-title">
+            Seleccioná simuladores
+          </h3>
+
+          <p id="summary-date">
+            Usuario · Fecha · Hora
+          </p>
         </div>
-        <strong id="summary-price">L 200.00</strong>
+
+        <strong id="summary-price">
+          L 0.00
+        </strong>
+
       </div>
 
       <button id="reserve-btn" class="reserve-confirm">
-        Reservar L 200.00
+        Reservar L 0.00
       </button>
+
     </aside>
 
   </main>
 
   <script type="module" src="./reservas.js"></script>
+
 </body>
+
 </html>
