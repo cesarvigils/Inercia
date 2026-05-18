@@ -7,7 +7,9 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, "index.html"),
         standings: resolve(__dirname, "standings.html"),
-        contacto: resolve(__dirname, "contacto.html")
+        contacto: resolve(__dirname, "contacto.html"),
+        perfil: resolve(__dirname, "perfil.html")
+
       }
     }
   }
