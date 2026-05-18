@@ -239,7 +239,7 @@
 }
 
 .record-category-icon {
-  width: 28px;
-  height: 28px;
+width: 260px;
+height: auto;
   object-fit: contain;
 }
