@@ -5,12 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Reservas | Inercia</title>
+  <title>Simuladores Inercia</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FIcono_Inercia_2026_transparenteconBorde1-01.png?alt=media&token=13110b1e-8a3a-48e1-9b8f-514d60de2fcf">
 
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/reservas.css">
@@ -19,6 +20,7 @@
 <body>
 
   <header class="navbar">
+
     <div class="container nav-wrapper">
 
       <a href="/" class="logo">
@@ -31,19 +33,64 @@
         <a href="/contacto">Contacto</a>
       </nav>
 
+      <div class="nav-right">
+
+        <div class="nav-auth">
+
+          <button id="open-auth" class="nav-btn">
+            Login
+          </button>
+
+          <button id="profile-trigger" class="profile-trigger hidden-auth">
+            <img id="navbar-pfp" src="/assets/default-user.png" alt="">
+          </button>
+
+          <div id="profile-menu" class="profile-menu hidden-auth">
+
+            <div class="profile-avatar-wrap">
+              <img id="profile-menu-pfp" src="/assets/default-user.png" alt="">
+            </div>
+
+            <h3 id="profile-menu-name">
+              Piloto
+            </h3>
+
+            <p id="profile-menu-email">
+              correo@email.com
+            </p>
+
+            <p id="profile-menu-phone">
+              Sin teléfono
+            </p>
+
+            <a href="/perfil" class="profile-link">
+              Mi Perfil
+            </a>
+
+            <button id="logout-btn" class="logout-btn">
+              Cerrar Sesión
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
+
   </header>
 
   <section class="booking-hero">
 
-    <img src="FIREBASE_HERO_RESERVAS" alt="Reservas Inercia">
+    <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftriple.jpg?alt=media&token=1e32c117-cd24-43c3-9724-5efae4cd1b70" alt="Reservas Inercia">
 
     <div class="booking-hero-overlay"></div>
 
     <div class="booking-hero-content">
       <span>RESERVAS</span>
       <h1>Reservá tu simulador.</h1>
-      <p>Elegí fecha, hora y hasta 8 simuladores.</p>
+      <p>Elegí fecha, hora y hasta 10 simuladores.</p>
     </div>
 
   </section>
