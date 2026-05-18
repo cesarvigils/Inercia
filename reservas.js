@@ -30,18 +30,17 @@ const db = getDatabase(app)
 const RIG_ICON =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
 
+const MAX_RIGS = 8
+
 const state = {
   user: null,
   userProfile: null,
-  type: "standard",
-  price: 200,
   date: "",
   time: "",
   rigsSelected: [],
   rigs: []
 }
 
-const typeCards = document.querySelectorAll(".type-card")
 const dateInput = document.getElementById("booking-date")
 const timeButtons = document.querySelectorAll("#time-slots button")
 const rigGrid = document.getElementById("rig-grid")
@@ -65,10 +64,6 @@ const defaultRigs = [
   { id: "premium2", name: "Premium 2", type: "premium", active: true }
 ]
 
-function getSelectedTypeLabel() {
-  return state.type === "premium" ? "Premium" : "Standard"
-}
-
 function getUserName() {
   return (
     state.userProfile?.name ||
@@ -77,11 +72,20 @@ function getUserName() {
   )
 }
 
-function getTotal() {
-  const amount =
-    state.rigsSelected.length || 1
+function getRigPrice(rig) {
+  return rig.type === "premium" ? 350 : 200
+}
 
-  return state.price * amount
+function getTotal() {
+  return state.rigsSelected.reduce((total, rigName) => {
+    const rig = state.rigs.find((item) => item.name === rigName)
+
+    if (!rig) {
+      return total
+    }
+
+    return total + getRigPrice(rig)
+  }, 0)
 }
 
 function formatPrice(price) {
@@ -89,30 +93,21 @@ function formatPrice(price) {
 }
 
 function updateSummary() {
-  const label = getSelectedTypeLabel()
-
   const rigsText =
     state.rigsSelected.length
       ? state.rigsSelected.join(", ")
-      : "Seleccioná simulador"
-
-  const date =
-    state.date || "Fecha"
-
-  const time =
-    state.time || "Hora"
+      : "Seleccioná simuladores"
 
   const total =
     getTotal()
 
   if (summaryTitle) {
-    summaryTitle.textContent =
-      `${label} - ${rigsText}`
+    summaryTitle.textContent = rigsText
   }
 
   if (summaryDate) {
     summaryDate.textContent =
-      `${getUserName()} · ${date} · ${time}`
+      `${getUserName()} · ${state.date || "Fecha"} · ${state.time || "Hora"}`
   }
 
   if (summaryPrice) {
@@ -135,12 +130,12 @@ async function loadUserProfile(user) {
       ? snapshot.val()
       : {}
 
-  state.userProfile =
-    profile
+  state.userProfile = profile
 
   if (!profile.phone) {
     alert("Antes de reservar, agrega tu número de teléfono en tu perfil.")
     window.location.href = "/perfil"
+    return
   }
 
   updateSummary()
@@ -167,9 +162,16 @@ function toggleRig(rigName) {
   if (state.rigsSelected.includes(rigName)) {
     state.rigsSelected =
       state.rigsSelected.filter((name) => name !== rigName)
-  } else {
-    state.rigsSelected.push(rigName)
+
+    return
   }
+
+  if (state.rigsSelected.length >= MAX_RIGS) {
+    alert(`Máximo ${MAX_RIGS} simuladores por reserva.`)
+    return
+  }
+
+  state.rigsSelected.push(rigName)
 }
 
 function renderRigs() {
@@ -177,10 +179,7 @@ function renderRigs() {
 
   rigGrid.innerHTML = ""
 
-  const filtered =
-    state.rigs.filter((rig) => rig.type === state.type)
-
-  filtered.forEach((rig) => {
+  state.rigs.forEach((rig) => {
     const card =
       document.createElement("button")
 
@@ -195,9 +194,13 @@ function renderRigs() {
       card.classList.add("active")
     }
 
+    const price =
+      getRigPrice(rig)
+
     card.innerHTML = `
       <img src="${RIG_ICON}" alt="">
       <span>${rig.name}</span>
+      <small>${formatPrice(price)}</small>
     `
 
     card.addEventListener("click", () => {
@@ -213,27 +216,6 @@ function renderRigs() {
 
   updateSummary()
 }
-
-typeCards.forEach((card) => {
-  card.addEventListener("click", () => {
-    typeCards.forEach((item) =>
-      item.classList.remove("active")
-    )
-
-    card.classList.add("active")
-
-    state.type =
-      card.dataset.type
-
-    state.price =
-      Number(card.dataset.price)
-
-    state.rigsSelected = []
-
-    renderRigs()
-    updateSummary()
-  })
-})
 
 if (dateInput) {
   dateInput.addEventListener("change", () => {
@@ -281,6 +263,16 @@ if (reserveBtn) {
       reserveBtn.disabled = true
       reserveBtn.textContent = "Reservando..."
 
+      const selectedRigDetails =
+        state.rigs
+          .filter((rig) => state.rigsSelected.includes(rig.name))
+          .map((rig) => ({
+            id: rig.id,
+            name: rig.name,
+            type: rig.type,
+            price: getRigPrice(rig)
+          }))
+
       const bookingRef =
         push(ref(db, "bookings"))
 
@@ -289,10 +281,8 @@ if (reserveBtn) {
         name: getUserName(),
         email: state.user.email,
         phone: state.userProfile.phone,
-        type: state.type,
-        typeLabel: getSelectedTypeLabel(),
-        unitPrice: state.price,
         rigs: state.rigsSelected,
+        rigDetails: selectedRigDetails,
         rigsCount: state.rigsSelected.length,
         total: getTotal(),
         date: state.date,
