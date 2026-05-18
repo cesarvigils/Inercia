@@ -1,0 +1,209 @@
+.profile-page {
+  width: min(1400px, 92%);
+  margin-left: 4vw;
+  margin-right: auto;
+  padding-top: 140px;
+  padding-bottom: 5rem;
+}
+
+.profile-hero {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.profile-card,
+.records-panel {
+  border-radius: 32px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18,18,18,.98),
+      rgba(5,5,5,.98)
+    );
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: 0 30px 80px rgba(0,0,0,.45);
+}
+
+.profile-card {
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.profile-avatar-box {
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background: #ff8c1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 45px rgba(255,140,26,.25);
+}
+
+.profile-avatar-box img {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-card h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.6rem;
+  color: white;
+}
+
+.profile-card p {
+  margin-top: .4rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.55);
+}
+
+.profile-label {
+  display: block;
+  margin-top: 1.4rem;
+  margin-bottom: .55rem;
+  text-align: left;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: .85rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,.5);
+  text-transform: uppercase;
+}
+
+.profile-input {
+  width: 100%;
+  height: 58px;
+  padding: 0 1rem;
+  border-radius: 18px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.07);
+  color: white;
+  outline: none;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.profile-input:focus {
+  border-color: rgba(255,140,26,.45);
+  box-shadow: 0 0 25px rgba(255,140,26,.12);
+}
+
+.profile-save {
+  width: 100%;
+  height: 60px;
+  margin-top: 1.6rem;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background:
+    linear-gradient(
+      180deg,
+      #ff9a32,
+      #dc731f
+    );
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.records-panel {
+  padding: 2.5rem;
+}
+
+.records-panel h2 {
+  margin-top: 1rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(3rem, 6vw, 6rem);
+  line-height: .9;
+  color: white;
+}
+
+.records-panel p {
+  margin-top: 1.2rem;
+  max-width: 600px;
+  color: rgba(255,255,255,.62);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.records-table {
+  margin-top: 2.5rem;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.records-header,
+.record-row {
+  display: grid;
+  grid-template-columns: 90px 1.4fr 1fr 1fr;
+  align-items: center;
+}
+
+.records-header {
+  height: 66px;
+  padding: 0 1.2rem;
+  background: rgba(255,255,255,.035);
+}
+
+.records-header span {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,.55);
+}
+
+.record-row {
+  min-height: 72px;
+  padding: 0 1.2rem;
+  border-top: 1px solid rgba(255,255,255,.045);
+}
+
+.record-row span {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: white;
+}
+
+.record-row .record-time {
+  font-family: 'Orbitron', sans-serif;
+  color: #ff8c1a;
+}
+
+.empty-records {
+  padding: 2rem;
+  color: rgba(255,255,255,.55);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+@media (max-width: 950px) {
+  .profile-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .records-panel h2 {
+    font-size: 3.5rem;
+  }
+
+  .records-table {
+    overflow-x: auto;
+  }
+
+  .records-header,
+  .record-row {
+    min-width: 620px;
+  }
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simuladores Inercia</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/perfil.css">
+</head>
+
+<body>
+
+  <div class="bg-grid"></div>
+
+  <header class="navbar">
+    <div class="container nav-wrapper">
+
+      <a href="/" class="logo">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+      </a>
+
+      <nav class="nav-links">
+        <a href="/standings">Resultados</a>
+        <a href="/reservas">Reservas</a>
+        <a href="/contacto">Contacto</a>
+      </nav>
+
+    </div>
+  </header>
+
+  <main class="profile-page">
+
+    <section class="profile-hero">
+
+      <div class="profile-card">
+
+        <div class="profile-avatar-box">
+          <img id="profile-photo" src="/assets/default-user.png" alt="">
+        </div>
+
+        <h1 id="profile-name">
+          Piloto
+        </h1>
+
+        <p id="profile-email">
+          correo@email.com
+        </p>
+
+
+        <label class="profile-label">
+          Teléfono
+        </label>
+
+        <input id="phone-input" class="profile-input" type="tel" placeholder="+504 9999-9999">
+
+        <button id="save-profile" class="profile-save">
+          Guardar Perfil
+        </button>
+
+      </div>
+
+      <div class="records-panel">
+
+        <div class="section-tag">
+          RECORDS
+        </div>
+
+        <h2>
+          Tus tiempos.
+        </h2>
+
+        <p>
+          Sincronizado con la hoja de resultados usando tu nombre de perfil.
+        </p>
+
+        <div class="records-table">
+
+          <div class="records-header">
+            <span>POS</span>
+            <span>PISTA</span>
+            <span>TIEMPO</span>
+            <span>CATEGORÍA</span>
+          </div>
+
+          <div id="profile-records"></div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="/perfil.js"></script>
+
+</body>
+</html>

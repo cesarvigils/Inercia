@@ -11,6 +11,10 @@
     {
       "source": "/reservas",
       "destination": "/reservas.html"
+    },
+        {
+      "source": "/perfil",
+      "destination": "/perfil.html"
     }
   ]
 }
