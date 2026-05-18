@@ -30,7 +30,7 @@ const db = getDatabase(app)
 const RIG_ICON =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
 
-const MAX_RIGS = 8
+const MAX_RIGS = 10
 
 const state = {
   user: null,
@@ -58,8 +58,6 @@ const defaultRigs = [
   { id: "rig6", name: "Rig#6", type: "standard", active: true },
   { id: "rig7", name: "Rig#7", type: "standard", active: true },
   { id: "rig8", name: "Rig#8", type: "standard", active: true },
-  { id: "rig9", name: "Rig#9", type: "standard", active: true },
-  { id: "rig10", name: "Rig#10", type: "standard", active: true },
   { id: "premium1", name: "Premium 1", type: "premium", active: true },
   { id: "premium2", name: "Premium 2", type: "premium", active: true }
 ]
