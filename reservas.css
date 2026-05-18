@@ -18,16 +18,16 @@
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(0,0,0,.25),
+    rgba(0,0,0,.2),
     rgba(0,0,0,.55),
-    #050505 92%
+    #050505 94%
   );
 }
 
 .booking-hero-content {
   position: absolute;
   left: 4vw;
-  bottom: 220px;
+  bottom: 250px;
 }
 
 .booking-hero-content span {
@@ -56,7 +56,7 @@
   z-index: 2;
 
   width: min(1500px, 94%);
-  margin: -180px auto 6rem;
+  margin: -95px auto 6rem;
 
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
@@ -68,12 +68,13 @@
 .booking-summary {
   min-width: 0;
   overflow: hidden;
-  margin-top: -2.2rem;
 
   background: rgba(20,20,20,.92);
   border: 1px solid rgba(255,255,255,.07);
   border-radius: 18px;
   padding: 1.4rem;
+
+  backdrop-filter: blur(12px);
 }
 
 .booking-panel h2,
@@ -152,7 +153,6 @@
 .rig-card span {
   margin-top: .45rem;
   max-width: 100%;
-
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -215,6 +215,7 @@
   position: sticky;
   top: 90px;
   height: fit-content;
+  margin-top: 0;
 }
 
 .summary-card {
@@ -286,16 +287,17 @@
   }
 
   .booking-hero-content {
-    bottom: 190px;
+    bottom: 210px;
   }
 
   .booking-page {
     grid-template-columns: 1fr;
-    margin-top: -150px;
+    margin-top: -80px;
   }
 
   .booking-summary {
     position: static;
+    margin-top: 0;
   }
 
   .rig-panel {
@@ -314,12 +316,12 @@
 
   .booking-hero-content {
     left: 1.2rem;
-    bottom: 170px;
+    bottom: 190px;
   }
 
   .booking-page {
     width: 94%;
-    margin-top: -130px;
+    margin-top: -60px;
   }
 
   .rig-grid {
@@ -332,10 +334,5 @@
 
   .summary-card strong {
     grid-column: 1 / -1;
-  }
-}
-@media (max-width: 1000px) {
-  .booking-summary {
-    margin-top: 0;
   }
 }

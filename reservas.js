@@ -30,13 +30,13 @@ const db = getDatabase(app)
 const RIG_ICON =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
 
-const MAX_RIGS = 10
+const MAX_RIGS = 8
 
 const state = {
   user: null,
   userProfile: null,
   date: "",
-  time: "",
+  timesSelected: [],
   rigsSelected: [],
   rigs: []
 }
@@ -74,16 +74,25 @@ function getRigPrice(rig) {
   return rig.type === "premium" ? 350 : 200
 }
 
+function getSelectedRigDetails() {
+  return state.rigs
+    .filter((rig) => state.rigsSelected.includes(rig.name))
+    .map((rig) => ({
+      id: rig.id,
+      name: rig.name,
+      type: rig.type,
+      price: getRigPrice(rig)
+    }))
+}
+
 function getTotal() {
-  return state.rigsSelected.reduce((total, rigName) => {
-    const rig = state.rigs.find((item) => item.name === rigName)
+  const rigTotal = getSelectedRigDetails()
+    .reduce((total, rig) => total + rig.price, 0)
 
-    if (!rig) {
-      return total
-    }
+  const hoursCount =
+    state.timesSelected.length || 1
 
-    return total + getRigPrice(rig)
-  }, 0)
+  return rigTotal * hoursCount
 }
 
 function formatPrice(price) {
@@ -96,8 +105,12 @@ function updateSummary() {
       ? state.rigsSelected.join(", ")
       : "Seleccioná simuladores"
 
-  const total =
-    getTotal()
+  const timesText =
+    state.timesSelected.length
+      ? state.timesSelected.join(", ")
+      : "Hora"
+
+  const total = getTotal()
 
   if (summaryTitle) {
     summaryTitle.textContent = rigsText
@@ -105,7 +118,7 @@ function updateSummary() {
 
   if (summaryDate) {
     summaryDate.textContent =
-      `${getUserName()} · ${state.date || "Fecha"} · ${state.time || "Hora"}`
+      `${getUserName()} · ${state.date || "Fecha"} · ${timesText}`
   }
 
   if (summaryPrice) {
@@ -198,7 +211,7 @@ function renderRigs() {
     card.innerHTML = `
       <img src="${RIG_ICON}" alt="">
       <span>${rig.name}</span>
-      <small>${formatPrice(price)}</small>
+      <small>${formatPrice(price)} / hora</small>
     `
 
     card.addEventListener("click", () => {
@@ -226,14 +239,19 @@ if (dateInput) {
 
 timeButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    timeButtons.forEach((btn) =>
-      btn.classList.remove("active")
-    )
-
-    button.classList.add("active")
-
-    state.time =
+    const time =
       button.textContent.trim()
+
+    if (state.timesSelected.includes(time)) {
+      state.timesSelected =
+        state.timesSelected.filter((item) => item !== time)
+
+      button.classList.remove("active")
+    } else {
+      state.timesSelected.push(time)
+
+      button.classList.add("active")
+    }
 
     updateSummary()
   })
@@ -252,8 +270,8 @@ if (reserveBtn) {
       return
     }
 
-    if (!state.date || !state.time || !state.rigsSelected.length) {
-      alert("Selecciona fecha, hora y al menos un simulador.")
+    if (!state.date || !state.timesSelected.length || !state.rigsSelected.length) {
+      alert("Selecciona fecha, al menos una hora y al menos un simulador.")
       return
     }
 
@@ -262,14 +280,7 @@ if (reserveBtn) {
       reserveBtn.textContent = "Reservando..."
 
       const selectedRigDetails =
-        state.rigs
-          .filter((rig) => state.rigsSelected.includes(rig.name))
-          .map((rig) => ({
-            id: rig.id,
-            name: rig.name,
-            type: rig.type,
-            price: getRigPrice(rig)
-          }))
+        getSelectedRigDetails()
 
       const bookingRef =
         push(ref(db, "bookings"))
@@ -279,12 +290,22 @@ if (reserveBtn) {
         name: getUserName(),
         email: state.user.email,
         phone: state.userProfile.phone,
+
         rigs: state.rigsSelected,
         rigDetails: selectedRigDetails,
         rigsCount: state.rigsSelected.length,
-        total: getTotal(),
+
+        times: state.timesSelected,
+        hoursCount: state.timesSelected.length,
+
         date: state.date,
-        time: state.time,
+
+        subtotalPerHour:
+          selectedRigDetails.reduce((total, rig) => total + rig.price, 0),
+
+        total:
+          getTotal(),
+
         status: "pending",
         createdAt: Date.now()
       })
