@@ -31,11 +31,12 @@ const RIG_ICON = "FIREBASE_TIMON_ICON"
 
 const state = {
   user: null,
+  userProfile: null,
   type: "standard",
   price: 200,
   date: "",
   time: "",
-  rig: "Rig#1",
+  rig: "",
   rigs: []
 }
 
@@ -55,29 +56,71 @@ const defaultRigs = [
   { id: "rig4", name: "Rig#4", type: "standard", active: true },
   { id: "rig5", name: "Rig#5", type: "standard", active: true },
   { id: "rig6", name: "Rig#6", type: "standard", active: true },
-    { id: "rig7", name: "Rig#4", type: "standard", active: true },
-        { id: "rig8", name: "Rig#4", type: "standard", active: true },
-
-
+  { id: "rig7", name: "Rig#7", type: "standard", active: true },
+  { id: "rig8", name: "Rig#8", type: "standard", active: true },
+  { id: "rig9", name: "Rig#9", type: "standard", active: true },
+  { id: "rig10", name: "Rig#10", type: "standard", active: true },
   { id: "premium1", name: "Premium 1", type: "premium", active: true },
   { id: "premium2", name: "Premium 2", type: "premium", active: true }
 ]
 
-function updateSummary() {
-  const label = state.type === "premium" ? "Premium" : "Standard"
+function getSelectedTypeLabel() {
+  return state.type === "premium" ? "Premium" : "Standard"
+}
 
-  summaryTitle.textContent = `${label} - ${state.rig}`
-  summaryDate.textContent = `${state.date || "Fecha"} · ${state.time || "Hora"}`
-  summaryPrice.textContent = `L ${state.price}.00`
-  reserveBtn.textContent = `Reservar L ${state.price}.00`
+function formatPrice(price) {
+  return `L ${Number(price).toFixed(2)}`
+}
+
+function updateSummary() {
+  const label = getSelectedTypeLabel()
+  const rig = state.rig || "Seleccioná simulador"
+  const date = state.date || "Fecha"
+  const time = state.time || "Hora"
+
+  if (summaryTitle) {
+    summaryTitle.textContent = `${label} - ${rig}`
+  }
+
+  if (summaryDate) {
+    summaryDate.textContent = `${date} · ${time}`
+  }
+
+  if (summaryPrice) {
+    summaryPrice.textContent = formatPrice(state.price)
+  }
+
+  if (reserveBtn) {
+    reserveBtn.textContent = `Reservar ${formatPrice(state.price)}`
+  }
+}
+
+async function loadUserProfile(user) {
+  const snapshot = await get(ref(db, `users/${user.uid}`))
+
+  const profile = snapshot.exists()
+    ? snapshot.val()
+    : {}
+
+  state.userProfile = profile
+
+  if (!profile.phone) {
+    alert("Antes de reservar, agrega tu número de teléfono en tu perfil.")
+    window.location.href = "/perfil"
+  }
 }
 
 async function loadRigs() {
-  const snapshot = await get(ref(db, "admin/simulators"))
+  try {
+    const snapshot = await get(ref(db, "admin/simulators"))
 
-  if (snapshot.exists()) {
-    state.rigs = Object.values(snapshot.val())
-  } else {
+    if (snapshot.exists()) {
+      state.rigs = Object.values(snapshot.val())
+    } else {
+      state.rigs = defaultRigs
+    }
+  } catch (error) {
+    console.error(error)
     state.rigs = defaultRigs
   }
 
@@ -85,9 +128,20 @@ async function loadRigs() {
 }
 
 function renderRigs() {
+  if (!rigGrid) return
+
   rigGrid.innerHTML = ""
 
   const filtered = state.rigs.filter((rig) => rig.type === state.type)
+
+  const firstActive = filtered.find((rig) => rig.active)
+
+  if (
+    firstActive &&
+    !filtered.some((rig) => rig.name === state.rig && rig.active)
+  ) {
+    state.rig = firstActive.name
+  }
 
   filtered.forEach((rig) => {
     const card = document.createElement("button")
@@ -108,6 +162,8 @@ function renderRigs() {
     `
 
     card.addEventListener("click", () => {
+      if (!rig.active) return
+
       state.rig = rig.name
       renderRigs()
       updateSummary()
@@ -116,35 +172,36 @@ function renderRigs() {
     rigGrid.appendChild(card)
   })
 
-  const firstActive = filtered.find((rig) => rig.active)
-
-  if (firstActive && !filtered.some((rig) => rig.name === state.rig)) {
-    state.rig = firstActive.name
-    updateSummary()
-  }
+  updateSummary()
 }
 
 typeCards.forEach((card) => {
   card.addEventListener("click", () => {
     typeCards.forEach((item) => item.classList.remove("active"))
+
     card.classList.add("active")
 
     state.type = card.dataset.type
     state.price = Number(card.dataset.price)
+
+    state.rig = ""
 
     renderRigs()
     updateSummary()
   })
 })
 
-dateInput.addEventListener("change", () => {
-  state.date = dateInput.value
-  updateSummary()
-})
+if (dateInput) {
+  dateInput.addEventListener("change", () => {
+    state.date = dateInput.value
+    updateSummary()
+  })
+}
 
 timeButtons.forEach((button) => {
   button.addEventListener("click", () => {
     timeButtons.forEach((btn) => btn.classList.remove("active"))
+
     button.classList.add("active")
 
     state.time = button.textContent.trim()
@@ -152,37 +209,64 @@ timeButtons.forEach((button) => {
   })
 })
 
-reserveBtn.addEventListener("click", async () => {
-  if (!state.user) {
-    alert("Inicia sesión para reservar.")
-    return
-  }
+if (reserveBtn) {
+  reserveBtn.addEventListener("click", async () => {
+    if (!state.user) {
+      alert("Inicia sesión para reservar.")
+      return
+    }
 
-  if (!state.date || !state.time || !state.rig) {
-    alert("Selecciona fecha, hora y simulador.")
-    return
-  }
+    if (!state.userProfile?.phone) {
+      alert("Tu número de teléfono es obligatorio para reservar.")
+      window.location.href = "/perfil"
+      return
+    }
 
-  const bookingRef = push(ref(db, "bookings"))
+    if (!state.date || !state.time || !state.rig) {
+      alert("Selecciona fecha, hora y simulador.")
+      return
+    }
 
-  await set(bookingRef, {
-    uid: state.user.uid,
-    name: state.user.displayName || "Piloto",
-    email: state.user.email,
-    type: state.type,
-    price: state.price,
-    date: state.date,
-    time: state.time,
-    rig: state.rig,
-    status: "pending",
-    createdAt: Date.now()
+    try {
+      reserveBtn.disabled = true
+      reserveBtn.textContent = "Reservando..."
+
+      const bookingRef = push(ref(db, "bookings"))
+
+      await set(bookingRef, {
+        uid: state.user.uid,
+        name: state.userProfile.name || state.user.displayName || "Piloto",
+        email: state.user.email,
+        phone: state.userProfile.phone,
+        type: state.type,
+        typeLabel: getSelectedTypeLabel(),
+        price: state.price,
+        date: state.date,
+        time: state.time,
+        rig: state.rig,
+        status: "pending",
+        createdAt: Date.now()
+      })
+
+      alert("Reserva creada.")
+    } catch (error) {
+      console.error(error)
+      alert("No se pudo crear la reserva.")
+    } finally {
+      reserveBtn.disabled = false
+      updateSummary()
+    }
   })
+}
 
-  alert("Reserva creada.")
-})
-
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   state.user = user
+
+  if (!user) {
+    return
+  }
+
+  await loadUserProfile(user)
 })
 
 loadRigs()
