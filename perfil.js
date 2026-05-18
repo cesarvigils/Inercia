@@ -1,6 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
 
 import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
+
+import {
   getAuth,
   onAuthStateChanged,
   updateProfile
@@ -26,6 +33,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
 const db = getDatabase(app)
+const storage = getStorage(app)
 
 const profilePhoto = document.getElementById("profile-photo")
 const profileName = document.getElementById("profile-name")
@@ -42,7 +50,8 @@ const COLUMNAS = {
   tiempo: 7
 }
 
-let uploadedPhoto = ""
+let selectedFile = null
+let previewPhoto = ""
 let currentPhoto = "/assets/default-user.png"
 let saveHandlerAttached = false
 
@@ -84,7 +93,6 @@ async function loadRecordsForUser(displayName) {
       return sheetName === targetName
     })
     .map((row) => ({
-      nombre: row[COLUMNAS.nombre],
       genero: row[COLUMNAS.genero] || "-",
       tiempo: row[COLUMNAS.tiempo] || "-",
       parsedTime: parseTime(row[COLUMNAS.tiempo])
@@ -118,7 +126,9 @@ async function loadRecordsForUser(displayName) {
   })
 }
 
-if (avatarBox && photoUpload) {
+function setupPhotoPicker() {
+  if (!avatarBox || !photoUpload) return
+
   avatarBox.addEventListener("click", () => {
     photoUpload.click()
   })
@@ -133,19 +143,39 @@ if (avatarBox && photoUpload) {
       return
     }
 
+    selectedFile = file
+
     const reader = new FileReader()
 
     reader.onload = () => {
-      uploadedPhoto = reader.result
+      previewPhoto = reader.result
 
       if (profilePhoto) {
-        profilePhoto.src = uploadedPhoto
+        profilePhoto.src = previewPhoto
       }
     }
 
     reader.readAsDataURL(file)
   })
 }
+
+async function uploadProfilePhoto(user) {
+  if (!selectedFile) return currentPhoto
+
+  const extension =
+    selectedFile.name.split(".").pop() || "jpg"
+
+  const imageRef = storageRef(
+    storage,
+    `profile-pictures/${user.uid}/profile.${extension}`
+  )
+
+  await uploadBytes(imageRef, selectedFile)
+
+  return await getDownloadURL(imageRef)
+}
+
+setupPhotoPicker()
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -180,29 +210,41 @@ onAuthStateChanged(auth, async (user) => {
     saveHandlerAttached = true
 
     saveProfile.addEventListener("click", async () => {
-      const newPhone = phoneInput ? phoneInput.value.trim() : ""
-      const newPhoto = uploadedPhoto || currentPhoto
+      try {
+        saveProfile.disabled = true
+        saveProfile.textContent = "Guardando..."
 
-      await set(userRef, {
-        uid: user.uid,
-        name: displayName,
-        email: user.email,
-        phone: newPhone,
-        photoURL: newPhoto
-      })
+        const newPhone = phoneInput ? phoneInput.value.trim() : ""
+        const newPhoto = await uploadProfilePhoto(user)
 
-      await updateProfile(user, {
-        photoURL: newPhoto
-      })
+        await set(userRef, {
+          uid: user.uid,
+          name: displayName,
+          email: user.email,
+          phone: newPhone,
+          photoURL: newPhoto
+        })
 
-      currentPhoto = newPhoto
-      uploadedPhoto = ""
+        await updateProfile(user, {
+          photoURL: newPhoto
+        })
 
-      if (profilePhoto) {
-        profilePhoto.src = newPhoto || "/assets/default-user.png"
+        currentPhoto = newPhoto
+        selectedFile = null
+        previewPhoto = ""
+
+        if (profilePhoto) {
+          profilePhoto.src = newPhoto || "/assets/default-user.png"
+        }
+
+        alert("Perfil actualizado.")
+      } catch (error) {
+        console.error(error)
+        alert("No se pudo actualizar el perfil.")
+      } finally {
+        saveProfile.disabled = false
+        saveProfile.textContent = "Guardar Perfil"
       }
-
-      alert("Perfil actualizado.")
     })
   }
 })

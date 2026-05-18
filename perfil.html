@@ -20,6 +20,7 @@
   <div class="bg-grid"></div>
 
   <header class="navbar">
+
     <div class="container nav-wrapper">
 
       <a href="/" class="logo">
@@ -32,7 +33,52 @@
         <a href="/contacto">Contacto</a>
       </nav>
 
+      <div class="nav-right">
+
+        <div class="nav-auth">
+
+          <button id="open-auth" class="nav-btn">
+            Login
+          </button>
+
+          <button id="profile-trigger" class="profile-trigger hidden-auth">
+            <img id="navbar-pfp" src="/assets/default-user.png" alt="">
+          </button>
+
+          <div id="profile-menu" class="profile-menu hidden-auth">
+
+            <div class="profile-avatar-wrap">
+              <img id="profile-menu-pfp" src="/assets/default-user.png" alt="">
+            </div>
+
+            <h3 id="profile-menu-name">
+              Piloto
+            </h3>
+
+            <p id="profile-menu-email">
+              correo@email.com
+            </p>
+
+            <p id="profile-menu-phone">
+              Sin teléfono
+            </p>
+
+            <a href="/perfil" class="profile-link">
+              Mi Perfil
+            </a>
+
+            <button id="logout-btn" class="logout-btn">
+              Cerrar Sesión
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
+
   </header>
 
   <main class="profile-page">
@@ -88,7 +134,7 @@
         </h2>
 
         <p>
-          Sincronizado con la hoja de resultados usando tu nombre de perfil.
+          Sincronizado cada hora, tus mejores tiempos se mostrarán aquí para que podás compartirlos y compararlos.
         </p>
 
         <div class="records-table">

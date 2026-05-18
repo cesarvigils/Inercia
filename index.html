@@ -13,26 +13,66 @@
   <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FIcono_Inercia_2026_transparenteconBorde1-01.png?alt=media&token=13110b1e-8a3a-48e1-9b8f-514d60de2fcf">
 </head>
 <body>
-  <header class="navbar">
+<header class="navbar">
+
     <div class="container nav-wrapper">
-      <a href="#" class="logo">
+
+      <a href="/" class="logo">
         <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
       </a>
+
       <nav class="nav-links">
-<a href="/standings">Resultados</a>
-<a href="/reservas">Reservas</a>
-<a href="/contacto">Contacto</a>
-<div class="nav-right">
+        <a href="/standings">Resultados</a>
+        <a href="/reservas">Reservas</a>
+        <a href="/contacto">Contacto</a>
+      </nav>
 
-        <a href="standings.html" class="live-status">
-        <div class="user-box">
+      <div class="nav-right">
 
-          <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fuser.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="">
+        <div class="nav-auth">
+
+          <button id="open-auth" class="nav-btn">
+            Login
+          </button>
+
+          <button id="profile-trigger" class="profile-trigger hidden-auth">
+            <img id="navbar-pfp" src="/assets/default-user.png" alt="">
+          </button>
+
+          <div id="profile-menu" class="profile-menu hidden-auth">
+
+            <div class="profile-avatar-wrap">
+              <img id="profile-menu-pfp" src="/assets/default-user.png" alt="">
+            </div>
+
+            <h3 id="profile-menu-name">
+              Piloto
+            </h3>
+
+            <p id="profile-menu-email">
+              correo@email.com
+            </p>
+
+            <p id="profile-menu-phone">
+              Sin teléfono
+            </p>
+
+            <a href="/perfil" class="profile-link">
+              Mi Perfil
+            </a>
+
+            <button id="logout-btn" class="logout-btn">
+              Cerrar Sesión
+            </button>
+
+          </div>
 
         </div>
 
-      </nav>
+      </div>
+
     </div>
+
   </header>
   <section class="hero">
   <div class="hero-overlay"></div>
