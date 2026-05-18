@@ -35,6 +35,12 @@ const auth = getAuth(app)
 const db = getDatabase(app)
 const storage = getStorage(app)
 
+const ICONO_T =
+  "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FTeam%20Inercia.png?alt=media&token=d899b11c-1a91-42fc-9ded-58977ff60a6f"
+
+const ICONO_S =
+  "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FTeam%20Inercia.png?alt=media&token=d899b11c-1a91-42fc-9ded-58977ff60a6f"
+
 const profilePhoto = document.getElementById("profile-photo")
 const profileName = document.getElementById("profile-name")
 const profileEmail = document.getElementById("profile-email")
@@ -51,16 +57,35 @@ const COLUMNAS = {
 }
 
 let selectedFile = null
-let previewPhoto = ""
 let currentPhoto = "/assets/default-user.png"
 let saveHandlerAttached = false
 
-function normalizeName(value) {
+function cleanDriverName(value) {
   return String(value || "")
+    .replace(/\(T\)/gi, "")
+    .replace(/\(S\)/gi, "")
     .trim()
+}
+
+function normalizeName(value) {
+  return cleanDriverName(value)
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+}
+
+function getCategoryIcon(nombre) {
+  const clean = String(nombre || "").toUpperCase()
+
+  if (clean.includes("(T)")) {
+    return `<img src="${ICONO_T}" class="record-category-icon" alt="Team Inercia">`
+  }
+
+  if (clean.includes("(S)")) {
+    return `<img src="${ICONO_S}" class="record-category-icon" alt="Special">`
+  }
+
+  return "-"
 }
 
 function parseTime(time) {
@@ -93,7 +118,8 @@ async function loadRecordsForUser(displayName) {
       return sheetName === targetName
     })
     .map((row) => ({
-      genero: row[COLUMNAS.genero] || "-",
+      nombre: row[COLUMNAS.nombre],
+      categoria: getCategoryIcon(row[COLUMNAS.nombre]),
       tiempo: row[COLUMNAS.tiempo] || "-",
       parsedTime: parseTime(row[COLUMNAS.tiempo])
     }))
@@ -119,7 +145,7 @@ async function loadRecordsForUser(displayName) {
       <span>#${index + 1}</span>
       <span>Formula 1 Canadá</span>
       <span class="record-time">${record.tiempo}</span>
-      <span>${record.genero}</span>
+      <span class="record-category">${record.categoria}</span>
     `
 
     recordsContainer.appendChild(row)
@@ -148,10 +174,8 @@ function setupPhotoPicker() {
     const reader = new FileReader()
 
     reader.onload = () => {
-      previewPhoto = reader.result
-
       if (profilePhoto) {
-        profilePhoto.src = previewPhoto
+        profilePhoto.src = reader.result
       }
     }
 
@@ -231,7 +255,6 @@ onAuthStateChanged(auth, async (user) => {
 
         currentPhoto = newPhoto
         selectedFile = null
-        previewPhoto = ""
 
         if (profilePhoto) {
           profilePhoto.src = newPhoto || "/assets/default-user.png"

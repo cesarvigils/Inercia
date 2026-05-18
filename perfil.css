@@ -233,3 +233,13 @@
 .profile-avatar-box:hover::after {
   opacity: 1;
 }
+.record-category {
+  display: flex;
+  align-items: center;
+}
+
+.record-category-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
