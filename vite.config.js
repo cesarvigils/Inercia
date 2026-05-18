@@ -8,7 +8,8 @@ export default defineConfig({
         index: resolve(__dirname, "index.html"),
         standings: resolve(__dirname, "standings.html"),
         contacto: resolve(__dirname, "contacto.html"),
-        perfil: resolve(__dirname, "perfil.html")
+        perfil: resolve(__dirname, "perfil.html"),
+        reservas: resolve(__dirname, "reservas.html")
 
       }
     }

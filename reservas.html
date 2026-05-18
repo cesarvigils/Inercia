@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservas | Inercia</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/reservas.css">
+</head>
+
+<body>
+
+  <header class="navbar">
+    <div class="container nav-wrapper">
+      <a href="/" class="logo">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+      </a>
+
+      <nav class="nav-links">
+        <a href="/standings">Resultados</a>
+        <a href="/reservas">Reservas</a>
+        <a href="/contacto">Contacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="booking-hero">
+    <img src="FIREBASE_HERO_RESERVAS" alt="">
+    <div class="booking-hero-overlay"></div>
+
+    <div class="booking-hero-content">
+      <span>RESERVAS</span>
+      <h1>Reservá tu simulador.</h1>
+      <p>Elegí fecha, hora y tipo de experiencia.</p>
+    </div>
+  </section>
+
+  <main class="booking-page">
+
+    <section class="booking-panel">
+      <h2>1. Seleccioná el tipo</h2>
+
+      <div class="type-grid">
+        <button class="type-card active" data-type="standard" data-price="200">
+          <h3>Standard</h3>
+          <p>Simulador individual</p>
+          <strong>L 200.00</strong>
+        </button>
+
+        <button class="type-card" data-type="premium" data-price="350">
+          <h3>Premium</h3>
+          <p>Experiencia avanzada</p>
+          <strong>L 350.00</strong>
+        </button>
+      </div>
+    </section>
+
+    <section class="booking-panel">
+      <h2>2. Seleccioná la fecha</h2>
+      <input id="booking-date" class="booking-date" type="date">
+    </section>
+
+    <section class="booking-panel">
+      <h2>3. Seleccioná la hora</h2>
+
+      <div id="time-slots" class="time-slots">
+        <button data-time="14:00">2:00 PM - 3:00 PM</button>
+        <button data-time="15:00">3:00 PM - 4:00 PM</button>
+        <button data-time="16:00">4:00 PM - 5:00 PM</button>
+        <button data-time="17:00">5:00 PM - 6:00 PM</button>
+        <button data-time="18:00">6:00 PM - 7:00 PM</button>
+        <button data-time="19:00">7:00 PM - 8:00 PM</button>
+        <button data-time="20:00">8:00 PM - 9:00 PM</button>
+      </div>
+    </section>
+
+    <section class="booking-panel">
+      <h2>4. Seleccioná simulador</h2>
+
+      <div id="rig-grid" class="rig-grid"></div>
+    </section>
+
+    <aside class="booking-summary">
+      <h2>Detalle de la reserva</h2>
+
+      <div class="summary-card">
+        <img src="FIREBASE_TIMON_ICON" alt="">
+        <div>
+          <h3 id="summary-title">Standard - Rig#1</h3>
+          <p id="summary-date">Seleccioná fecha y hora</p>
+        </div>
+        <strong id="summary-price">L 200.00</strong>
+      </div>
+
+      <button id="reserve-btn" class="reserve-confirm">
+        Reservar L 200.00
+      </button>
+    </aside>
+
+  </main>
+
+  <script type="module" src="/reservas.js"></script>
+</body>
+</html>

@@ -15,6 +15,10 @@
         {
       "source": "/perfil",
       "destination": "/perfil.html"
-    }
+    },
+    {
+  "source": "/reservas",
+  "destination": "/reservas.html"
+}
   ]
 }
