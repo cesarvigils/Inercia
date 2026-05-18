@@ -68,6 +68,7 @@
 .booking-summary {
   min-width: 0;
   overflow: hidden;
+  margin-top: -2.2rem;
 
   background: rgba(20,20,20,.92);
   border: 1px solid rgba(255,255,255,.07);
@@ -331,5 +332,10 @@
 
   .summary-card strong {
     grid-column: 1 / -1;
+  }
+}
+@media (max-width: 1000px) {
+  .booking-summary {
+    margin-top: 0;
   }
 }
