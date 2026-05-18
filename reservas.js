@@ -27,7 +27,8 @@ const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
 const db = getDatabase(app)
 
-const RIG_ICON = "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
+const RIG_ICON =
+  "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
 
 const state = {
   user: null,
@@ -36,7 +37,7 @@ const state = {
   price: 200,
   date: "",
   time: "",
-  rig: "",
+  rigsSelected: [],
   rigs: []
 }
 
@@ -68,57 +69,92 @@ function getSelectedTypeLabel() {
   return state.type === "premium" ? "Premium" : "Standard"
 }
 
+function getUserName() {
+  return (
+    state.userProfile?.name ||
+    state.user?.displayName ||
+    "Piloto"
+  )
+}
+
+function getTotal() {
+  const amount =
+    state.rigsSelected.length || 1
+
+  return state.price * amount
+}
+
 function formatPrice(price) {
   return `L ${Number(price).toFixed(2)}`
 }
 
 function updateSummary() {
   const label = getSelectedTypeLabel()
-  const rig = state.rig || "Seleccioná simulador"
-  const date = state.date || "Fecha"
-  const time = state.time || "Hora"
+
+  const rigsText =
+    state.rigsSelected.length
+      ? state.rigsSelected.join(", ")
+      : "Seleccioná simulador"
+
+  const date =
+    state.date || "Fecha"
+
+  const time =
+    state.time || "Hora"
+
+  const total =
+    getTotal()
 
   if (summaryTitle) {
-    summaryTitle.textContent = `${label} - ${rig}`
+    summaryTitle.textContent =
+      `${label} - ${rigsText}`
   }
 
   if (summaryDate) {
-    summaryDate.textContent = `${date} · ${time}`
+    summaryDate.textContent =
+      `${getUserName()} · ${date} · ${time}`
   }
 
   if (summaryPrice) {
-    summaryPrice.textContent = formatPrice(state.price)
+    summaryPrice.textContent =
+      formatPrice(total)
   }
 
   if (reserveBtn) {
-    reserveBtn.textContent = `Reservar ${formatPrice(state.price)}`
+    reserveBtn.textContent =
+      `Reservar ${formatPrice(total)}`
   }
 }
 
 async function loadUserProfile(user) {
-  const snapshot = await get(ref(db, `users/${user.uid}`))
+  const snapshot =
+    await get(ref(db, `users/${user.uid}`))
 
-  const profile = snapshot.exists()
-    ? snapshot.val()
-    : {}
+  const profile =
+    snapshot.exists()
+      ? snapshot.val()
+      : {}
 
-  state.userProfile = profile
+  state.userProfile =
+    profile
 
   if (!profile.phone) {
     alert("Antes de reservar, agrega tu número de teléfono en tu perfil.")
     window.location.href = "/perfil"
   }
+
+  updateSummary()
 }
 
 async function loadRigs() {
   try {
-    const snapshot = await get(ref(db, "admin/simulators"))
+    const snapshot =
+      await get(ref(db, "admin/simulators"))
 
-    if (snapshot.exists()) {
-      state.rigs = Object.values(snapshot.val())
-    } else {
-      state.rigs = defaultRigs
-    }
+    state.rigs =
+      snapshot.exists()
+        ? Object.values(snapshot.val())
+        : defaultRigs
   } catch (error) {
     console.error(error)
     state.rigs = defaultRigs
@@ -127,32 +163,35 @@ async function loadRigs() {
   renderRigs()
 }
 
+function toggleRig(rigName) {
+  if (state.rigsSelected.includes(rigName)) {
+    state.rigsSelected =
+      state.rigsSelected.filter((name) => name !== rigName)
+  } else {
+    state.rigsSelected.push(rigName)
+  }
+}
+
 function renderRigs() {
   if (!rigGrid) return
 
   rigGrid.innerHTML = ""
 
-  const filtered = state.rigs.filter((rig) => rig.type === state.type)
-
-  const firstActive = filtered.find((rig) => rig.active)
-
-  if (
-    firstActive &&
-    !filtered.some((rig) => rig.name === state.rig && rig.active)
-  ) {
-    state.rig = firstActive.name
-  }
+  const filtered =
+    state.rigs.filter((rig) => rig.type === state.type)
 
   filtered.forEach((rig) => {
-    const card = document.createElement("button")
+    const card =
+      document.createElement("button")
 
-    card.className = "rig-card"
+    card.className =
+      "rig-card"
 
     if (!rig.active) {
       card.classList.add("disabled")
     }
 
-    if (state.rig === rig.name) {
+    if (state.rigsSelected.includes(rig.name)) {
       card.classList.add("active")
     }
 
@@ -164,7 +203,7 @@ function renderRigs() {
     card.addEventListener("click", () => {
       if (!rig.active) return
 
-      state.rig = rig.name
+      toggleRig(rig.name)
       renderRigs()
       updateSummary()
     })
@@ -177,14 +216,19 @@ function renderRigs() {
 
 typeCards.forEach((card) => {
   card.addEventListener("click", () => {
-    typeCards.forEach((item) => item.classList.remove("active"))
+    typeCards.forEach((item) =>
+      item.classList.remove("active")
+    )
 
     card.classList.add("active")
 
-    state.type = card.dataset.type
-    state.price = Number(card.dataset.price)
+    state.type =
+      card.dataset.type
 
-    state.rig = ""
+    state.price =
+      Number(card.dataset.price)
+
+    state.rigsSelected = []
 
     renderRigs()
     updateSummary()
@@ -193,18 +237,24 @@ typeCards.forEach((card) => {
 
 if (dateInput) {
   dateInput.addEventListener("change", () => {
-    state.date = dateInput.value
+    state.date =
+      dateInput.value
+
     updateSummary()
   })
 }
 
 timeButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    timeButtons.forEach((btn) => btn.classList.remove("active"))
+    timeButtons.forEach((btn) =>
+      btn.classList.remove("active")
+    )
 
     button.classList.add("active")
 
-    state.time = button.textContent.trim()
+    state.time =
+      button.textContent.trim()
+
     updateSummary()
   })
 })
@@ -222,8 +272,8 @@ if (reserveBtn) {
       return
     }
 
-    if (!state.date || !state.time || !state.rig) {
-      alert("Selecciona fecha, hora y simulador.")
+    if (!state.date || !state.time || !state.rigsSelected.length) {
+      alert("Selecciona fecha, hora y al menos un simulador.")
       return
     }
 
@@ -231,24 +281,27 @@ if (reserveBtn) {
       reserveBtn.disabled = true
       reserveBtn.textContent = "Reservando..."
 
-      const bookingRef = push(ref(db, "bookings"))
+      const bookingRef =
+        push(ref(db, "bookings"))
 
       await set(bookingRef, {
         uid: state.user.uid,
-        name: state.userProfile.name || state.user.displayName || "Piloto",
+        name: getUserName(),
         email: state.user.email,
         phone: state.userProfile.phone,
         type: state.type,
         typeLabel: getSelectedTypeLabel(),
-        price: state.price,
+        unitPrice: state.price,
+        rigs: state.rigsSelected,
+        rigsCount: state.rigsSelected.length,
+        total: getTotal(),
         date: state.date,
         time: state.time,
-        rig: state.rig,
         status: "pending",
         createdAt: Date.now()
       })
 
-      alert("Reserva creada.")
+      alert(`Reserva creada para ${getUserName()}.`)
     } catch (error) {
       console.error(error)
       alert("No se pudo crear la reserva.")
@@ -263,6 +316,7 @@ onAuthStateChanged(auth, async (user) => {
   state.user = user
 
   if (!user) {
+    updateSummary()
     return
   }
 

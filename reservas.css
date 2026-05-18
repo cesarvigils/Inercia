@@ -313,3 +313,72 @@
     grid-column: 1 / -1;
   }
 }
+.booking-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.rig-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  gap: 1rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.rig-card {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 120px;
+  padding: .7rem;
+}
+
+.rig-card img {
+  width: 58px;
+  height: 58px;
+}
+
+.rig-card span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-summary {
+  overflow: hidden;
+}
+
+.summary-card {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+}
+
+.summary-card h3,
+.summary-card p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 1001px) {
+  .booking-page {
+    grid-template-columns: minmax(0, 1fr) 420px;
+  }
+
+  .rig-grid {
+    grid-template-columns: repeat(5, minmax(70px, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .rig-grid {
+    grid-template-columns: repeat(3, minmax(80px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .rig-grid {
+    grid-template-columns: repeat(2, minmax(80px, 1fr));
+  }
+}
