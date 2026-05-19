@@ -1,4 +1,8 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
+import {
+  initializeApp,
+  getApps,
+  getApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
 
 import {
   getStorage,
@@ -30,7 +34,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-const app = initializeApp(firebaseConfig)
+const app =
+  getApps().length
+    ? getApp()
+    : initializeApp(firebaseConfig)
+
 const auth = getAuth(app)
 const db = getDatabase(app)
 const storage = getStorage(app)
@@ -75,14 +83,25 @@ function normalizeName(value) {
 }
 
 function getCategoryIcon(nombre) {
-  const clean = String(nombre || "").toUpperCase()
+  const clean =
+    String(nombre || "").toUpperCase()
 
   if (clean.includes("(T)")) {
-    return `<img src="${ICONO_T}" class="record-category-icon" alt="Team Inercia">`
+    return `
+      <img
+        src="${ICONO_T}"
+        class="record-category-icon"
+        alt="Team Inercia">
+    `
   }
 
   if (clean.includes("(S)")) {
-    return `<img src="${ICONO_S}" class="record-category-icon" alt="Special">`
+    return `
+      <img
+        src="${ICONO_S}"
+        class="record-category-icon"
+        alt="Special">
+    `
   }
 
   return "-"
@@ -91,13 +110,23 @@ function getCategoryIcon(nombre) {
 function parseTime(time) {
   if (!time) return Infinity
 
-  const parts = String(time).trim().split(":")
+  const parts =
+    String(time).trim().split(":")
+
   if (parts.length !== 2) return Infinity
 
-  const minutes = Number(parts[0])
-  const seconds = Number(parts[1])
+  const minutes =
+    Number(parts[0])
 
-  if (Number.isNaN(minutes) || Number.isNaN(seconds)) return Infinity
+  const seconds =
+    Number(parts[1])
+
+  if (
+    Number.isNaN(minutes) ||
+    Number.isNaN(seconds)
+  ) {
+    return Infinity
+  }
 
   return minutes * 60 + seconds
 }
@@ -105,25 +134,32 @@ function parseTime(time) {
 async function loadRecordsForUser(displayName) {
   if (!recordsContainer) return
 
-  const response = await fetch("/api/standings")
-  const data = await response.json()
+  const response =
+    await fetch("/api/standings")
+
+  const data =
+    await response.json()
 
   if (!data.values) return
 
-  const targetName = normalizeName(displayName)
+  const targetName =
+    normalizeName(displayName)
 
-  const records = data.values
-    .filter((row) => {
-      const sheetName = normalizeName(row[COLUMNAS.nombre])
-      return sheetName === targetName
-    })
-    .map((row) => ({
-      nombre: row[COLUMNAS.nombre],
-      categoria: getCategoryIcon(row[COLUMNAS.nombre]),
-      tiempo: row[COLUMNAS.tiempo] || "-",
-      parsedTime: parseTime(row[COLUMNAS.tiempo])
-    }))
-    .sort((a, b) => a.parsedTime - b.parsedTime)
+  const records =
+    data.values
+      .filter((row) => {
+        const sheetName =
+          normalizeName(row[COLUMNAS.nombre])
+
+        return sheetName === targetName
+      })
+      .map((row) => ({
+        nombre: row[COLUMNAS.nombre],
+        categoria: getCategoryIcon(row[COLUMNAS.nombre]),
+        tiempo: row[COLUMNAS.tiempo] || "-",
+        parsedTime: parseTime(row[COLUMNAS.tiempo])
+      }))
+      .sort((a, b) => a.parsedTime - b.parsedTime)
 
   recordsContainer.innerHTML = ""
 
@@ -137,7 +173,8 @@ async function loadRecordsForUser(displayName) {
   }
 
   records.forEach((record, index) => {
-    const row = document.createElement("div")
+    const row =
+      document.createElement("div")
 
     row.classList.add("record-row")
 
@@ -160,7 +197,8 @@ function setupPhotoPicker() {
   })
 
   photoUpload.addEventListener("change", (event) => {
-    const file = event.target.files[0]
+    const file =
+      event.target.files[0]
 
     if (!file) return
 
@@ -171,7 +209,8 @@ function setupPhotoPicker() {
 
     selectedFile = file
 
-    const reader = new FileReader()
+    const reader =
+      new FileReader()
 
     reader.onload = () => {
       if (profilePhoto) {
@@ -189,10 +228,11 @@ async function uploadProfilePhoto(user) {
   const extension =
     selectedFile.name.split(".").pop() || "jpg"
 
-  const imageRef = storageRef(
-    storage,
-    `profile-pictures/${user.uid}/profile.${extension}`
-  )
+  const imageRef =
+    storageRef(
+      storage,
+      `profile-pictures/${user.uid}/profile.${extension}`
+    )
 
   await uploadBytes(imageRef, selectedFile)
 
@@ -207,12 +247,16 @@ onAuthStateChanged(auth, async (user) => {
     return
   }
 
-  const userRef = ref(db, `users/${user.uid}`)
-  const snapshot = await get(userRef)
+  const userRef =
+    ref(db, `users/${user.uid}`)
 
-  const savedData = snapshot.exists()
-    ? snapshot.val()
-    : {}
+  const snapshot =
+    await get(userRef)
+
+  const savedData =
+    snapshot.exists()
+      ? snapshot.val()
+      : {}
 
   const displayName =
     savedData.name || user.displayName || "Piloto"
@@ -223,10 +267,21 @@ onAuthStateChanged(auth, async (user) => {
   const phone =
     savedData.phone || ""
 
-  if (profileName) profileName.textContent = displayName
-  if (profileEmail) profileEmail.textContent = user.email || "Sin correo"
-  if (profilePhoto) profilePhoto.src = currentPhoto
-  if (phoneInput) phoneInput.value = phone
+  if (profileName) {
+    profileName.textContent = displayName
+  }
+
+  if (profileEmail) {
+    profileEmail.textContent = user.email || "Sin correo"
+  }
+
+  if (profilePhoto) {
+    profilePhoto.src = currentPhoto
+  }
+
+  if (phoneInput) {
+    phoneInput.value = phone
+  }
 
   await loadRecordsForUser(displayName)
 
@@ -238,8 +293,11 @@ onAuthStateChanged(auth, async (user) => {
         saveProfile.disabled = true
         saveProfile.textContent = "Guardando..."
 
-        const newPhone = phoneInput ? phoneInput.value.trim() : ""
-        const newPhoto = await uploadProfilePhoto(user)
+        const newPhone =
+          phoneInput ? phoneInput.value.trim() : ""
+
+        const newPhoto =
+          await uploadProfilePhoto(user)
 
         await set(userRef, {
           uid: user.uid,
@@ -257,7 +315,8 @@ onAuthStateChanged(auth, async (user) => {
         selectedFile = null
 
         if (profilePhoto) {
-          profilePhoto.src = newPhoto || "/assets/default-user.png"
+          profilePhoto.src =
+            newPhoto || "/assets/default-user.png"
         }
 
         alert("Perfil actualizado.")
