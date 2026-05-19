@@ -1,5 +1,8 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
-
+import {
+  getApp,
+  getApps,
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
 import {
   getAuth,
   onAuthStateChanged
@@ -23,7 +26,10 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-const app = initializeApp(firebaseConfig)
+const app =
+  getApps().length
+    ? getApp()
+    : initializeApp(firebaseConfig)
 const auth = getAuth(app)
 const db = getDatabase(app)
 
