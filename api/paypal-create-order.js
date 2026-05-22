@@ -5,7 +5,7 @@ const PAYPAL_SECRET =
   process.env.PAYPAL_SECRET
 
 const PAYPAL_API =
-  "https://api-m.paypal.com"
+  "https://api-m.sandbox.paypal.com"
 
 async function getAccessToken() {
 
