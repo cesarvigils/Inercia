@@ -3,6 +3,7 @@ import {
   getApps,
   initializeApp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
+
 import {
   getAuth,
   onAuthStateChanged
@@ -30,6 +31,7 @@ const app =
   getApps().length
     ? getApp()
     : initializeApp(firebaseConfig)
+
 const auth = getAuth(app)
 const db = getDatabase(app)
 
@@ -37,6 +39,7 @@ const RIG_ICON =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
 
 const MAX_RIGS = 10
+const HNL_TO_USD_RATE = 26
 
 const state = {
   user: null,
@@ -44,7 +47,11 @@ const state = {
   date: "",
   timesSelected: [],
   rigsSelected: [],
-  rigs: []
+  rigs: [],
+  paymentMethod: "cash",
+  paypalPaid: false,
+  paypalOrderId: null,
+  paypalDetails: null
 }
 
 const dateInput = document.getElementById("booking-date")
@@ -54,6 +61,8 @@ const reserveBtn = document.getElementById("reserve-btn")
 const summaryTitle = document.getElementById("summary-title")
 const summaryDate = document.getElementById("summary-date")
 const summaryPrice = document.getElementById("summary-price")
+const paymentCards = document.querySelectorAll(".payment-card")
+const paymentExtra = document.getElementById("payment-extra")
 
 const defaultRigs = [
   { id: "rig1", name: "Rig#1", type: "standard", active: true },
@@ -91,14 +100,20 @@ function getSelectedRigDetails() {
     }))
 }
 
-function getTotal() {
-  const rigTotal = getSelectedRigDetails()
+function getSubtotalPerHour() {
+  return getSelectedRigDetails()
     .reduce((total, rig) => total + rig.price, 0)
+}
 
+function getTotal() {
   const hoursCount =
     state.timesSelected.length || 1
 
-  return rigTotal * hoursCount
+  return getSubtotalPerHour() * hoursCount
+}
+
+function getTotalUSD() {
+  return (getTotal() / HNL_TO_USD_RATE).toFixed(2)
 }
 
 function formatPrice(price) {
@@ -135,6 +150,10 @@ function updateSummary() {
   if (reserveBtn) {
     reserveBtn.textContent =
       `Reservar ${formatPrice(total)}`
+  }
+
+  if (state.paymentMethod === "card") {
+    renderPaymentUI()
   }
 }
 
@@ -175,11 +194,18 @@ async function loadRigs() {
   renderRigs()
 }
 
+function resetPaymentState() {
+  state.paypalPaid = false
+  state.paypalOrderId = null
+  state.paypalDetails = null
+}
+
 function toggleRig(rigName) {
   if (state.rigsSelected.includes(rigName)) {
     state.rigsSelected =
       state.rigsSelected.filter((name) => name !== rigName)
 
+    resetPaymentState()
     return
   }
 
@@ -189,6 +215,7 @@ function toggleRig(rigName) {
   }
 
   state.rigsSelected.push(rigName)
+  resetPaymentState()
 }
 
 function renderRigs() {
@@ -234,11 +261,153 @@ function renderRigs() {
   updateSummary()
 }
 
+function isBookingReadyForPayment() {
+  return Boolean(
+    state.user &&
+    state.userProfile?.phone &&
+    state.date &&
+    state.timesSelected.length &&
+    state.rigsSelected.length &&
+    getTotal() > 0
+  )
+}
+
+function renderPaymentUI() {
+  if (!paymentExtra) return
+
+  if (state.paymentMethod === "cash") {
+    paymentExtra.innerHTML = `
+      <div class="payment-placeholder">
+        Pagás al llegar al local.
+      </div>
+    `
+    return
+  }
+
+  if (state.paymentMethod === "bank") {
+    paymentExtra.innerHTML = `
+      <div class="payment-placeholder">
+        Transferencia bancaria pendiente de integración WhatsApp API.
+      </div>
+    `
+    return
+  }
+
+  if (state.paymentMethod === "card") {
+    paymentExtra.innerHTML = `
+      <div class="payment-placeholder">
+        Total tarjeta: ${formatPrice(getTotal())}
+        <br>
+        PayPal cobrará aprox. USD ${getTotalUSD()}.
+      </div>
+
+      <div id="paypal-button-container" class="paypal-button-container"></div>
+    `
+
+    renderPayPalButton()
+  }
+}
+
+function renderPayPalButton() {
+  const container =
+    document.getElementById("paypal-button-container")
+
+  if (!container) return
+
+  if (!isBookingReadyForPayment()) {
+    container.innerHTML = `
+      <div class="payment-placeholder">
+        Primero seleccioná simulador, fecha y hora.
+      </div>
+    `
+    return
+  }
+
+  if (!window.paypal) {
+    container.innerHTML = `
+      <div class="payment-placeholder">
+        PayPal no cargó. Revisá VITE_PAYPAL_CLIENT_ID.
+      </div>
+    `
+    return
+  }
+
+  window.paypal.Buttons({
+    createOrder: async () => {
+      const response =
+        await fetch("/api/paypal-create-order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            total: getTotalUSD()
+          })
+        })
+
+      const order =
+        await response.json()
+
+      if (!order.id) {
+        console.error(order)
+        throw new Error("No se pudo crear la orden de PayPal")
+      }
+
+      return order.id
+    },
+
+    onApprove: async (data) => {
+      const response =
+        await fetch("/api/paypal-capture-order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            orderID: data.orderID
+          })
+        })
+
+      const details =
+        await response.json()
+
+      state.paypalPaid = true
+      state.paypalOrderId = data.orderID
+      state.paypalDetails = details
+
+      alert("Pago aprobado. Ahora confirmá la reserva.")
+      updateSummary()
+    },
+
+    onError: (error) => {
+      console.error(error)
+      alert("Error con PayPal.")
+    }
+  }).render("#paypal-button-container")
+}
+
+paymentCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    paymentCards.forEach((item) => {
+      item.classList.remove("active")
+    })
+
+    card.classList.add("active")
+
+    state.paymentMethod =
+      card.dataset.payment || "cash"
+
+    resetPaymentState()
+    renderPaymentUI()
+  })
+})
+
 if (dateInput) {
   dateInput.addEventListener("change", () => {
     state.date =
       dateInput.value
 
+    resetPaymentState()
     updateSummary()
   })
 }
@@ -255,10 +424,10 @@ timeButtons.forEach((button) => {
       button.classList.remove("active")
     } else {
       state.timesSelected.push(time)
-
       button.classList.add("active")
     }
 
+    resetPaymentState()
     updateSummary()
   })
 })
@@ -278,6 +447,11 @@ if (reserveBtn) {
 
     if (!state.date || !state.timesSelected.length || !state.rigsSelected.length) {
       alert("Selecciona fecha, al menos una hora y al menos un simulador.")
+      return
+    }
+
+    if (state.paymentMethod === "card" && !state.paypalPaid) {
+      alert("Primero completá el pago con PayPal.")
       return
     }
 
@@ -306,13 +480,19 @@ if (reserveBtn) {
 
         date: state.date,
 
-        subtotalPerHour:
-          selectedRigDetails.reduce((total, rig) => total + rig.price, 0),
+        subtotalPerHour: getSubtotalPerHour(),
+        total: getTotal(),
 
-        total:
-          getTotal(),
+        paymentMethod: state.paymentMethod,
+        paypalPaid: state.paypalPaid,
+        paypalOrderId: state.paypalOrderId,
+        paypalDetails: state.paypalDetails,
 
-        status: "pending",
+        status:
+          state.paymentMethod === "card"
+            ? "paid"
+            : "pending",
+
         createdAt: Date.now()
       })
 
@@ -339,63 +519,5 @@ onAuthStateChanged(auth, async (user) => {
 })
 
 loadRigs()
-updateSummary()
-const paymentCards =
-  document.querySelectorAll(".payment-card")
-
-const paymentExtra =
-  document.getElementById("payment-extra")
-
-state.paymentMethod = "cash"
-
-paymentCards.forEach((card) => {
-
-  card.addEventListener("click", () => {
-
-    paymentCards.forEach((item) => {
-      item.classList.remove("active")
-    })
-
-    card.classList.add("active")
-
-    state.paymentMethod =
-      card.dataset.payment
-
-    renderPaymentUI()
-  })
-})
-
-function renderPaymentUI() {
-
-  if (!paymentExtra) return
-
-  if (state.paymentMethod === "card") {
-
-    paymentExtra.innerHTML = `
-      <div class="payment-placeholder">
-        PayPal integration próximamente.
-      </div>
-    `
-
-    return
-  }
-
-  if (state.paymentMethod === "bank") {
-
-    paymentExtra.innerHTML = `
-      <div class="payment-placeholder">
-        API de WhatsApp pendiente de integración.
-      </div>
-    `
-
-    return
-  }
-
-  paymentExtra.innerHTML = `
-    <div class="payment-placeholder">
-      Pagás al llegar al local.
-    </div>
-  `
-}
-
 renderPaymentUI()
+updateSummary()
