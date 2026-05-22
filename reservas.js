@@ -341,7 +341,7 @@ function renderPayPalButton() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            total: getTotalUSD()
+  total: getTotal()
           })
         })
 
