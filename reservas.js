@@ -340,3 +340,62 @@ onAuthStateChanged(auth, async (user) => {
 
 loadRigs()
 updateSummary()
+const paymentCards =
+  document.querySelectorAll(".payment-card")
+
+const paymentExtra =
+  document.getElementById("payment-extra")
+
+state.paymentMethod = "cash"
+
+paymentCards.forEach((card) => {
+
+  card.addEventListener("click", () => {
+
+    paymentCards.forEach((item) => {
+      item.classList.remove("active")
+    })
+
+    card.classList.add("active")
+
+    state.paymentMethod =
+      card.dataset.payment
+
+    renderPaymentUI()
+  })
+})
+
+function renderPaymentUI() {
+
+  if (!paymentExtra) return
+
+  if (state.paymentMethod === "card") {
+
+    paymentExtra.innerHTML = `
+      <div class="payment-placeholder">
+        PayPal integration próximamente.
+      </div>
+    `
+
+    return
+  }
+
+  if (state.paymentMethod === "bank") {
+
+    paymentExtra.innerHTML = `
+      <div class="payment-placeholder">
+        API de WhatsApp pendiente de integración.
+      </div>
+    `
+
+    return
+  }
+
+  paymentExtra.innerHTML = `
+    <div class="payment-placeholder">
+      Pagás al llegar al local.
+    </div>
+  `
+}
+
+renderPaymentUI()
