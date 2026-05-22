@@ -1,13 +1,22 @@
+import fetch from "node-fetch"
+
+const PAYPAL_CLIENT =
+  process.env.PAYPAL_CLIENT_ID
+
+const PAYPAL_SECRET =
+  process.env.PAYPAL_SECRET
+
 const PAYPAL_API =
-  process.env.PAYPAL_ENV === "sandbox"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com"
+  "https://api-m.paypal.com"
+
+const USD_RATE = 24.7
 
 async function getAccessToken() {
+
   const auth =
-    Buffer.from(
-      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
-    ).toString("base64")
+    Buffer
+      .from(`${PAYPAL_CLIENT}:${PAYPAL_SECRET}`)
+      .toString("base64")
 
   const response =
     await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
@@ -26,42 +35,64 @@ async function getAccessToken() {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" })
-  }
 
-  const { total } =
-    req.body || {}
+  try {
 
-  if (!total || Number(total) <= 0) {
-    return res.status(400).json({ error: "Invalid total" })
-  }
+    const { total } = req.body
 
-  const accessToken =
-    await getAccessToken()
-
-  const response =
-    await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        intent: "CAPTURE",
-        purchase_units: [
-          {
-            amount: {
-              currency_code: "HNL",
-              value: Number(total).toFixed(2)
-            }
-          }
-        ]
+    if (!total) {
+      return res.status(400).json({
+        error: "missing_total"
       })
+    }
+
+    const totalUSD =
+      (Number(total) / USD_RATE)
+        .toFixed(2)
+
+    const accessToken =
+      await getAccessToken()
+
+    const response =
+      await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          intent: "CAPTURE",
+          purchase_units: [
+            {
+              amount: {
+                currency_code: "USD",
+                value: totalUSD
+              }
+            }
+          ]
+        })
+      })
+
+    const data =
+      await response.json()
+
+    console.log(data)
+
+    if (!data.id) {
+
+      return res.status(400).json({
+        error: data
+      })
+    }
+
+    return res.status(200).json(data)
+
+  } catch (error) {
+
+    console.error(error)
+
+    return res.status(500).json({
+      error: "paypal_create_order_failed"
     })
-
-  const data =
-    await response.json()
-
-  return res.status(200).json(data)
+  }
 }
