@@ -3,7 +3,7 @@ const clientId =
 
 if (!clientId) {
   console.error("Falta VITE_PAYPAL_CLIENT_ID")
-} else if (!window.paypal) {
+} else {
   const script =
     document.createElement("script")
 
@@ -12,6 +12,10 @@ if (!clientId) {
 
   script.async =
     true
+
+  script.onload = () => {
+    window.dispatchEvent(new Event("paypal-loaded"))
+  }
 
   document.head.appendChild(script)
 }
