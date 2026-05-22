@@ -16,6 +16,12 @@ import {
   push,
   set
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -34,7 +40,7 @@ const app =
 
 const auth = getAuth(app)
 const db = getDatabase(app)
-
+const storage = getStorage(app)
 const RIG_ICON =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
 
@@ -63,7 +69,7 @@ const summaryDate = document.getElementById("summary-date")
 const summaryPrice = document.getElementById("summary-price")
 const paymentCards = document.querySelectorAll(".payment-card")
 const paymentExtra = document.getElementById("payment-extra")
-
+let bankProofFile = null
 const defaultRigs = [
   { id: "rig1", name: "Rig#1", type: "standard", active: true },
   { id: "rig2", name: "Rig#2", type: "standard", active: true },
@@ -151,7 +157,10 @@ function updateSummary() {
     reserveBtn.textContent =
       `Reservar ${formatPrice(total)}`
   }
-
+if (state.paymentMethod === "bank" && !bankProofFile) {
+  alert("Subí el comprobante de transferencia para reservar.")
+  return
+}
   if (state.paymentMethod === "card") {
     renderPaymentUI()
   }
@@ -287,9 +296,52 @@ function renderPaymentUI() {
   if (state.paymentMethod === "bank") {
     paymentExtra.innerHTML = `
       <div class="payment-placeholder">
-        Transferencia bancaria pendiente de integración WhatsApp API.
+        Subí tu comprobante de transferencia. Es obligatorio.
       </div>
+
+      <input
+        id="bank-proof"
+        class="bank-proof"
+        type="file"
+        accept="image/*,.pdf"
+        hidden>
+
+      <button
+        id="upload-proof-btn"
+        class="reserve-confirm"
+        type="button">
+        Subir comprobante
+      </button>
+
+      <p id="proof-file-name" class="payment-placeholder">
+        Ningún archivo seleccionado.
+      </p>
     `
+
+    const proofInput =
+      document.getElementById("bank-proof")
+
+    const uploadBtn =
+      document.getElementById("upload-proof-btn")
+
+    const proofName =
+      document.getElementById("proof-file-name")
+
+    uploadBtn.addEventListener("click", () => {
+      proofInput.click()
+    })
+
+    proofInput.addEventListener("change", () => {
+      bankProofFile = proofInput.files[0] || null
+
+      proofName.textContent =
+        bankProofFile
+          ? bankProofFile.name
+          : "Ningún archivo seleccionado."
+
+      resetPaymentState()
+    })
+
     return
   }
 
@@ -298,12 +350,13 @@ function renderPaymentUI() {
       <div class="payment-placeholder">
         Total: ${formatPrice(getTotalHNL())}
         <br>
-        <br>
+        PayPal cobrará en Dolares Americanos.
       </div>
 
+      <div id="paypal-button-container" class="paypal-button-container"></div>
     `
 
-    renderPayPalButton()
+    waitForPayPalAndRender()
   }
 }
 
@@ -463,6 +516,13 @@ if (reserveBtn) {
 
       const bookingRef =
         push(ref(db, "bookings"))
+        const bookingId =
+  bookingRef.key
+
+const bankProofURL =
+  state.paymentMethod === "bank"
+    ? await uploadBankProof(bookingId)
+    : ""
 
       await set(bookingRef, {
         uid: state.user.uid,
@@ -497,7 +557,13 @@ if (reserveBtn) {
           state.paymentMethod === "card"
             ? "paid"
             : "pending",
-
+bankProofURL,
+status:
+  state.paymentMethod === "card"
+    ? "paid"
+    : state.paymentMethod === "bank"
+      ? "pending_bank_review"
+      : "pending_cash",
         createdAt: Date.now()
       })
 
@@ -522,7 +588,36 @@ onAuthStateChanged(auth, async (user) => {
 
   await loadUserProfile(user)
 })
+function waitForPayPalAndRender() {
+  if (window.paypal) {
+    renderPayPalButton()
+    return
+  }
 
+  window.addEventListener(
+    "paypal-loaded",
+    () => {
+      renderPayPalButton()
+    },
+    { once: true }
+  )
+}
+async function uploadBankProof(bookingId) {
+  if (!bankProofFile) return ""
+
+  const fileName =
+    `${Date.now()}-${bankProofFile.name}`
+
+  const fileRef =
+    storageRef(
+      storage,
+      `bank-proofs/${bookingId}/${fileName}`
+    )
+
+  await uploadBytes(fileRef, bankProofFile)
+
+  return await getDownloadURL(fileRef)
+}
 loadRigs()
 renderPaymentUI()
 updateSummary()
