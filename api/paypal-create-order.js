@@ -36,14 +36,22 @@ async function getAccessToken() {
 }
 
 export default async function handler(req, res) {
-
   try {
+    if (req.method !== "POST") {
+      return res.status(405).json({
+        error: "method_not_allowed"
+      })
+    }
 
-    const { total } =
-      req.body
+    const body =
+      typeof req.body === "string"
+        ? JSON.parse(req.body || "{}")
+        : req.body || {}
+
+    const total =
+      body.total
 
     if (!total) {
-
       return res.status(400).json({
         error: "missing_total"
       })
