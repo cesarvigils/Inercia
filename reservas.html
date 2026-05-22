@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Simuladores Inercia</title>
+  <title>Reservas | Simuladores Inercia</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -250,7 +250,7 @@
             </h3>
 
             <p>
-              PayPal / tarjeta próximamente.
+              PayPal / tarjeta.
             </p>
           </div>
 
@@ -276,7 +276,12 @@
 
       </div>
 
-<div id="payment-extra" class="payment-extra"></div>
+      <div id="payment-extra" class="payment-extra">
+
+        <div id="paypal-button-container" class="paypal-button-container"></div>
+
+      </div>
+
     </section>
 
     <aside class="booking-summary">
@@ -312,9 +317,10 @@
     </aside>
 
   </main>
-<script type="module" src="./paypal-loader.js"></script>
-<script type="module" src="./firebase-auth.js"></script>
-<script type="module" src="./reservas.js"></script>
+
+  <script type="module" src="./firebase-auth.js"></script>
+  <script type="module" src="./paypal-loader.js"></script>
+  <script type="module" src="./reservas.js"></script>
 
 </body>
 
