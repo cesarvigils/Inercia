@@ -1,5 +1,3 @@
-import fetch from "node-fetch"
-
 const PAYPAL_CLIENT =
   process.env.PAYPAL_CLIENT_ID
 
@@ -9,8 +7,6 @@ const PAYPAL_SECRET =
 const PAYPAL_API =
   "https://api-m.paypal.com"
 
-const USD_RATE = 24.7
-
 async function getAccessToken() {
 
   const auth =
@@ -19,14 +15,19 @@ async function getAccessToken() {
       .toString("base64")
 
   const response =
-    await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: "grant_type=client_credentials"
-    })
+    await fetch(
+      `${PAYPAL_API}/v1/oauth2/token`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+        body:
+          "grant_type=client_credentials"
+      }
+    )
 
   const data =
     await response.json()
@@ -38,61 +39,67 @@ export default async function handler(req, res) {
 
   try {
 
-    const { total } = req.body
+    const { total } =
+      req.body
 
     if (!total) {
+
       return res.status(400).json({
         error: "missing_total"
       })
     }
 
-    const totalUSD =
-      (Number(total) / USD_RATE)
-        .toFixed(2)
-
     const accessToken =
       await getAccessToken()
 
     const response =
-      await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({
-          intent: "CAPTURE",
-          purchase_units: [
-            {
-              amount: {
-                currency_code: "HNL",
-  value: Number(total).toFixed(2)
+      await fetch(
+        `${PAYPAL_API}/v2/checkout/orders`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${accessToken}`
+          },
+
+          body: JSON.stringify({
+            intent: "CAPTURE",
+
+            purchase_units: [
+              {
+                amount: {
+                  currency_code: "HNL",
+                  value:
+                    Number(total).toFixed(2)
+                }
               }
-            }
-          ]
-        })
-      })
+            ]
+          })
+        }
+      )
 
     const data =
       await response.json()
 
     console.log(data)
 
-    if (!data.id) {
-
-      return res.status(400).json({
-        error: data
-      })
-    }
-
-    return res.status(200).json(data)
+    return res
+      .status(response.status)
+      .json(data)
 
   } catch (error) {
 
     console.error(error)
 
     return res.status(500).json({
-      error: "paypal_create_order_failed"
+      error:
+        "paypal_create_order_failed",
+
+      details:
+        error.message
     })
   }
 }

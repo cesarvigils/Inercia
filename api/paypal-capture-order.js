@@ -1,23 +1,36 @@
+const PAYPAL_CLIENT =
+  process.env.PAYPAL_CLIENT_ID
+
+const PAYPAL_SECRET =
+  process.env.PAYPAL_SECRET
+
 const PAYPAL_API =
-  process.env.PAYPAL_ENV === "sandbox"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com"
+  "https://api-m.paypal.com"
 
 async function getAccessToken() {
+
   const auth =
-    Buffer.from(
-      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
-    ).toString("base64")
+    Buffer
+      .from(`${PAYPAL_CLIENT}:${PAYPAL_SECRET}`)
+      .toString("base64")
 
   const response =
-    await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: "grant_type=client_credentials"
-    })
+    await fetch(
+      `${PAYPAL_API}/v1/oauth2/token`,
+      {
+        method: "POST",
+        headers: {
+          Authorization:
+            `Basic ${auth}`,
+
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body:
+          "grant_type=client_credentials"
+      }
+    )
 
   const data =
     await response.json()
@@ -26,31 +39,48 @@ async function getAccessToken() {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" })
-  }
 
-  const { orderID } =
-    req.body || {}
+  try {
 
-  if (!orderID) {
-    return res.status(400).json({ error: "Missing orderID" })
-  }
+    const { orderID } =
+      req.body
 
-  const accessToken =
-    await getAccessToken()
+    const accessToken =
+      await getAccessToken()
 
-  const response =
-    await fetch(`${PAYPAL_API}/v2/checkout/orders/${orderID}/capture`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      }
+    const response =
+      await fetch(
+        `${PAYPAL_API}/v2/checkout/orders/${orderID}/capture`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${accessToken}`
+          }
+        }
+      )
+
+    const data =
+      await response.json()
+
+    return res
+      .status(response.status)
+      .json(data)
+
+  } catch (error) {
+
+    console.error(error)
+
+    return res.status(500).json({
+      error:
+        "paypal_capture_failed",
+
+      details:
+        error.message
     })
-
-  const data =
-    await response.json()
-
-  return res.status(200).json(data)
+  }
 }
