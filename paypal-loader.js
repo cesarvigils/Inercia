@@ -5,7 +5,7 @@ const script =
   document.createElement("script")
 
 script.src =
-  `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=HNL&intent=capture`
+  `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&intent=capture`
 script.async =
   true
 

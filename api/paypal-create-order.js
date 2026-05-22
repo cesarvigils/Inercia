@@ -79,7 +79,7 @@ export default async function handler(req, res) {
             purchase_units: [
               {
                 amount: {
-                  currency_code: "HNL",
+                  currency_code: "USD",
                   value:
                     Number(total).toFixed(2)
                 }
