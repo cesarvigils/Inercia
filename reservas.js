@@ -342,11 +342,9 @@ function renderPayPalButton() {
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({
-            totalHNL: getTotalHNL(),
-            totalUSD: getTotalUSD(),
-            exchangeRate: HNL_TO_USD_RATE
-          })
+body: JSON.stringify({
+  total: getTotalHNL()
+})
         })
 
       const order =
