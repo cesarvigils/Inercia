@@ -7,61 +7,83 @@ const PAYPAL_SECRET =
 const PAYPAL_API =
   "https://api-m.sandbox.paypal.com"
 
-const FALLBACK_HNL_PER_USD =
-  26
+const FALLBACK_RATE = 26
 
 async function getExchangeRate() {
+
   try {
+
     const response =
       await fetch(
-        "https://api.frankfurter.dev/v2/rates?base=USD&quotes=HNL"
+        "https://open.er-api.com/v6/latest/USD"
       )
 
     const data =
       await response.json()
 
     const rate =
-      Number(data.rates?.HNL)
+      Number(data?.rates?.HNL)
 
-    if (!rate || rate <= 0) {
-      return FALLBACK_HNL_PER_USD
+    if (!rate || Number.isNaN(rate)) {
+      return FALLBACK_RATE
     }
 
     return rate
+
   } catch {
-    return FALLBACK_HNL_PER_USD
+
+    return FALLBACK_RATE
+
   }
 }
 
 async function getAccessToken() {
+
   const auth =
     Buffer
-      .from(`${PAYPAL_CLIENT}:${PAYPAL_SECRET}`)
+      .from(
+        `${PAYPAL_CLIENT}:${PAYPAL_SECRET}`
+      )
       .toString("base64")
 
   const response =
-    await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: "grant_type=client_credentials"
-    })
+    await fetch(
+      `${PAYPAL_API}/v1/oauth2/token`,
+      {
+        method: "POST",
+
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body:
+          "grant_type=client_credentials"
+      }
+    )
 
   const data =
     await response.json()
 
   if (!data.access_token) {
-    throw new Error(JSON.stringify(data))
+
+    console.error(data)
+
+    throw new Error(
+      "No PayPal access token"
+    )
   }
 
   return data.access_token
 }
 
 export default async function handler(req, res) {
+
   try {
+
     if (req.method !== "POST") {
+
       return res.status(405).json({
         error: "method_not_allowed"
       })
@@ -72,12 +94,19 @@ export default async function handler(req, res) {
         ? JSON.parse(req.body || "{}")
         : req.body || {}
 
+    console.log("BODY:", body)
+
     const totalHNL =
       Number(body.total)
 
-    if (!totalHNL || totalHNL <= 0) {
+    if (
+      !totalHNL ||
+      Number.isNaN(totalHNL) ||
+      totalHNL <= 0
+    ) {
+
       return res.status(400).json({
-        error: "missing_or_invalid_total"
+        error: "invalid_total"
       })
     }
 
@@ -85,49 +114,70 @@ export default async function handler(req, res) {
       await getExchangeRate()
 
     const totalUSD =
-      (totalHNL / rate).toFixed(2)
+      Number(totalHNL / rate)
+        .toFixed(2)
+
+    console.log({
+      totalHNL,
+      rate,
+      totalUSD
+    })
 
     const accessToken =
       await getAccessToken()
 
     const response =
-      await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({
-          intent: "CAPTURE",
-          purchase_units: [
-            {
-              description:
-                `Reserva Inercia - L ${totalHNL.toFixed(2)} @ ${rate.toFixed(4)}`,
+      await fetch(
+        `${PAYPAL_API}/v2/checkout/orders`,
+        {
+          method: "POST",
 
-              amount: {
-                currency_code: "USD",
-                value: totalUSD
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
+
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            intent: "CAPTURE",
+
+            purchase_units: [
+              {
+                amount: {
+                  currency_code: "USD",
+                  value: totalUSD
+                }
               }
-            }
-          ]
-        })
-      })
+            ]
+          })
+        }
+      )
 
     const data =
       await response.json()
 
+    console.log(
+      "PAYPAL RESPONSE:",
+      data
+    )
+
     return res
       .status(response.status)
-      .json({
-        ...data,
-        totalHNL,
-        totalUSD,
-        exchangeRate: rate
-      })
+      .json(data)
+
   } catch (error) {
+
+    console.error(error)
+
     return res.status(500).json({
-      error: "paypal_create_order_failed",
-      details: error.message
+      error:
+        "paypal_create_order_failed",
+
+      details:
+        error.message
     })
   }
 }
