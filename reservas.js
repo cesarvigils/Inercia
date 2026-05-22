@@ -105,7 +105,7 @@ function getSubtotalPerHour() {
     .reduce((total, rig) => total + rig.price, 0)
 }
 
-function getTotal() {
+function getTotalHNL() {
   const hoursCount =
     state.timesSelected.length || 1
 
@@ -113,7 +113,7 @@ function getTotal() {
 }
 
 function getTotalUSD() {
-  return (getTotal() / HNL_TO_USD_RATE).toFixed(2)
+  return Number(getTotalHNL() / HNL_TO_USD_RATE).toFixed(2)
 }
 
 function formatPrice(price) {
@@ -131,7 +131,7 @@ function updateSummary() {
       ? state.timesSelected.join(", ")
       : "Hora"
 
-  const total = getTotal()
+  const total = getTotalHNL()
 
   if (summaryTitle) {
     summaryTitle.textContent = rigsText
@@ -268,7 +268,7 @@ function isBookingReadyForPayment() {
     state.date &&
     state.timesSelected.length &&
     state.rigsSelected.length &&
-    getTotal() > 0
+    getTotalHNL() > 0
   )
 }
 
@@ -296,9 +296,11 @@ function renderPaymentUI() {
   if (state.paymentMethod === "card") {
     paymentExtra.innerHTML = `
       <div class="payment-placeholder">
-        Total tarjeta: ${formatPrice(getTotal())}
+        Total: ${formatPrice(getTotalHNL())}
         <br>
-        PayPal cobrará aprox. USD ${getTotalUSD()}.
+        Cobro PayPal: USD ${getTotalUSD()}
+        <br>
+        Tasa usada: L ${HNL_TO_USD_RATE}.00 = USD 1.00
       </div>
 
       <div id="paypal-button-container" class="paypal-button-container"></div>
@@ -341,7 +343,9 @@ function renderPayPalButton() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-  total: getTotal()
+            totalHNL: getTotalHNL(),
+            totalUSD: getTotalUSD(),
+            exchangeRate: HNL_TO_USD_RATE
           })
         })
 
@@ -481,9 +485,15 @@ if (reserveBtn) {
         date: state.date,
 
         subtotalPerHour: getSubtotalPerHour(),
-        total: getTotal(),
+        total: getTotalHNL(),
 
         paymentMethod: state.paymentMethod,
+        currencyDisplayed: "HNL",
+        currencyCharged: state.paymentMethod === "card" ? "USD" : "HNL",
+        exchangeRate: HNL_TO_USD_RATE,
+        totalHNL: getTotalHNL(),
+        totalUSD: state.paymentMethod === "card" ? getTotalUSD() : null,
+
         paypalPaid: state.paypalPaid,
         paypalOrderId: state.paypalOrderId,
         paypalDetails: state.paypalDetails,
