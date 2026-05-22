@@ -7,30 +7,54 @@ const PAYPAL_SECRET =
 const PAYPAL_API =
   "https://api-m.sandbox.paypal.com"
 
-async function getAccessToken() {
+const FALLBACK_HNL_PER_USD =
+  26
 
+async function getExchangeRate() {
+  try {
+    const response =
+      await fetch(
+        "https://api.frankfurter.dev/v2/rates?base=USD&quotes=HNL"
+      )
+
+    const data =
+      await response.json()
+
+    const rate =
+      Number(data.rates?.HNL)
+
+    if (!rate || rate <= 0) {
+      return FALLBACK_HNL_PER_USD
+    }
+
+    return rate
+  } catch {
+    return FALLBACK_HNL_PER_USD
+  }
+}
+
+async function getAccessToken() {
   const auth =
     Buffer
       .from(`${PAYPAL_CLIENT}:${PAYPAL_SECRET}`)
       .toString("base64")
 
   const response =
-    await fetch(
-      `${PAYPAL_API}/v1/oauth2/token`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${auth}`,
-          "Content-Type":
-            "application/x-www-form-urlencoded"
-        },
-        body:
-          "grant_type=client_credentials"
-      }
-    )
+    await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: "grant_type=client_credentials"
+    })
 
   const data =
     await response.json()
+
+  if (!data.access_token) {
+    throw new Error(JSON.stringify(data))
+  }
 
   return data.access_token
 }
@@ -48,66 +72,62 @@ export default async function handler(req, res) {
         ? JSON.parse(req.body || "{}")
         : req.body || {}
 
-    const total =
-      body.total
+    const totalHNL =
+      Number(body.total)
 
-    if (!total) {
+    if (!totalHNL || totalHNL <= 0) {
       return res.status(400).json({
-        error: "missing_total"
+        error: "missing_or_invalid_total"
       })
     }
+
+    const rate =
+      await getExchangeRate()
+
+    const totalUSD =
+      (totalHNL / rate).toFixed(2)
 
     const accessToken =
       await getAccessToken()
 
     const response =
-      await fetch(
-        `${PAYPAL_API}/v2/checkout/orders`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
+      await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          intent: "CAPTURE",
+          purchase_units: [
+            {
+              description:
+                `Reserva Inercia - L ${totalHNL.toFixed(2)} @ ${rate.toFixed(4)}`,
 
-            Authorization:
-              `Bearer ${accessToken}`
-          },
-
-          body: JSON.stringify({
-            intent: "CAPTURE",
-
-            purchase_units: [
-              {
-                amount: {
-                  currency_code: "USD",
-                  value:
-                    Number(total).toFixed(2)
-                }
+              amount: {
+                currency_code: "USD",
+                value: totalUSD
               }
-            ]
-          })
-        }
-      )
+            }
+          ]
+        })
+      })
 
     const data =
       await response.json()
 
-    console.log(data)
-
     return res
       .status(response.status)
-      .json(data)
-
+      .json({
+        ...data,
+        totalHNL,
+        totalUSD,
+        exchangeRate: rate
+      })
   } catch (error) {
-
-    console.error(error)
-
     return res.status(500).json({
-      error:
-        "paypal_create_order_failed",
-
-      details:
-        error.message
+      error: "paypal_create_order_failed",
+      details: error.message
     })
   }
 }
