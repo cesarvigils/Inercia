@@ -298,12 +298,9 @@ function renderPaymentUI() {
       <div class="payment-placeholder">
         Total: ${formatPrice(getTotalHNL())}
         <br>
-        Cobro PayPal: USD ${getTotalUSD()}
         <br>
-        Tasa usada: L ${HNL_TO_USD_RATE}.00 = USD 1.00
       </div>
 
-      <div id="paypal-button-container" class="paypal-button-container"></div>
     `
 
     renderPayPalButton()
