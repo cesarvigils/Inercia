@@ -471,5 +471,82 @@ async function sendBankProofToTelegram(bookingId, bookingData) {
 }
 
 loadRigs()
-renderPaymentUI()
-updateSummary()
+// RESERVAR
+// =========================
+
+if (reserveBtn) {
+  reserveBtn.addEventListener("click", async () => {
+    try {
+      if (!state.date) {
+        alert("Seleccioná una fecha")
+        return
+      }
+
+      if (!state.timesSelected.length) {
+        alert("Seleccioná al menos una hora")
+        return
+      }
+
+      if (!state.rigsSelected.length) {
+        alert("Seleccioná al menos un simulador")
+        return
+      }
+
+      if (
+        state.paymentMethod === "bank" &&
+        !bankProofFile
+      ) {
+        alert("Subí el comprobante bancario")
+        return
+      }
+
+      if (
+        state.paymentMethod === "card" &&
+        !state.paypalPaid
+      ) {
+        alert("Primero completá el pago PayPal")
+        return
+      }
+
+      reserveBtn.disabled = true
+
+      const bookingRef = push(ref(db, "bookings"))
+
+      const bookingData = {
+        id: bookingRef.key,
+        uid: state.user.uid,
+        name: getUserName(),
+        email: state.user.email,
+        phone: state.userProfile.phone,
+        date: state.date,
+        times: state.timesSelected,
+        rigs: getSelectedRigDetails(),
+        paymentMethod: state.paymentMethod,
+        totalHNL: getTotalHNL(),
+        totalUSD: getTotalUSD(),
+        paypalPaid: state.paypalPaid,
+        paypalOrderId: state.paypalOrderId || null,
+        createdAt: Date.now(),
+        status: "pending"
+      }
+
+      await set(bookingRef, bookingData)
+
+      if (state.paymentMethod === "bank") {
+        await sendBankProofToTelegram(
+          bookingRef.key,
+          bookingData
+        )
+      }
+
+      alert("Reserva creada correctamente")
+
+      window.location.href = "/mis-reservas"
+    } catch (error) {
+      console.error(error)
+      alert("Error al crear la reserva")
+    } finally {
+      reserveBtn.disabled = false
+    }
+  })
+}
