@@ -10,5 +10,8 @@
   },
   "devDependencies": {
     "vite": "^5.4.21"
+  },
+  "dependencies": {
+    "formidable": "^3.5.4"
   }
 }
