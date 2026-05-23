@@ -16,13 +16,6 @@ import {
   push,
   set
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
-import {
-  getStorage,
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
-
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -584,14 +577,67 @@ if (reserveBtn) {
       const selectedRigDetails =
         getSelectedRigDetails()
 
-      const bookingRef =
-        push(ref(db, "bookings"))
-        const bookingId =
+const bookingRef =
+  push(ref(db, "bookings"))
+
+const bookingId =
   bookingRef.key
+
+const bookingData = {
+  uid: state.user.uid,
+  name: getUserName(),
+  email: state.user.email,
+  phone: state.userProfile.phone,
+
+  rigs: state.rigsSelected,
+  rigDetails: selectedRigDetails,
+  rigsCount: state.rigsSelected.length,
+
+  times: state.timesSelected,
+  hoursCount: state.timesSelected.length,
+
+  date: state.date,
+
+  subtotalPerHour: getSubtotalPerHour(),
+  total: getTotalHNL(),
+
+  paymentMethod: state.paymentMethod,
+  currencyDisplayed: "HNL",
+  currencyCharged: state.paymentMethod === "card" ? "USD" : "HNL",
+  exchangeRate: HNL_TO_USD_RATE,
+  totalHNL: getTotalHNL(),
+  totalUSD: state.paymentMethod === "card" ? getTotalUSD() : null,
+
+  paypalPaid: state.paypalPaid,
+  paypalOrderId: state.paypalOrderId,
+  paypalDetails: state.paypalDetails,
+
+  bankProofSentToTelegram: false,
+
+  status:
+    state.paymentMethod === "card"
+      ? "paid"
+      : state.paymentMethod === "bank"
+        ? "pending_bank_review"
+        : "pending_cash",
+
+  createdAt: Date.now()
+}
+
+await set(bookingRef, bookingData)
+
+if (state.paymentMethod === "bank") {
+  await sendBankProofToTelegram(bookingId, bookingData)
+
+  await set(bookingRef, {
+    ...bookingData,
+    bankProofSentToTelegram: true
+  })
+}
 
 const bankProofURL =
   state.paymentMethod === "bank"
-    ? await uploadBankProof(bookingId)
+    ? await sendBankProofToTelegram(bookingId, bookingData)
     : ""
 
       await set(bookingRef, {
@@ -672,21 +718,28 @@ function waitForPayPalAndRender() {
     { once: true }
   )
 }
-async function uploadBankProof(bookingId) {
-  if (!bankProofFile) return ""
+async function sendBankProofToTelegram(bookingId, bookingData) {
+  if (!bankProofFile) return null
 
-  const fileName =
-    `${Date.now()}-${bankProofFile.name}`
+  const formData = new FormData()
 
-  const fileRef =
-    storageRef(
-      storage,
-      `bank-proofs/${bookingId}/${fileName}`
-    )
+  formData.append("proof", bankProofFile)
+  formData.append("bookingId", bookingId)
+  formData.append("booking", JSON.stringify(bookingData))
 
-  await uploadBytes(fileRef, bankProofFile)
+  const response = await fetch("/api/telegram-send-proof", {
+    method: "POST",
+    body: formData
+  })
 
-  return await getDownloadURL(fileRef)
+  const data = await response.json()
+
+  if (!response.ok) {
+    console.error(data)
+    throw new Error("No se pudo mandar el comprobante a Telegram.")
+  }
+
+  return data
 }
 loadRigs()
 renderPaymentUI()
