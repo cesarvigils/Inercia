@@ -1,7 +1,12 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
 import { getDatabase, ref, get, push, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
-
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -15,7 +20,7 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 const auth = getAuth(app)
 const db = getDatabase(app)
-
+const storage = getStorage(app)
 const RIG_ICON =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
 
@@ -418,182 +423,52 @@ function setupBankModalUI() {
 async function sendBankProofToTelegram(bookingId, bookingData) {
   if (!bankProofFile) return null
 
-  const formData = new FormData()
+  const fileName =
+    `${Date.now()}-${bankProofFile.name}`
 
-  formData.append("proof", bankProofFile)
-  formData.append("bookingId", bookingId)
-  formData.append("booking", JSON.stringify(bookingData))
+  const fileRef =
+    storageRef(
+      storage,
+      `bank-proofs/${bookingId}/${fileName}`
+    )
 
-  const response = await fetch("/api/telegram-send-proof", {
-    method: "POST",
-    body: formData
-  })
+  await uploadBytes(fileRef, bankProofFile)
 
-  const data = await response.json()
+  const proofURL =
+    await getDownloadURL(fileRef)
+
+  const response =
+    await fetch("/api/telegram-send-proof", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        bookingId,
+        name: bookingData.name,
+        email: bookingData.email,
+        phone: bookingData.phone,
+        date: bookingData.date,
+        times: bookingData.times,
+        rigs: bookingData.rigs,
+        total: bookingData.totalHNL,
+        proofURL
+      })
+    })
+
+  const data =
+    await response.json()
 
   if (!response.ok) {
     console.error(data)
     throw new Error("No se pudo mandar el comprobante a Telegram.")
   }
 
-  return data
-}
-
-paymentCards.forEach((card) => {
-  card.addEventListener("click", () => {
-    paymentCards.forEach((item) => {
-      item.classList.remove("active")
-    })
-
-    card.classList.add("active")
-
-    state.paymentMethod = card.dataset.payment || "cash"
-
-    if (state.paymentMethod !== "bank") {
-      bankProofFile = null
-    }
-
-    resetPaymentState()
-    renderPaymentUI()
-  })
-})
-
-if (dateInput) {
-  dateInput.addEventListener("change", () => {
-    state.date = dateInput.value
-    resetPaymentState()
-    updateSummary()
-  })
-}
-
-timeButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const time = button.textContent.trim()
-
-    if (state.timesSelected.includes(time)) {
-      state.timesSelected = state.timesSelected.filter((item) => item !== time)
-      button.classList.remove("active")
-    } else {
-      state.timesSelected.push(time)
-      button.classList.add("active")
-    }
-
-    resetPaymentState()
-    updateSummary()
-  })
-})
-
-if (reserveBtn) {
-  reserveBtn.addEventListener("click", async () => {
-    if (!state.user) {
-      alert("Inicia sesión para reservar.")
-      return
-    }
-
-    if (!state.userProfile?.phone) {
-      alert("Tu número de teléfono es obligatorio para reservar.")
-      window.location.href = "/perfil"
-      return
-    }
-
-    if (!state.date || !state.timesSelected.length || !state.rigsSelected.length) {
-      alert("Selecciona fecha, al menos una hora y al menos un simulador.")
-      return
-    }
-
-    if (state.paymentMethod === "card" && !state.paypalPaid) {
-      alert("Primero completá el pago con PayPal.")
-      return
-    }
-
-    if (state.paymentMethod === "bank" && !bankProofFile) {
-      alert("Subí el comprobante de transferencia para reservar.")
-      return
-    }
-
-    try {
-      reserveBtn.disabled = true
-      reserveBtn.textContent = "Reservando..."
-
-      const selectedRigDetails = getSelectedRigDetails()
-      const bookingRef = push(ref(db, "bookings"))
-      const bookingId = bookingRef.key
-
-      const bookingData = {
-        uid: state.user.uid,
-        name: getUserName(),
-        email: state.user.email,
-        phone: state.userProfile.phone,
-
-        rigs: state.rigsSelected,
-        rigDetails: selectedRigDetails,
-        rigsCount: state.rigsSelected.length,
-
-        times: state.timesSelected,
-        hoursCount: state.timesSelected.length,
-
-        date: state.date,
-
-        subtotalPerHour: getSubtotalPerHour(),
-        total: getTotalHNL(),
-
-        paymentMethod: state.paymentMethod,
-        currencyDisplayed: "HNL",
-        currencyCharged: state.paymentMethod === "card" ? "USD" : "HNL",
-        exchangeRate: HNL_TO_USD_RATE,
-        totalHNL: getTotalHNL(),
-        totalUSD: state.paymentMethod === "card" ? getTotalUSD() : null,
-
-        paypalPaid: state.paypalPaid,
-        paypalOrderId: state.paypalOrderId,
-        paypalDetails: state.paypalDetails,
-
-        bankProofSentToTelegram: false,
-        telegramData: null,
-
-        status:
-          state.paymentMethod === "card"
-            ? "paid"
-            : state.paymentMethod === "bank"
-              ? "pending_bank_review"
-              : "pending_cash",
-
-        createdAt: Date.now()
-      }
-
-      await set(bookingRef, bookingData)
-
-      if (state.paymentMethod === "bank") {
-        const telegramData = await sendBankProofToTelegram(bookingId, bookingData)
-
-        await set(bookingRef, {
-          ...bookingData,
-          bankProofSentToTelegram: true,
-          telegramData
-        })
-      }
-
-      alert(`Reserva creada para ${getUserName()}.`)
-    } catch (error) {
-      console.error(error)
-      alert("No se pudo crear la reserva.")
-    } finally {
-      reserveBtn.disabled = false
-      updateSummary()
-    }
-  })
-}
-
-onAuthStateChanged(auth, async (user) => {
-  state.user = user
-
-  if (!user) {
-    updateSummary()
-    return
+  return {
+    proofURL,
+    telegram: data
   }
-
-  await loadUserProfile(user)
-})
+}
 
 loadRigs()
 renderPaymentUI()
