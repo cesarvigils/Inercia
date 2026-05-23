@@ -3,6 +3,12 @@ import {
   getApps,
   initializeApp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
 
 import {
   getAuth,
