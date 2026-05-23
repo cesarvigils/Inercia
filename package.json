@@ -12,6 +12,7 @@
     "vite": "^5.4.21"
   },
   "dependencies": {
-    "formidable": "^3.5.4"
+    "formidable": "^3.5.4",
+    "fs": "^0.0.1-security"
   }
 }
