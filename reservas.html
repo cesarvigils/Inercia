@@ -322,7 +322,60 @@
       </button>
 
     </aside>
+<div id="bank-modal" class="bank-modal hidden-bank-modal">
 
+  <div class="bank-modal-box">
+
+    <button id="close-bank-modal" class="bank-modal-close">
+      ✕
+    </button>
+
+    <h2>
+      Cuentas para transferencia
+    </h2>
+
+    <p class="bank-owner">
+      A nombre de <strong>Mauro Daniel Salgado Diaz</strong>
+      <br>
+      DNI: <strong>0801198616666</strong>
+    </p>
+
+    <div class="bank-list">
+
+      <button class="bank-account" data-copy="000000000000">
+        <img src="FIREBASE_LOGO_ATLANTIDA" alt="Banco Atlántida">
+        <div>
+          <h3>Banco Atlántida</h3>
+          <p>000000000000</p>
+        </div>
+        <span>Copiar</span>
+      </button>
+
+      <button class="bank-account" data-copy="000000000000">
+        <img src="FIREBASE_LOGO_FICOHSA" alt="Banco Ficohsa">
+        <div>
+          <h3>Banco Ficohsa</h3>
+          <p>000000000000</p>
+        </div>
+        <span>Copiar</span>
+      </button>
+
+      <button class="bank-account" data-copy="000000000000">
+        <img src="FIREBASE_LOGO_BAC" alt="BAC Credomatic">
+        <div>
+          <h3>BAC Credomatic</h3>
+          <p>000000000000</p>
+        </div>
+        <span>Copiar</span>
+      </button>
+
+    </div>
+
+    <small id="bank-copy-msg" class="bank-copy-msg"></small>
+
+  </div>
+
+</div>
   </main>
 
   <script type="module" src="./firebase-auth.js"></script>

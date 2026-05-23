@@ -293,57 +293,127 @@ function renderPaymentUI() {
     return
   }
 
-  if (state.paymentMethod === "bank") {
-    paymentExtra.innerHTML = `
-      <div class="payment-placeholder">
-        Subí tu comprobante de transferencia. Es obligatorio.
-      </div>
+if (state.paymentMethod === "bank") {
 
-      <input
-        id="bank-proof"
-        class="bank-proof"
-        type="file"
-        accept="image/*,.pdf"
-        hidden>
+  paymentExtra.innerHTML = `
+    <div class="payment-placeholder">
+      Transferí a una de nuestras cuentas y subí tu comprobante. Es obligatorio.
+    </div>
 
-      <button
-        id="upload-proof-btn"
-        class="reserve-confirm"
-        type="button">
-        Subir comprobante
-      </button>
+    <button
+      id="open-bank-modal"
+      class="reserve-confirm"
+      type="button">
+      Ver cuentas bancarias
+    </button>
 
-      <p id="proof-file-name" class="payment-placeholder">
-        Ningún archivo seleccionado.
-      </p>
-    `
+    <input
+      id="bank-proof"
+      class="bank-proof"
+      type="file"
+      accept="image/*,.pdf"
+      hidden>
 
-    const proofInput =
-      document.getElementById("bank-proof")
+    <button
+      id="upload-proof-btn"
+      class="reserve-confirm"
+      type="button">
+      Subir comprobante
+    </button>
 
-    const uploadBtn =
-      document.getElementById("upload-proof-btn")
+    <p id="proof-file-name" class="payment-placeholder">
+      Ningún archivo seleccionado.
+    </p>
+  `
 
-    const proofName =
-      document.getElementById("proof-file-name")
+  const proofInput =
+    document.getElementById("bank-proof")
 
-    uploadBtn.addEventListener("click", () => {
-      proofInput.click()
+  const uploadBtn =
+    document.getElementById("upload-proof-btn")
+
+  const proofName =
+    document.getElementById("proof-file-name")
+
+  const openBankModal =
+    document.getElementById("open-bank-modal")
+
+  const bankModal =
+    document.getElementById("bank-modal")
+
+  const closeBankModal =
+    document.getElementById("close-bank-modal")
+
+  const bankAccounts =
+    document.querySelectorAll(".bank-account")
+
+  const bankCopyMsg =
+    document.getElementById("bank-copy-msg")
+
+  uploadBtn.addEventListener("click", () => {
+    proofInput.click()
+  })
+
+  proofInput.addEventListener("change", () => {
+
+    bankProofFile =
+      proofInput.files[0] || null
+
+    proofName.textContent =
+      bankProofFile
+        ? bankProofFile.name
+        : "Ningún archivo seleccionado."
+
+    resetPaymentState()
+  })
+
+  if (openBankModal && bankModal) {
+
+    openBankModal.addEventListener("click", () => {
+      bankModal.classList.remove("hidden-bank-modal")
     })
-
-    proofInput.addEventListener("change", () => {
-      bankProofFile = proofInput.files[0] || null
-
-      proofName.textContent =
-        bankProofFile
-          ? bankProofFile.name
-          : "Ningún archivo seleccionado."
-
-      resetPaymentState()
-    })
-
-    return
   }
+
+  if (closeBankModal && bankModal) {
+
+    closeBankModal.addEventListener("click", () => {
+      bankModal.classList.add("hidden-bank-modal")
+    })
+
+    bankModal.addEventListener("click", (event) => {
+
+      if (event.target === bankModal) {
+        bankModal.classList.add("hidden-bank-modal")
+      }
+    })
+  }
+
+  bankAccounts.forEach((account) => {
+
+    account.addEventListener("click", async () => {
+
+      const value =
+        account.dataset.copy
+
+      try {
+
+        await navigator.clipboard.writeText(value)
+
+        if (bankCopyMsg) {
+          bankCopyMsg.textContent =
+            `Copiado: ${value}`
+        }
+
+      } catch (error) {
+
+        console.error(error)
+
+      }
+    })
+  })
+
+  return
+}
 
   if (state.paymentMethod === "card") {
     paymentExtra.innerHTML = `
@@ -621,3 +691,80 @@ async function uploadBankProof(bookingId) {
 loadRigs()
 renderPaymentUI()
 updateSummary()
+let bankProofFile = null
+
+function setupBankProofUI() {
+  const proofInput =
+    document.getElementById("bank-proof")
+
+  const uploadBtn =
+    document.getElementById("upload-proof-btn")
+
+  const proofName =
+    document.getElementById("proof-file-name")
+
+  if (!proofInput || !uploadBtn || !proofName) return
+
+  uploadBtn.addEventListener("click", () => {
+    proofInput.click()
+  })
+
+  proofInput.addEventListener("change", () => {
+    bankProofFile =
+      proofInput.files[0] || null
+
+    proofName.textContent =
+      bankProofFile
+        ? bankProofFile.name
+        : "Ningún archivo seleccionado."
+
+    resetPaymentState()
+  })
+}
+
+function setupBankModalUI() {
+  const openBtn =
+    document.getElementById("open-bank-modal")
+
+  const modal =
+    document.getElementById("bank-modal")
+
+  const closeBtn =
+    document.getElementById("close-bank-modal")
+
+  const copyMsg =
+    document.getElementById("bank-copy-msg")
+
+  const accounts =
+    document.querySelectorAll(".bank-account")
+
+  if (!openBtn || !modal || !closeBtn) return
+
+  openBtn.addEventListener("click", () => {
+    modal.classList.remove("hidden-bank-modal")
+  })
+
+  closeBtn.addEventListener("click", () => {
+    modal.classList.add("hidden-bank-modal")
+  })
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      modal.classList.add("hidden-bank-modal")
+    }
+  })
+
+  accounts.forEach((account) => {
+    account.addEventListener("click", async () => {
+      const value =
+        account.dataset.copy
+
+      await navigator.clipboard.writeText(value)
+
+      if (copyMsg) {
+        copyMsg.textContent =
+          `Copiado: ${value}`
+      }
+    })
+  })
+}

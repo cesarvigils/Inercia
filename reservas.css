@@ -405,3 +405,117 @@
 .payment-extra {
   margin-top: 1rem;
 }
+.bank-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.hidden-bank-modal {
+  display: none;
+}
+
+.bank-modal-box {
+  width: min(520px, 100%);
+  background: rgba(18,18,18,.98);
+  border: 1px solid rgba(255,140,26,.35);
+  border-radius: 22px;
+  padding: 1.5rem;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0,0,0,.45);
+}
+
+.bank-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  color: white;
+  cursor: pointer;
+}
+
+.bank-modal-box h2 {
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  margin-bottom: .7rem;
+}
+
+.bank-owner {
+  color: rgba(255,255,255,.7);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bank-owner strong {
+  color: #ff8c1a;
+}
+
+.bank-list {
+  display: grid;
+  gap: .8rem;
+}
+
+.bank-account {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  align-items: center;
+  gap: .9rem;
+  padding: .9rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bank-account:hover {
+  border-color: #ff8c1a;
+  background: rgba(255,140,26,.1);
+}
+
+.bank-account img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  padding: .35rem;
+}
+
+.bank-account h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .95rem;
+  margin-bottom: .2rem;
+}
+
+.bank-account p {
+  color: rgba(255,255,255,.65);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 800;
+}
+
+.bank-account span {
+  color: #ff8c1a;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 900;
+}
+
+.bank-copy-msg {
+  display: block;
+  margin-top: 1rem;
+  color: #ff8c1a;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 800;
+}
