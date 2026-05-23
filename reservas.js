@@ -691,7 +691,6 @@ async function uploadBankProof(bookingId) {
 loadRigs()
 renderPaymentUI()
 updateSummary()
-let bankProofFile = null
 
 function setupBankProofUI() {
   const proofInput =
