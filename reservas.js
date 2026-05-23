@@ -550,3 +550,83 @@ if (reserveBtn) {
     }
   })
 }
+paymentCards.forEach((card) => {
+
+  card.addEventListener("click", () => {
+
+    paymentCards.forEach((item) => {
+      item.classList.remove("active")
+    })
+
+    card.classList.add("active")
+
+    state.paymentMethod =
+      card.dataset.payment || "cash"
+
+    if (state.paymentMethod !== "bank") {
+      bankProofFile = null
+    }
+
+    resetPaymentState()
+
+    renderPaymentUI()
+    updateSummary()
+  })
+})
+
+if (dateInput) {
+
+  dateInput.addEventListener("change", () => {
+
+    state.date =
+      dateInput.value
+
+    resetPaymentState()
+    updateSummary()
+  })
+}
+
+timeButtons.forEach((button) => {
+
+  button.addEventListener("click", () => {
+
+    const time =
+      button.dataset.time
+
+    if (state.timesSelected.includes(time)) {
+
+      state.timesSelected =
+        state.timesSelected.filter(
+          (item) => item !== time
+        )
+
+      button.classList.remove("active")
+
+    } else {
+
+      state.timesSelected.push(time)
+
+      button.classList.add("active")
+    }
+
+    resetPaymentState()
+    updateSummary()
+  })
+})
+
+onAuthStateChanged(auth, async (user) => {
+
+  state.user = user
+
+  if (!user) {
+    updateSummary()
+    return
+  }
+
+  await loadUserProfile(user)
+
+  updateSummary()
+})
+
+renderPaymentUI()
+updateSummary()
