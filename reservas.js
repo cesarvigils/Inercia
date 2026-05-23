@@ -826,3 +826,29 @@ function setupBankModalUI() {
     })
   })
 }
+const telegramResponse =
+  await fetch("/api/telegram-send-proof", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      bookingId,
+      name: getUserName(),
+      email: state.user.email,
+      phone: state.userProfile.phone,
+      date: state.date,
+      times: state.timesSelected,
+      rigs: state.rigsSelected,
+      total: getTotalHNL(),
+      proofURL: bankProofURL
+    })
+  })
+
+const telegramData =
+  await telegramResponse.json()
+
+if (!telegramResponse.ok) {
+  console.error(telegramData)
+  throw new Error("No se pudo mandar el comprobante a Telegram.")
+}

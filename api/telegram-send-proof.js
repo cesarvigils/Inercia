@@ -23,140 +23,99 @@ function getFile(files, name) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "method_not_allowed"
-    })
-  }
-
   try {
-    const form =
-      formidable({
-        multiples: false,
-        keepExtensions: true
+    if (req.method !== "POST") {
+      return res.status(405).json({
+        error: "method_not_allowed"
       })
+    }
 
-    const [fields, files] =
-      await form.parse(req)
+    const body =
+      typeof req.body === "string"
+        ? JSON.parse(req.body || "{}")
+        : req.body || {}
 
-    const proofFile =
-      getFile(files, "proof")
+    const {
+      bookingId,
+      name,
+      email,
+      phone,
+      date,
+      times,
+      rigs,
+      total,
+      proofURL
+    } = body
 
-    const bookingId =
-      pick(fields?.bookingId)
-
-    const bookingRaw =
-      pick(fields?.booking)
-
-    const booking =
-      JSON.parse(bookingRaw || "{}")
-
-    if (!proofFile || !bookingId) {
+    if (!bookingId || !proofURL) {
       return res.status(400).json({
-        error: "missing_proof_or_booking",
-        fields,
-        filesKeys: files ? Object.keys(files) : []
+        error: "missing_booking_id_or_proof_url",
+        received: body
       })
     }
 
-    const filePath =
-      proofFile.filepath
+    const token =
+      process.env.TELEGRAM_BOT_TOKEN
 
-    const mimetype =
-      proofFile.mimetype || "application/octet-stream"
+    const chatId =
+      process.env.TELEGRAM_GROUP_CHAT_ID
 
-    const isPdf =
-      mimetype === "application/pdf"
-
-    const caption =
-      [
-        "🧾 Nueva transferencia pendiente",
-        "",
-        `Reserva: ${bookingId}`,
-        `Cliente: ${booking.name || "-"}`,
-        `Teléfono: ${booking.phone || "-"}`,
-        `Correo: ${booking.email || "-"}`,
-        `Fecha: ${booking.date || "-"}`,
-        `Hora: ${(booking.times || []).join(", ")}`,
-        `Simuladores: ${(booking.rigs || []).join(", ")}`,
-        `Total: L ${Number(booking.totalHNL || booking.total || 0).toFixed(2)}`,
-        "",
-        "Confirmar o rechazar desde los botones:"
-      ].join("\n")
-
-    const telegramForm =
-      new FormData()
-
-    telegramForm.append(
-      "chat_id",
-      TELEGRAM_GROUP_CHAT_ID
-    )
-
-    telegramForm.append(
-      "caption",
-      caption
-    )
-
-    telegramForm.append(
-      "reply_markup",
-      JSON.stringify({
-        inline_keyboard: [
-          [
-            {
-              text: "✅ Confirmar reserva",
-              callback_data: `confirm_booking:${bookingId}`
-            },
-            {
-              text: "❌ Rechazar reserva",
-              callback_data: `reject_booking:${bookingId}`
-            }
-          ]
-        ]
+    if (!token || !chatId) {
+      return res.status(500).json({
+        error: "missing_telegram_env"
       })
-    )
-
-    const buffer =
-      fs.readFileSync(filePath)
-
-    const blob =
-      new Blob([buffer], {
-        type: mimetype
-      })
-
-    telegramForm.append(
-      isPdf ? "document" : "photo",
-      blob,
-      proofFile.originalFilename || "comprobante"
-    )
-
-    const endpoint =
-      isPdf ? "sendDocument" : "sendPhoto"
-
-    const telegramResponse =
-      await fetch(
-        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${endpoint}`,
-        {
-          method: "POST",
-          body: telegramForm
-        }
-      )
-
-    const telegramData =
-      await telegramResponse.json()
-
-    if (!telegramResponse.ok) {
-      return res
-        .status(telegramResponse.status)
-        .json(telegramData)
     }
 
-    return res.status(200).json({
-      ok: true,
-      telegram: telegramData
-    })
+    const text = `
+🧾 Nueva transferencia pendiente
+
+ Cliente: ${name || "-"}
+ Email: ${email || "-"}
+Teléfono: ${phone || "-"}
+ Fecha: ${date || "-"}
+ Horas: ${(times || []).join(", ")}
+ Simuladores: ${(rigs || []).join(", ")}
+ Total: L ${Number(total || 0).toFixed(2)}
+
+📎 Comprobante:
+${proofURL}
+`
+
+    const response =
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "✅ Confirmar reserva",
+                  callback_data: `confirm:${bookingId}`
+                },
+                {
+                  text: "❌ Rechazar reserva",
+                  callback_data: `reject:${bookingId}`
+                }
+              ]
+            ]
+          }
+        })
+      })
+
+    const data =
+      await response.json()
+
+    if (!data.ok) {
+      return res.status(400).json(data)
+    }
+
+    return res.status(200).json(data)
   } catch (error) {
-    console.error(error)
-
     return res.status(500).json({
       error: "telegram_send_failed",
       details: error.message
