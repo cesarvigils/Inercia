@@ -311,143 +311,100 @@ function renderPayPalButton() {
     return
   }
 
-  window.paypal.Buttons({
-    createOrder: async () => {
-      const response = await fetch("/api/paypal-create-order", {
+window.paypal.Buttons({
+
+  createOrder: async () => {
+
+    const response =
+      await fetch("/api/paypal-create-order", {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json"
         },
+
         body: JSON.stringify({
           total: getTotalHNL()
         })
       })
 
-      const order = await response.json()
-
-      if (!order.id) {
-        console.error(order)
-        throw new Error("No se pudo crear la orden de PayPal")
-      }
-
-      return order.id
-    },
-
-onApprove: async (data) => {
-
-  try {
-
-    const response =
-      await fetch("/api/paypal-capture-order", {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          orderID: data.orderID
-        })
-      })
-
-    const details =
+    const order =
       await response.json()
 
-    state.paypalPaid = true
-    state.paypalOrderId = data.orderID
-    state.paypalDetails = details
+    if (!order.id) {
 
-    alert("✅ Pago realizado correctamente. Reservando simuladores...")
+      console.error(order)
 
-    const bookingRef =
-      push(ref(db, "bookings"))
-
-    const bookingId =
-      bookingRef.key
-
-    const bookingData = {
-      id: bookingId,
-
-      uid: state.user.uid,
-
-      name: getUserName(),
-
-      email: state.user.email,
-
-      phone: state.userProfile.phone,
-
-      date: state.date,
-
-      times: state.timesSelected,
-
-      hoursCount:
-        state.timesSelected.length,
-
-      rigs:
-        state.rigsSelected,
-
-      rigDetails:
-        getSelectedRigDetails(),
-
-      rigsCount:
-        state.rigsSelected.length,
-
-      paymentMethod: "card",
-
-      currencyDisplayed: "HNL",
-
-      currencyCharged: "USD",
-
-      totalHNL:
-        getTotalHNL(),
-
-      totalUSD:
-        getTotalUSD(),
-
-      exchangeRate:
-        HNL_TO_USD_RATE,
-
-      paypalPaid: true,
-
-      paypalOrderId:
-        data.orderID,
-
-      paypalDetails:
-        details,
-
-      status: "paid",
-
-      createdAt:
-        Date.now()
+      throw new Error(
+        "No se pudo crear la orden de PayPal"
+      )
     }
 
-    await set(
-      bookingRef,
-      bookingData
-    )
+    return order.id
+  },
 
-    alert("🏁 Reserva confirmada correctamente.")
+  onApprove: async (data) => {
 
-    window.location.href =
-      "/mis-reservas"
+    try {
 
-  } catch (error) {
+      const response =
+        await fetch("/api/paypal-capture-order", {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            orderID: data.orderID
+          })
+        })
+
+      const details =
+        await response.json()
+
+      if (!response.ok) {
+
+        console.error(details)
+
+        alert(
+          "No se pudo confirmar el pago."
+        )
+
+        return
+      }
+
+      state.paypalPaid = true
+      state.paypalOrderId = data.orderID
+      state.paypalDetails = details
+
+      alert(
+        "✅ Pago realizado correctamente. Creando reserva..."
+      )
+
+      if (reserveBtn) {
+        reserveBtn.click()
+      }
+
+    } catch (error) {
+
+      console.error(error)
+
+      alert(
+        "El pago pasó pero ocurrió un error creando la reserva."
+      )
+    }
+  },
+
+  onError: (error) => {
 
     console.error(error)
 
-    alert(
-      "El pago pasó pero ocurrió un error creando la reserva."
-    )
+    alert("Error con PayPal.")
   }
-}
 
-    onError: (error) => {
-      console.error(error)
-      alert("Error con PayPal.")
-    }
-  }).render("#paypal-button-container")
-}
 
+}).render("#paypal-button-container")}
 function setupBankProofUI() {
   const proofInput = document.getElementById("bank-proof")
   const uploadBtn = document.getElementById("upload-proof-btn")
