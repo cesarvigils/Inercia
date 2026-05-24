@@ -25,7 +25,13 @@ export default async function handler(req, res) {
 
     if (!email || !bookingId) {
       return res.status(400).json({ error: "missing_email_or_booking_id" })
+      
     }
+    const smtpUser =
+  process.env.SMTP_USER
+
+const smtpPass =
+  process.env.SMTP_PASS
 const transporter =
   nodemailer.createTransport({
     host: "mail.privateemail.com",
