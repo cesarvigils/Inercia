@@ -344,7 +344,7 @@ window.paypal.Buttons({
     return order.id
   },
 
-  onApprove: async (data) => {
+  onApprove: async (data, actions) => {
 
   if (paypalProcessing) return
 
@@ -352,39 +352,15 @@ window.paypal.Buttons({
 
   try {
 
-    const response =
-      await fetch("/api/paypal-capture-order", {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          orderID: data.orderID
-        })
-      })
-
     const details =
-      await response.json()
-
-    if (!response.ok) {
-
-      console.error(details)
-
-      alert(
-        "No se pudo confirmar el pago."
-      )
-
-      return
-    }
+      await actions.order.capture()
 
     state.paypalPaid = true
     state.paypalOrderId = data.orderID
     state.paypalDetails = details
 
     alert(
-      "✅ Pago aprobado correctamente. Creando reserva..."
+      " Pago aprobado correctamente. Reserva Creada"
     )
 
     if (reserveBtn) {
