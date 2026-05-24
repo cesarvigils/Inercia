@@ -333,26 +333,113 @@ function renderPayPalButton() {
       return order.id
     },
 
-    onApprove: async (data) => {
-      const response = await fetch("/api/paypal-capture-order", {
+onApprove: async (data) => {
+
+  try {
+
+    const response =
+      await fetch("/api/paypal-capture-order", {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json"
         },
+
         body: JSON.stringify({
           orderID: data.orderID
         })
       })
 
-      const details = await response.json()
+    const details =
+      await response.json()
 
-      state.paypalPaid = true
-      state.paypalOrderId = data.orderID
-      state.paypalDetails = details
+    state.paypalPaid = true
+    state.paypalOrderId = data.orderID
+    state.paypalDetails = details
 
-      alert("Pago aprobado. Ahora confirmá la reserva.")
-      updateSummary()
-    },
+    alert("✅ Pago realizado correctamente. Reservando simuladores...")
+
+    const bookingRef =
+      push(ref(db, "bookings"))
+
+    const bookingId =
+      bookingRef.key
+
+    const bookingData = {
+      id: bookingId,
+
+      uid: state.user.uid,
+
+      name: getUserName(),
+
+      email: state.user.email,
+
+      phone: state.userProfile.phone,
+
+      date: state.date,
+
+      times: state.timesSelected,
+
+      hoursCount:
+        state.timesSelected.length,
+
+      rigs:
+        state.rigsSelected,
+
+      rigDetails:
+        getSelectedRigDetails(),
+
+      rigsCount:
+        state.rigsSelected.length,
+
+      paymentMethod: "card",
+
+      currencyDisplayed: "HNL",
+
+      currencyCharged: "USD",
+
+      totalHNL:
+        getTotalHNL(),
+
+      totalUSD:
+        getTotalUSD(),
+
+      exchangeRate:
+        HNL_TO_USD_RATE,
+
+      paypalPaid: true,
+
+      paypalOrderId:
+        data.orderID,
+
+      paypalDetails:
+        details,
+
+      status: "paid",
+
+      createdAt:
+        Date.now()
+    }
+
+    await set(
+      bookingRef,
+      bookingData
+    )
+
+    alert("🏁 Reserva confirmada correctamente.")
+
+    window.location.href =
+      "/mis-reservas"
+
+  } catch (error) {
+
+    console.error(error)
+
+    alert(
+      "El pago pasó pero ocurrió un error creando la reserva."
+    )
+  }
+}
 
     onError: (error) => {
       console.error(error)
