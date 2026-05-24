@@ -85,7 +85,7 @@
 
 .rig-panel {
   grid-area: rigs;
-  height: 352px;
+    min-height: 350px;
 
 }
 
@@ -145,8 +145,7 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(72px, 1fr));
   gap: 1rem;
-  height: 240px;
-  align-content: start;
+
   min-height: 260px;
 }
 
@@ -666,14 +665,6 @@
   .rig-grid {
     grid-template-columns: repeat(3, minmax(82px, 1fr));
     min-height: 420px;
-  }
-
-}
-@media (max-width: 560px) {
-
-  .rig-grid {
-    grid-template-columns: repeat(2, minmax(82px, 1fr));
-    min-height: 620px;
   }
 
 }
