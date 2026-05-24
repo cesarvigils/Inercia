@@ -4,7 +4,7 @@ import { getDatabase } from "firebase-admin/database"
 if (!getApps().length) {
   initializeApp({
     credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
-    databaseURL: process.env.VITE_FIREBASE_DATABASE_URL
+    databaseURL: process.env.FIREBASE_DATABASE_URL
   })
 }
 
