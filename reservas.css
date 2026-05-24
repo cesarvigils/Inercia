@@ -85,7 +85,7 @@
 
 .rig-panel {
   grid-area: rigs;
-    min-height: 350px;
+  height: 352px;
 
 }
 
@@ -145,8 +145,8 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(72px, 1fr));
   gap: 1rem;
-
-  min-height: 260px;
+  height: 240px;
+  align-content: start;
 }
 
 .rig-card {
@@ -584,6 +584,11 @@
       "summary";
 
     margin-top: -80px;
+      position: relative;
+  z-index: 5;
+
+  transform: translateY(-180px);
+  margin: 0 auto 6rem;
   }
 
   .rig-grid {
