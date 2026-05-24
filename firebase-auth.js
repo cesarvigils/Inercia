@@ -3,6 +3,7 @@ import {
   getApps,
   getApp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
+
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -23,155 +24,165 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
+
 const app =
   getApps().length
     ? getApp()
     : initializeApp(firebaseConfig)
+
 const auth = getAuth(app)
 const provider = new GoogleAuthProvider()
 
-const overlay = document.getElementById("auth-overlay")
-const openAuth = document.getElementById("open-auth")
-const closeAuth = document.getElementById("close-auth")
-const loginTab = document.getElementById("login-tab")
-const registerTab = document.getElementById("register-tab")
-const loginForm = document.getElementById("login-form")
-const registerForm = document.getElementById("register-form")
-const googleLogin = document.getElementById("google-login")
-const registerBtn = document.getElementById("register-btn")
-const loginBtn = document.getElementById("login-btn")
-
-if (openAuth && overlay) {
-  openAuth.addEventListener("click", () => {
-    overlay.classList.remove("hidden-auth")
-  })
-}
-
-if (closeAuth && overlay) {
-  closeAuth.addEventListener("click", () => {
-    overlay.classList.add("hidden-auth")
-  })
-}
-
-if (loginTab && registerTab && loginForm && registerForm) {
-  loginTab.addEventListener("click", () => {
-    loginTab.classList.add("active-tab")
-    registerTab.classList.remove("active-tab")
-    loginForm.classList.remove("hidden-auth")
-    registerForm.classList.add("hidden-auth")
-  })
-
-  registerTab.addEventListener("click", () => {
-    registerTab.classList.add("active-tab")
-    loginTab.classList.remove("active-tab")
-    registerForm.classList.remove("hidden-auth")
-    loginForm.classList.add("hidden-auth")
-  })
-}
-
-if (googleLogin && overlay) {
-  googleLogin.addEventListener("click", async () => {
-    try {
-      await signInWithPopup(auth, provider)
-      overlay.classList.add("hidden-auth")
-    } catch (error) {
-      console.error(error)
-      alert("No se pudo iniciar sesión con Google.")
-    }
-  })
-}
-
-if (registerBtn) {
-  registerBtn.addEventListener("click", async () => {
-    try {
-      const name = document.getElementById("register-name").value
-      const email = document.getElementById("register-email").value
-      const password = document.getElementById("register-password").value
-
-      const cred = await createUserWithEmailAndPassword(auth, email, password)
-
-      await updateProfile(cred.user, {
-        displayName: name
-      })
-
-      await sendEmailVerification(cred.user)
-
-      alert("Verificación enviada al correo.")
-    } catch (error) {
-      console.error(error)
-      alert("No se pudo crear la cuenta.")
-    }
-  })
-}
-
-if (loginBtn && overlay) {
-  loginBtn.addEventListener("click", async () => {
-    try {
-      const email = document.getElementById("login-email").value
-      const password = document.getElementById("login-password").value
-
-      const cred = await signInWithEmailAndPassword(auth, email, password)
-
-      if (!cred.user.emailVerified) {
-        alert("Verifica tu correo primero.")
-        return
-      }
-
-      overlay.classList.add("hidden-auth")
-    } catch (error) {
-      console.error(error)
-      alert("No se pudo iniciar sesión.")
-    }
-  })
-}
-
-const profileTrigger = document.getElementById("profile-trigger")
-const profileMenu = document.getElementById("profile-menu")
-const logoutBtn = document.getElementById("logout-btn")
-
-const navbarPfp = document.getElementById("navbar-pfp")
-const profileMenuPfp = document.getElementById("profile-menu-pfp")
-const profileMenuName = document.getElementById("profile-menu-name")
-const profileMenuEmail = document.getElementById("profile-menu-email")
-const profileMenuPhone = document.getElementById("profile-menu-phone")
-
-if (profileTrigger && profileMenu) {
-  profileTrigger.addEventListener("click", () => {
-    profileMenu.classList.toggle("hidden-auth")
-  })
-}
-
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    await signOut(auth)
-    window.location.reload()
-  })
-}
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    openAuth?.classList.add("hidden-auth")
-    profileTrigger?.classList.remove("hidden-auth")
-
-    const photo = user.photoURL || "/assets/default-user.png"
-
-    if (navbarPfp) navbarPfp.src = photo
-    if (profileMenuPfp) profileMenuPfp.src = photo
-
-    if (profileMenuName) {
-      profileMenuName.textContent = user.displayName || "Piloto"
-    }
-
-    if (profileMenuEmail) {
-      profileMenuEmail.textContent = user.email || "Sin correo"
-    }
-
-    if (profileMenuPhone) {
-      profileMenuPhone.textContent = user.phoneNumber || "Sin teléfono"
-    }
-  } else {
-    openAuth?.classList.remove("hidden-auth")
-    profileTrigger?.classList.add("hidden-auth")
-    profileMenu?.classList.add("hidden-auth")
+function getAuthEls() {
+  return {
+    overlay: document.getElementById("auth-overlay"),
+    openAuth: document.getElementById("open-auth"),
+    closeAuth: document.getElementById("close-auth"),
+    loginTab: document.getElementById("login-tab"),
+    registerTab: document.getElementById("register-tab"),
+    loginForm: document.getElementById("login-form"),
+    registerForm: document.getElementById("register-form"),
+    googleLogin: document.getElementById("google-login"),
+    registerBtn: document.getElementById("register-btn"),
+    loginBtn: document.getElementById("login-btn"),
+    profileTrigger: document.getElementById("profile-trigger"),
+    profileMenu: document.getElementById("profile-menu"),
+    logoutBtn: document.getElementById("logout-btn"),
+    navbarPfp: document.getElementById("navbar-pfp"),
+    profileMenuPfp: document.getElementById("profile-menu-pfp"),
+    profileMenuName: document.getElementById("profile-menu-name"),
+    profileMenuEmail: document.getElementById("profile-menu-email"),
+    profileMenuPhone: document.getElementById("profile-menu-phone")
   }
-})
+}
+
+function initAuthUI() {
+  const el = getAuthEls()
+
+  if (el.openAuth && el.overlay) {
+    el.openAuth.onclick = () => {
+      el.overlay.classList.remove("hidden-auth")
+    }
+  }
+
+  if (el.closeAuth && el.overlay) {
+    el.closeAuth.onclick = () => {
+      el.overlay.classList.add("hidden-auth")
+    }
+  }
+
+  if (el.loginTab && el.registerTab && el.loginForm && el.registerForm) {
+    el.loginTab.onclick = () => {
+      el.loginTab.classList.add("active-tab")
+      el.registerTab.classList.remove("active-tab")
+      el.loginForm.classList.remove("hidden-auth")
+      el.registerForm.classList.add("hidden-auth")
+    }
+
+    el.registerTab.onclick = () => {
+      el.registerTab.classList.add("active-tab")
+      el.loginTab.classList.remove("active-tab")
+      el.registerForm.classList.remove("hidden-auth")
+      el.loginForm.classList.add("hidden-auth")
+    }
+  }
+
+  if (el.googleLogin && el.overlay) {
+    el.googleLogin.onclick = async () => {
+      try {
+        await signInWithPopup(auth, provider)
+        el.overlay.classList.add("hidden-auth")
+      } catch (error) {
+        console.error(error)
+        alert("No se pudo iniciar sesión con Google.")
+      }
+    }
+  }
+
+  if (el.registerBtn) {
+    el.registerBtn.onclick = async () => {
+      try {
+        const name = document.getElementById("register-name").value
+        const email = document.getElementById("register-email").value
+        const password = document.getElementById("register-password").value
+
+        const cred =
+          await createUserWithEmailAndPassword(auth, email, password)
+
+        await updateProfile(cred.user, {
+          displayName: name
+        })
+
+        await sendEmailVerification(cred.user)
+
+        alert("Verificación enviada al correo.")
+      } catch (error) {
+        console.error(error)
+        alert("No se pudo crear la cuenta.")
+      }
+    }
+  }
+
+  if (el.loginBtn && el.overlay) {
+    el.loginBtn.onclick = async () => {
+      try {
+        const email = document.getElementById("login-email").value
+        const password = document.getElementById("login-password").value
+
+        const cred =
+          await signInWithEmailAndPassword(auth, email, password)
+
+        if (!cred.user.emailVerified) {
+          alert("Verifica tu correo primero.")
+          return
+        }
+
+        el.overlay.classList.add("hidden-auth")
+      } catch (error) {
+        console.error(error)
+        alert("No se pudo iniciar sesión.")
+      }
+    }
+  }
+
+  if (el.profileTrigger && el.profileMenu) {
+    el.profileTrigger.onclick = () => {
+      el.profileMenu.classList.toggle("hidden-auth")
+    }
+  }
+
+  if (el.logoutBtn) {
+    el.logoutBtn.onclick = async () => {
+      await signOut(auth)
+      window.location.reload()
+    }
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    const fresh = getAuthEls()
+
+    if (user) {
+      fresh.openAuth?.classList.add("hidden-auth")
+      fresh.profileTrigger?.classList.remove("hidden-auth")
+
+      const photo =
+        user.photoURL || "/assets/default-user.png"
+
+      if (fresh.navbarPfp) fresh.navbarPfp.src = photo
+      if (fresh.profileMenuPfp) fresh.profileMenuPfp.src = photo
+      if (fresh.profileMenuName) fresh.profileMenuName.textContent = user.displayName || "Piloto"
+      if (fresh.profileMenuEmail) fresh.profileMenuEmail.textContent = user.email || "Sin correo"
+      if (fresh.profileMenuPhone) fresh.profileMenuPhone.textContent = user.phoneNumber || "Sin teléfono"
+    } else {
+      fresh.openAuth?.classList.remove("hidden-auth")
+      fresh.profileTrigger?.classList.add("hidden-auth")
+      fresh.profileMenu?.classList.add("hidden-auth")
+    }
+  })
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initAuthUI)
+} else {
+  initAuthUI()
+}
