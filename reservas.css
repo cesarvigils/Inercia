@@ -32,10 +32,11 @@
   position: absolute;
   left: 4vw;
   bottom: 250px;
-  z-index: 2;
+  z-index: 3;
 }
 
 .booking-hero-content span {
+  display: block;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 900;
   letter-spacing: 4px;
@@ -54,12 +55,12 @@
   margin-top: 1rem;
   color: rgba(255,255,255,.72);
   font-size: 1.2rem;
-  max-width: 620px;
   line-height: 1.5;
+  max-width: 620px;
 }
 
 /* =========================================================
-   PAGE LAYOUT
+   PAGE GRID
 ========================================================= */
 
 .booking-page {
@@ -70,15 +71,45 @@
   margin: -95px auto 6rem;
 
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+
+  grid-template-columns: minmax(0, 1fr) 380px;
+
+  grid-template-areas:
+    "rigs date"
+    "time payment"
+    "summary payment";
+
   gap: 1.5rem;
   align-items: start;
 }
 
+.rig-panel {
+  grid-area: rigs;
+}
+
+.date-panel {
+  grid-area: date;
+}
+
+.time-panel {
+  grid-area: time;
+}
+
+.payment-panel {
+  grid-area: payment;
+}
+
+.booking-summary {
+  grid-area: summary;
+}
+
+/* =========================================================
+   PANELS
+========================================================= */
+
 .booking-panel,
 .booking-summary {
   min-width: 0;
-  overflow: hidden;
 
   background: rgba(20,20,20,.92);
   border: 1px solid rgba(255,255,255,.07);
@@ -86,10 +117,6 @@
   padding: 1.4rem;
 
   backdrop-filter: blur(12px);
-}
-
-.booking-panel {
-  height: fit-content;
 }
 
 .booking-panel h2,
@@ -109,29 +136,23 @@
 }
 
 /* =========================================================
-   RIGS
+   RIG GRID
 ========================================================= */
-
-.rig-panel {
-  grid-column: 1 / 2;
-}
 
 .rig-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(72px, 1fr));
   gap: 1rem;
-  width: 100%;
-  max-width: 100%;
 }
 
 .rig-card {
   width: 100%;
-  min-width: 0;
   min-height: 126px;
   padding: .75rem;
 
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,.08);
+
   background: rgba(255,255,255,.025);
 
   color: white;
@@ -171,6 +192,7 @@
 
 .rig-card span {
   margin-top: .45rem;
+
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -243,7 +265,7 @@
 }
 
 .time-slots button:hover {
-  background: rgba(255,140,26,.18);
+  background: rgba(255,140,26,.15);
 }
 
 .time-slots button.active {
@@ -251,20 +273,86 @@
 }
 
 /* =========================================================
+   PAYMENT
+========================================================= */
+
+.payment-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.payment-card {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  padding: 1rem;
+
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.08);
+
+  background: rgba(255,255,255,.03);
+
+  color: white;
+  cursor: pointer;
+
+  text-align: left;
+
+  transition: .25s ease;
+}
+
+.payment-card:hover {
+  border-color: rgba(255,140,26,.35);
+  transform: translateY(-2px);
+}
+
+.payment-card.active {
+  border-color: #ff8c1a;
+  background: rgba(255,140,26,.08);
+  box-shadow: 0 0 30px rgba(255,140,26,.14);
+}
+
+.payment-icon {
+  width: 54px;
+  height: 54px;
+
+  border-radius: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255,255,255,.06);
+
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.payment-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+}
+
+.payment-card p {
+  margin-top: .3rem;
+  color: rgba(255,255,255,.55);
+  font-size: .92rem;
+  line-height: 1.4;
+}
+
+.payment-extra {
+  margin-top: 1rem;
+}
+
+/* =========================================================
    SUMMARY
 ========================================================= */
 
-.booking-summary {
-  position: sticky;
-  top: 90px;
-
-  height: auto;
-  align-self: start;
-}
-
 .summary-card {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: 48px minmax(0,1fr) auto;
   gap: .8rem;
   align-items: center;
 
@@ -282,31 +370,18 @@
 .summary-card h3 {
   color: #ff8c1a;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.1rem;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 1.05rem;
 }
 
 .summary-card p {
   color: rgba(255,255,255,.55);
   font-size: .9rem;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .summary-card strong {
   color: white;
   font-family: 'Orbitron', sans-serif;
-  white-space: nowrap;
 }
-
-/* =========================================================
-   BUTTON
-========================================================= */
 
 .reserve-confirm {
   width: 100%;
@@ -336,84 +411,6 @@
 }
 
 /* =========================================================
-   PAYMENT
-========================================================= */
-
-.payment-panel {
-  margin-top: 1.5rem;
-}
-
-.payment-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.payment-card {
-  width: 100%;
-
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-
-  padding: 1rem;
-
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.08);
-
-  background: rgba(255,255,255,.03);
-
-  color: white;
-  cursor: pointer;
-
-  text-align: left;
-  transition: .25s ease;
-}
-
-.payment-card:hover {
-  border-color: rgba(255,140,26,.35);
-  transform: translateY(-2px);
-}
-
-.payment-card.active {
-  border-color: #ff8c1a;
-  background: rgba(255,140,26,.08);
-  box-shadow: 0 0 30px rgba(255,140,26,.14);
-}
-
-.payment-icon {
-  width: 54px;
-  height: 54px;
-
-  border-radius: 14px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: rgba(255,255,255,.06);
-
-  font-size: 1.5rem;
-
-  flex-shrink: 0;
-}
-
-.payment-card h3 {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-}
-
-.payment-card p {
-  margin-top: .3rem;
-  color: rgba(255,255,255,.55);
-  font-size: .92rem;
-  line-height: 1.4;
-}
-
-.payment-extra {
-  margin-top: 1rem;
-}
-
-/* =========================================================
    BANK MODAL
 ========================================================= */
 
@@ -436,13 +433,15 @@
 }
 
 .bank-modal-box {
-  width: min(520px, 100%);
+  width: min(520px,100%);
   max-height: 90vh;
   overflow-y: auto;
 
   background: rgba(18,18,18,.98);
+
   border: 1px solid rgba(255,140,26,.35);
   border-radius: 22px;
+
   padding: 1.5rem;
 
   position: relative;
@@ -471,8 +470,7 @@
   color: white;
   font-family: 'Orbitron', sans-serif;
   margin-bottom: .7rem;
-  font-size: 1.875rem;
-  letter-spacing: .85px;
+  font-size: 1.7rem;
 }
 
 .bank-owner {
@@ -505,9 +503,8 @@
   border: 1px solid rgba(255,255,255,.08);
 
   background: rgba(255,255,255,.04);
-  color: white;
 
-  text-align: left;
+  color: white;
   cursor: pointer;
 
   transition: .2s ease;
@@ -533,7 +530,6 @@
 .bank-account h3 {
   font-family: 'Orbitron', sans-serif;
   font-size: .95rem;
-  margin-bottom: .2rem;
 }
 
 .bank-account p {
@@ -573,13 +569,17 @@
   }
 
   .booking-page {
-    grid-template-columns: 1fr;
-    margin-top: -80px;
-  }
 
-  .booking-summary {
-    position: static;
-    width: 100%;
+    grid-template-columns: 1fr;
+
+    grid-template-areas:
+      "rigs"
+      "date"
+      "time"
+      "payment"
+      "summary";
+
+    margin-top: -80px;
   }
 
   .rig-grid {
@@ -612,28 +612,24 @@
     grid-template-columns: repeat(2, minmax(82px, 1fr));
   }
 
+  .payment-card {
+    padding: .9rem;
+  }
+
   .summary-card {
-    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-columns: 42px minmax(0,1fr);
   }
 
   .summary-card strong {
     grid-column: 1 / -1;
   }
 
-  .payment-card {
-    padding: .9rem;
-  }
-
   .time-slots button {
     flex: 1 1 calc(50% - .5rem);
   }
 
-  .bank-modal-box {
-    padding: 1rem;
-  }
-
   .bank-account {
-    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-columns: 42px minmax(0,1fr);
   }
 
   .bank-account span {
@@ -651,12 +647,12 @@
     grid-template-columns: 1fr;
   }
 
-  .time-slots button {
-    flex: 1 1 100%;
-  }
-
   .payment-card {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .time-slots button {
+    flex: 1 1 100%;
   }
 }
