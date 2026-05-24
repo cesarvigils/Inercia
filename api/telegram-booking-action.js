@@ -74,27 +74,6 @@ async function editMessage(chatId, messageId, text) {
   )
 }
 
-async function removeButtons(chatId, messageId) {
-  if (!TELEGRAM_TOKEN || !chatId || !messageId) return
-
-  await fetch(
-    `https://api.telegram.org/bot${TELEGRAM_TOKEN}/editMessageReplyMarkup`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        message_id: messageId,
-        reply_markup: {
-          inline_keyboard: []
-        }
-      })
-    }
-  )
-}
-
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
@@ -137,10 +116,7 @@ export default async function handler(req, res) {
       callbackData.split(":")
 
     if (!bookingId) {
-      await answerCallback(
-        callback.id,
-        "Reserva inválida."
-      )
+      await answerCallback(callback.id, "Reserva inválida.")
 
       return res.status(400).json({
         error: "missing_booking_id",
@@ -148,17 +124,11 @@ export default async function handler(req, res) {
       })
     }
 
-    const bookingRef =
-      db.ref(`bookings/${bookingId}`)
-
     const bookingSnap =
-      await bookingRef.get()
+      await db.ref(`bookings/${bookingId}`).get()
 
     if (!bookingSnap.exists()) {
-      await answerCallback(
-        callback.id,
-        "La reserva no existe."
-      )
+      await answerCallback(callback.id, "La reserva no existe.")
 
       return res.status(404).json({
         error: "booking_not_found",
@@ -176,17 +146,8 @@ export default async function handler(req, res) {
       booking.createdAt &&
       Date.now() - Number(booking.createdAt) > DAY
 
-    const chatId =
-      callback.message?.chat?.id
-
-    const messageId =
-      callback.message?.message_id
-
-    const originalText =
-      callback.message?.text || ""
-
     if (expired) {
-      await bookingRef.update({
+      await db.ref(`bookings/${bookingId}`).update({
         status: "expired",
         expiredAt: Date.now(),
         reviewedByTelegram: true
@@ -197,14 +158,10 @@ export default async function handler(req, res) {
         "La solicitud expiró."
       )
 
-      await removeButtons(chatId, messageId)
-
       await editMessage(
-        chatId,
-        messageId,
-        `${originalText}
-
-⏰ Solicitud expirada`
+        callback.message?.chat?.id,
+        callback.message?.message_id,
+        `⏰ Solicitud expirada\n\nID: ${bookingId}`
       )
 
       return res.status(200).json({
@@ -221,10 +178,7 @@ export default async function handler(req, res) {
           : null
 
     if (!status) {
-      await answerCallback(
-        callback.id,
-        "Acción inválida."
-      )
+      await answerCallback(callback.id, "Acción inválida.")
 
       return res.status(400).json({
         error: "invalid_action",
@@ -232,7 +186,7 @@ export default async function handler(req, res) {
       })
     }
 
-    await bookingRef.update({
+    await db.ref(`bookings/${bookingId}`).update({
       status,
       reviewedAt: Date.now(),
       reviewedByTelegram: true
@@ -245,18 +199,12 @@ export default async function handler(req, res) {
         : "Reserva rechazada."
     )
 
-    await removeButtons(chatId, messageId)
-
     await editMessage(
-      chatId,
-      messageId,
-      `${originalText}
-
-${
-  status === "confirmed"
-    ? "✅ Reserva confirmada"
-    : "❌ Reserva rechazada"
-}`
+      callback.message?.chat?.id,
+      callback.message?.message_id,
+      status === "confirmed"
+        ? `✅ Reserva confirmada\n\nID: ${bookingId}`
+        : `❌ Reserva rechazada\n\nID: ${bookingId}`
     )
 
     return res.status(200).json({
