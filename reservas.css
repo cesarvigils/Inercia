@@ -147,6 +147,7 @@
   gap: 1rem;
   height: 240px;
   align-content: start;
+  min-height: 260px;
 }
 
 .rig-card {
@@ -584,11 +585,6 @@
       "summary";
 
     margin-top: -80px;
-      position: relative;
-  z-index: 5;
-
-  transform: translateY(-180px);
-  margin: 0 auto 6rem;
   }
 
   .rig-grid {
