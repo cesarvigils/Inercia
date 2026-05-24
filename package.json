@@ -12,6 +12,7 @@
     "vite": "^5.4.21"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "firebase-admin": "^13.10.0",
     "formidable": "^3.5.4",
     "fs": "^0.0.1-security"

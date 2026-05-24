@@ -5,8 +5,7 @@ const PAYPAL_SECRET =
   process.env.PAYPAL_SECRET
 
 const PAYPAL_API =
-  "https://api-m.sandbox.paypal.com"
-
+  "https://api-m.paypal.com"
 const FALLBACK_RATE = 26
 
 async function getExchangeRate() {
