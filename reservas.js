@@ -345,56 +345,64 @@ window.paypal.Buttons({
 
   onApprove: async (data) => {
 
-    try {
+  if (paypalProcessing) return
 
-      const response =
-        await fetch("/api/paypal-capture-order", {
-          method: "POST",
+  paypalProcessing = true
 
-          headers: {
-            "Content-Type": "application/json"
-          },
+  try {
 
-          body: JSON.stringify({
-            orderID: data.orderID
-          })
+    const response =
+      await fetch("/api/paypal-capture-order", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          orderID: data.orderID
         })
+      })
 
-      const details =
-        await response.json()
+    const details =
+      await response.json()
 
-      if (!response.ok) {
+    if (!response.ok) {
 
-        console.error(details)
-
-        alert(
-          "No se pudo confirmar el pago."
-        )
-
-        return
-      }
-
-      state.paypalPaid = true
-      state.paypalOrderId = data.orderID
-      state.paypalDetails = details
+      console.error(details)
 
       alert(
-        "✅ Pago realizado correctamente. Creando reserva..."
+        "No se pudo confirmar el pago."
       )
 
-      if (reserveBtn) {
-        reserveBtn.click()
-      }
-
-    } catch (error) {
-
-      console.error(error)
-
-      alert(
-        "El pago pasó pero ocurrió un error creando la reserva."
-      )
+      return
     }
-  },
+
+    state.paypalPaid = true
+    state.paypalOrderId = data.orderID
+    state.paypalDetails = details
+
+    alert(
+      "✅ Pago aprobado correctamente. Creando reserva..."
+    )
+
+    if (reserveBtn) {
+      reserveBtn.click()
+    }
+
+  } catch (error) {
+
+    console.error(error)
+
+    alert(
+      "El pago pasó pero ocurrió un error creando la reserva."
+    )
+
+  } finally {
+
+    paypalProcessing = false
+  }
+},
 
   onError: (error) => {
 
