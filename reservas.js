@@ -43,6 +43,7 @@ const state = {
 }
 
 let bankProofFile = null
+let paypalProcessing = false
 
 const dateInput = document.getElementById("booking-date")
 const timeButtons = document.querySelectorAll("#time-slots button")
