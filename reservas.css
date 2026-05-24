@@ -1,6 +1,10 @@
+/* =========================
+   HERO
+========================= */
+
 .booking-hero {
   position: relative;
-  height: 620px;
+  min-height: 620px;
   overflow: hidden;
   background: #050505;
   z-index: 1;
@@ -18,8 +22,8 @@
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(0,0,0,.2),
-    rgba(0,0,0,.55),
+    rgba(0, 0, 0, .2),
+    rgba(0, 0, 0, .55),
     #050505 94%
   );
 }
@@ -27,29 +31,40 @@
 .booking-hero-content {
   position: absolute;
   left: 4vw;
-  bottom: 250px;
+  bottom: 230px;
+  width: min(700px, 92%);
+  z-index: 3;
 }
 
 .booking-hero-content span {
+  display: block;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 900;
   letter-spacing: 4px;
   color: #ff8c1a;
+  font-size: .95rem;
 }
 
 .booking-hero-content h1 {
   margin-top: .8rem;
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(3rem, 7vw, 7rem);
+  font-size: clamp(2.7rem, 7vw, 7rem);
   color: white;
-  line-height: .9;
+  line-height: .95;
+  word-break: break-word;
 }
 
 .booking-hero-content p {
   margin-top: 1rem;
-  color: rgba(255,255,255,.72);
-  font-size: 1.2rem;
+  color: rgba(255, 255, 255, .72);
+  font-size: 1.1rem;
+  line-height: 1.5;
+  max-width: 600px;
 }
+
+/* =========================
+   LAYOUT
+========================= */
 
 .booking-page {
   position: relative;
@@ -69,9 +84,9 @@
   min-width: 0;
   overflow: hidden;
 
-  background: rgba(20,20,20,.92);
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 18px;
+  background: rgba(20, 20, 20, .92);
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 22px;
   padding: 1.4rem;
 
   backdrop-filter: blur(12px);
@@ -88,10 +103,15 @@
 
 .booking-note {
   margin-bottom: 1.2rem;
-  color: rgba(255,255,255,.55);
+  color: rgba(255, 255, 255, .55);
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
+  line-height: 1.4;
 }
+
+/* =========================
+   RIGS
+========================= */
 
 .rig-panel {
   grid-column: 1 / 2;
@@ -102,8 +122,6 @@
   grid-template-columns: repeat(5, minmax(72px, 1fr));
   gap: 1rem;
   width: 100%;
-  max-width: 100%;
-  overflow: hidden;
 }
 
 .rig-card {
@@ -113,8 +131,8 @@
   padding: .75rem;
 
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, .025);
 
   color: white;
   cursor: pointer;
@@ -129,14 +147,15 @@
 }
 
 .rig-card:hover {
-  opacity: .8;
-  border-color: rgba(255,140,26,.35);
+  opacity: .85;
+  border-color: rgba(255, 140, 26, .35);
+  transform: translateY(-2px);
 }
 
 .rig-card.active {
   opacity: 1;
   border-color: #ff8c1a;
-  box-shadow: 0 0 25px rgba(255,140,26,.18);
+  box-shadow: 0 0 25px rgba(255, 140, 26, .18);
 }
 
 .rig-card.disabled {
@@ -152,7 +171,8 @@
 
 .rig-card span {
   margin-top: .45rem;
-  max-width: 100%;
+  width: 100%;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -169,21 +189,34 @@
   font-weight: 900;
 }
 
-.booking-date {
-  height: 54px;
-  max-width: 100%;
+/* =========================
+   DATE INPUT
+========================= */
 
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.04);
+.booking-date {
+  width: 100%;
+  height: 54px;
+
+  border: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, .04);
   color: white;
 
   border-radius: 14px;
   padding: 0 1rem;
 
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
+  outline: none;
 }
+
+.booking-date:focus {
+  border-color: #ff8c1a;
+}
+
+/* =========================
+   TIME SLOTS
+========================= */
 
 .time-slots {
   display: flex;
@@ -192,30 +225,39 @@
 }
 
 .time-slots button {
-  height: 40px;
+  min-height: 42px;
   padding: 0 1rem;
 
   border-radius: 999px;
   border: none;
 
-  background: rgba(255,255,255,.08);
+  background: rgba(255, 255, 255, .08);
   color: white;
 
   cursor: pointer;
 
   font-family: 'Rajdhani', sans-serif;
   font-weight: 800;
+
+  transition: .2s ease;
+}
+
+.time-slots button:hover {
+  background: rgba(255, 140, 26, .2);
 }
 
 .time-slots button.active {
   background: #ff8c1a;
 }
 
+/* =========================
+   SUMMARY
+========================= */
+
 .booking-summary {
   position: sticky;
   top: 90px;
   height: fit-content;
-  margin-top: 0;
 }
 
 .summary-card {
@@ -224,7 +266,7 @@
   gap: .8rem;
   align-items: center;
 
-  background: rgba(255,255,255,.06);
+  background: rgba(255, 255, 255, .06);
   border-radius: 14px;
   padding: 1rem;
 }
@@ -238,7 +280,7 @@
 .summary-card h3 {
   color: #ff8c1a;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 
   overflow: hidden;
   text-overflow: ellipsis;
@@ -246,7 +288,7 @@
 }
 
 .summary-card p {
-  color: rgba(255,255,255,.55);
+  color: rgba(255, 255, 255, .55);
   font-size: .9rem;
 
   overflow: hidden;
@@ -260,9 +302,13 @@
   white-space: nowrap;
 }
 
+/* =========================
+   BUTTON
+========================= */
+
 .reserve-confirm {
   width: 100%;
-  height: 56px;
+  min-height: 56px;
 
   margin-top: 1.2rem;
 
@@ -274,6 +320,12 @@
 
   font-family: 'Orbitron', sans-serif;
   cursor: pointer;
+
+  transition: .2s ease;
+}
+
+.reserve-confirm:hover {
+  transform: translateY(-1px);
 }
 
 .reserve-confirm:disabled {
@@ -281,61 +333,10 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 1000px) {
-  .booking-hero {
-    height: 520px;
-  }
+/* =========================
+   PAYMENT
+========================= */
 
-  .booking-hero-content {
-    bottom: 210px;
-  }
-
-  .booking-page {
-    grid-template-columns: 1fr;
-    margin-top: -80px;
-  }
-
-  .booking-summary {
-    position: static;
-    margin-top: 0;
-  }
-
-  .rig-panel {
-    grid-column: auto;
-  }
-
-  .rig-grid {
-    grid-template-columns: repeat(3, minmax(82px, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .booking-hero {
-    height: 470px;
-  }
-
-  .booking-hero-content {
-    left: 1.2rem;
-    bottom: 190px;
-  }
-
-  .booking-page {
-    width: 94%;
-    margin-top: -60px;
-  }
-
-  .rig-grid {
-    grid-template-columns: repeat(2, minmax(82px, 1fr));
-  }
-
-  .summary-card {
-    grid-template-columns: 42px minmax(0, 1fr);
-  }
-
-  .summary-card strong {
-    grid-column: 1 / -1;
-  }
-}
 .payment-panel {
   margin-top: 1.5rem;
 }
@@ -355,9 +356,9 @@
   padding: 1rem;
 
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid rgba(255, 255, 255, .08);
 
-  background: rgba(255,255,255,.03);
+  background: rgba(255, 255, 255, .03);
 
   color: white;
   cursor: pointer;
@@ -367,18 +368,21 @@
 }
 
 .payment-card:hover {
-  border-color: rgba(255,140,26,.35);
+  border-color: rgba(255, 140, 26, .35);
+  transform: translateY(-2px);
 }
 
 .payment-card.active {
   border-color: #ff8c1a;
-  background: rgba(255,140,26,.08);
-  box-shadow: 0 0 30px rgba(255,140,26,.14);
+  background: rgba(255, 140, 26, .08);
+  box-shadow: 0 0 30px rgba(255, 140, 26, .14);
 }
 
 .payment-icon {
   width: 54px;
   height: 54px;
+
+  flex-shrink: 0;
 
   border-radius: 14px;
 
@@ -386,7 +390,7 @@
   align-items: center;
   justify-content: center;
 
-  background: rgba(255,255,255,.06);
+  background: rgba(255, 255, 255, .06);
 
   font-size: 1.5rem;
 }
@@ -398,48 +402,67 @@
 
 .payment-card p {
   margin-top: .3rem;
-  color: rgba(255,255,255,.55);
+  color: rgba(255, 255, 255, .55);
   font-size: .92rem;
+  line-height: 1.4;
 }
 
 .payment-extra {
   margin-top: 1rem;
 }
+
+/* =========================
+   BANK MODAL
+========================= */
+
+.hidden-bank-modal {
+  display: none !important;
+}
+
 .bank-modal {
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  background: rgba(0,0,0,.72);
+  z-index: 99999;
+
+  background: rgba(0, 0, 0, .72);
+
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-}
 
-.hidden-bank-modal {
-  display: none;
+  padding: 1rem;
+  overflow-y: auto;
 }
 
 .bank-modal-box {
   width: min(520px, 100%);
-  background: rgba(18,18,18,.98);
-  border: 1px solid rgba(255,140,26,.35);
+  max-height: 92vh;
+  overflow-y: auto;
+
+  background: #111;
+  border: 1px solid rgba(255, 140, 26, .35);
   border-radius: 22px;
   padding: 1.5rem;
+
   position: relative;
-  box-shadow: 0 0 60px rgba(0,0,0,.45);
+
+  box-shadow: 0 0 60px rgba(0, 0, 0, .45);
 }
 
 .bank-modal-close {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  width: 36px;
-  height: 36px;
+
+  width: 38px;
+  height: 38px;
+
   border: none;
   border-radius: 999px;
-  background: rgba(255,255,255,.08);
+
+  background: rgba(255, 255, 255, .08);
   color: white;
+
   cursor: pointer;
 }
 
@@ -447,16 +470,17 @@
   color: white;
   font-family: 'Orbitron', sans-serif;
   margin-bottom: .7rem;
-  font-size: 1.875rem;
-  letter-spacing: 0.85px;
-
+  font-size: 1.7rem;
+  letter-spacing: .5px;
+  padding-right: 2.5rem;
 }
 
 .bank-owner {
-  color: rgba(255,255,255,.7);
+  color: rgba(255, 255, 255, .7);
   font-family: 'Rajdhani', sans-serif;
   font-size: 1rem;
   margin-bottom: 1rem;
+  line-height: 1.4;
 }
 
 .bank-owner strong {
@@ -470,43 +494,55 @@
 
 .bank-account {
   width: 100%;
+
   display: grid;
-  grid-template-columns: 54px 1fr auto;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
   align-items: center;
   gap: .9rem;
+
   padding: .9rem;
+
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255, 255, 255, .08);
+
+  background: rgba(255, 255, 255, .04);
   color: white;
+
   text-align: left;
   cursor: pointer;
+
+  transition: .2s ease;
 }
 
 .bank-account:hover {
   border-color: #ff8c1a;
-  background: rgba(255,140,26,.1);
+  background: rgba(255, 140, 26, .1);
 }
 
 .bank-account img {
   width: 46px;
   height: 46px;
+
   object-fit: contain;
+
   border-radius: 12px;
-  background: rgba(255,255,255,.06);
+  background: rgba(255, 255, 255, .06);
+
   padding: .35rem;
 }
 
 .bank-account h3 {
   font-family: 'Orbitron', sans-serif;
-  font-size: .95rem;
+  font-size: .92rem;
   margin-bottom: .2rem;
 }
 
 .bank-account p {
-  color: rgba(255,255,255,.65);
+  color: rgba(255, 255, 255, .65);
   font-family: 'Rajdhani', sans-serif;
   font-weight: 800;
+
+  overflow-wrap: anywhere;
 }
 
 .bank-account span {
@@ -518,28 +554,176 @@
 .bank-copy-msg {
   display: block;
   margin-top: 1rem;
+
   color: #ff8c1a;
+
   font-family: 'Rajdhani', sans-serif;
   font-weight: 800;
 }
-.hidden-bank-modal {
-  display: none !important;
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 1000px) {
+
+  .booking-hero {
+    min-height: 540px;
+  }
+
+  .booking-hero-content {
+    left: 1.5rem;
+    right: 1.5rem;
+    bottom: 190px;
+    width: auto;
+  }
+
+  .booking-page {
+    grid-template-columns: 1fr;
+    margin-top: -70px;
+    gap: 1.2rem;
+  }
+
+  .booking-summary {
+    position: static;
+  }
+
+  .rig-panel {
+    grid-column: auto;
+  }
+
+  .rig-grid {
+    grid-template-columns: repeat(3, minmax(90px, 1fr));
+  }
 }
 
-.bank-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  background: rgba(0,0,0,.72);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 560px) {
+
+  .booking-hero {
+    min-height: 470px;
+  }
+
+  .booking-hero-content {
+    left: 1rem;
+    right: 1rem;
+    bottom: 150px;
+  }
+
+  .booking-hero-content span {
+    font-size: .8rem;
+    letter-spacing: 2px;
+  }
+
+  .booking-hero-content h1 {
+    font-size: clamp(2.2rem, 11vw, 3.2rem);
+    line-height: 1;
+  }
+
+  .booking-hero-content p {
+    font-size: .95rem;
+  }
+
+  .booking-page {
+    width: 94%;
+    margin-top: -50px;
+    margin-bottom: 4rem;
+  }
+
+  .booking-panel,
+  .booking-summary {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .rig-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
+  }
+
+  .rig-card {
+    min-height: 115px;
+  }
+
+  .rig-card img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .summary-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: .7rem;
+  }
+
+  .summary-card strong {
+    grid-column: 1 / -1;
+    margin-top: .4rem;
+  }
+
+  .payment-card {
+    align-items: flex-start;
+  }
+
+  .payment-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 1.2rem;
+  }
+
+  .bank-modal-box {
+    padding: 1.1rem;
+    border-radius: 18px;
+  }
+
+  .bank-modal-box h2 {
+    font-size: 1.25rem;
+  }
+
+  .bank-account {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: .7rem;
+  }
+
+  .bank-account span {
+    grid-column: 1 / -1;
+    margin-top: .3rem;
+  }
+
+  .bank-account img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .time-slots button {
+    flex: 1 1 calc(50% - .6rem);
+    justify-content: center;
+  }
+
+  .reserve-confirm {
+    min-height: 54px;
+    font-size: .9rem;
+  }
 }
 
-.bank-modal-box {
-  width: min(520px, 92%);
-  background: #111;
-  border: 1px solid rgba(255,140,26,.35);
-  border-radius: 22px;
-  padding: 1.5rem;
+/* =========================
+   EXTRA SMALL DEVICES
+========================= */
+
+@media (max-width: 380px) {
+
+  .rig-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .time-slots button {
+    flex: 1 1 100%;
+  }
+
+  .payment-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
