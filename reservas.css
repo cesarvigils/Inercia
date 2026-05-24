@@ -85,6 +85,8 @@
 
 .rig-panel {
   grid-area: rigs;
+    min-height: 350px;
+
 }
 
 .date-panel {
@@ -143,6 +145,8 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(72px, 1fr));
   gap: 1rem;
+
+  min-height: 260px;
 }
 
 .rig-card {
@@ -655,4 +659,20 @@
   .time-slots button {
     flex: 1 1 100%;
   }
+}
+@media (max-width: 1000px) {
+
+  .rig-grid {
+    grid-template-columns: repeat(3, minmax(82px, 1fr));
+    min-height: 420px;
+  }
+
+}
+@media (max-width: 560px) {
+
+  .rig-grid {
+    grid-template-columns: repeat(2, minmax(82px, 1fr));
+    min-height: 620px;
+  }
+
 }
