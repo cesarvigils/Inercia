@@ -628,7 +628,23 @@ if (reserveBtn) {
       }
 
       await set(bookingRef, bookingData)
+await fetch("/api/send-booking-email", {
+  method: "POST",
 
+  headers: {
+    "Content-Type": "application/json"
+  },
+
+  body: JSON.stringify({
+    ...bookingData,
+
+    email: state.user.email,
+
+    name: getUserName(),
+
+    bookingId
+  })
+})
       if (state.paymentMethod === "bank") {
         const telegramData = await sendBankProofToTelegram(bookingId, bookingData)
 
