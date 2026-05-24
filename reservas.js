@@ -640,6 +640,7 @@ if (reserveBtn) {
       }
 
       alert("Reserva creada correctamente.")
+      window.location.href = "/mis-reservas"
     } catch (error) {
       console.error(error)
       alert("Error al crear la reserva.")
