@@ -9,8 +9,8 @@ export default defineConfig({
         standings: resolve(__dirname, "standings.html"),
         contacto: resolve(__dirname, "contacto.html"),
         perfil: resolve(__dirname, "perfil.html"),
-        reservas: resolve(__dirname, "reservas.html")
-
+        reservas: resolve(__dirname, "reservas.html"),
+        admin: resolve(__dirname, "admin.html")
       }
     }
   }
