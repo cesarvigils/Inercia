@@ -1,5 +1,9 @@
 import nodemailer from "nodemailer"
-
+console.log({
+  smtpUser: process.env.SMTP_USER,
+  hasPass: Boolean(process.env.SMTP_PASS),
+  passLength: process.env.SMTP_PASS?.length
+})
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
