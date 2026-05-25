@@ -12,22 +12,19 @@
       "source": "/reservas",
       "destination": "/reservas.html"
     },
-        {
+    {
       "source": "/perfil",
       "destination": "/perfil.html"
     },
+
     {
-  "source": "/reservas",
-  "destination": "/reservas.html"
-},
-    {
-      "has": [{ "type": "host", "value": "admin.inerciahn.com" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "admin.inerciahn.com"
+        }
+      ],
       "source": "/",
-      "destination": "/admin.html"
-    },
-    {
-      "has": [{ "type": "host", "value": "admin.inerciahn.com" }],
-      "source": "/:path*",
       "destination": "/admin.html"
     }
   ]
