@@ -15,6 +15,11 @@ import {
   signOut,
   signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
+import {
+  getDatabase,
+  ref,
+  set
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -31,6 +36,7 @@ const app =
     : initializeApp(firebaseConfig)
 
 const auth = getAuth(app)
+const db = getDatabase(app)
 const provider = new GoogleAuthProvider()
 
 function getAuthEls() {
@@ -102,9 +108,15 @@ function initAuthUI() {
   if (el.registerBtn) {
     el.registerBtn.onclick = async () => {
       try {
-        const name = document.getElementById("register-name").value
-        const email = document.getElementById("register-email").value
-        const password = document.getElementById("register-password").value
+        const name = document.getElementById("register-name").value.trim()
+const email = document.getElementById("register-email").value.trim()
+const password = document.getElementById("register-password").value
+const phone = document.getElementById("register-phone").value.trim()
+
+if (!phone) {
+  alert("El teléfono es obligatorio.")
+  return
+}
 
         const cred =
           await createUserWithEmailAndPassword(auth, email, password)
@@ -112,7 +124,14 @@ function initAuthUI() {
         await updateProfile(cred.user, {
           displayName: name
         })
-
+await set(ref(db, `users/${cred.user.uid}`), {
+  uid: cred.user.uid,
+  name,
+  email,
+  phone,
+  photoURL: cred.user.photoURL || "",
+  createdAt: Date.now()
+})
         await sendEmailVerification(cred.user)
 
         alert("Verificación enviada al correo.")

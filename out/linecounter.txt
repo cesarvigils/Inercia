@@ -7,7 +7,7 @@ count workspace : c:\Users\Cesar Vigil\Documents\Web Simuladores Inercia V.1
 total files : 50
 total code lines : 9634
 total comment lines : 78
-total blank lines : 2245
+total blank lines : 0
 
     statistics
    |      extension|     total code|  total comment|    total blank|percent|
