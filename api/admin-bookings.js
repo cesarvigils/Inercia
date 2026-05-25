@@ -1,0 +1,3 @@
+import{adminDb,requireAdmin,sendError}from"./admin-utils.js";
+function isTuesdayToSunday(dateString){const day=new Date(`${dateString}T12:00:00`).getDay();return day===0||(day>=2&&day<=6)}
+export default async function handler(req,res){try{if(req.method!=="GET")return res.status(405).json({error:"method_not_allowed"});await requireAdmin(req);const snap=await adminDb.ref("bookings").get();const data=snap.exists()?snap.val():{};const bookings=Object.entries(data).map(([id,b])=>({id,...b})).filter(b=>b.date&&isTuesdayToSunday(b.date)).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.times?.[0]||"").localeCompare(String(b.times?.[0]||"")));return res.status(200).json({ok:true,bookings})}catch(error){return sendError(res,error)}}
