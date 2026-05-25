@@ -1,0 +1,2 @@
+import{adminDb,requireAdmin,sendError}from"./admin-utils.js";
+export default async function handler(req,res){try{if(req.method!=="GET")return res.status(405).json({error:"method_not_allowed"});await requireAdmin(req);const snap=await adminDb.ref("users").get();const data=snap.exists()?snap.val():{};const users=Object.entries(data).map(([uid,u])=>({uid,...u})).sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));return res.status(200).json({ok:true,users})}catch(error){return sendError(res,error)}}

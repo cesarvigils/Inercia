@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | Simuladores Inercia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+
+<section id="admin-login" class="admin-login">
+  <div class="login-card">
+    <img class="login-logo" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+    <h1>Panel Admin</h1>
+    <p>Acceso privado para administración.</p>
+    <input id="admin-email" type="email" placeholder="Correo admin">
+    <input id="admin-password" type="password" placeholder="Contraseña">
+    <button id="admin-login-btn">Entrar</button>
+    <small id="login-error"></small>
+  </div>
+</section>
+
+<main id="admin-app" class="admin-app hidden">
+  <header class="admin-header">
+    <div>
+      <span>ADMIN.INERCIAHN.COM</span>
+      <h1>Panel de Control</h1>
+    </div>
+    <button id="admin-logout">Cerrar sesión</button>
+  </header>
+
+  <nav class="admin-tabs">
+    <button class="admin-tab active" data-tab="reservas">Reservas</button>
+    <button class="admin-tab" data-tab="promos">Promociones</button>
+    <button class="admin-tab" data-tab="usuarios">Usuarios</button>
+  </nav>
+
+  <section id="tab-reservas" class="admin-section active">
+    <div class="section-head">
+      <div>
+        <h2>Reservas martes a domingo</h2>
+        <p>Vista tipo Trello agrupada por día.</p>
+      </div>
+      <button id="refresh-bookings">Actualizar</button>
+    </div>
+    <div id="bookings-board" class="bookings-board"></div>
+  </section>
+
+  <section id="tab-promos" class="admin-section">
+    <div class="section-head">
+      <div>
+        <h2>Promociones</h2>
+        <p>Precio fijo, porcentaje y horas gratis.</p>
+      </div>
+    </div>
+
+    <div class="promo-grid">
+      <form id="promo-form" class="admin-form">
+        <h3>Crear / modificar promo</h3>
+        <input id="promo-id" type="hidden">
+
+        <label>Nombre</label>
+        <input id="promo-name" type="text" placeholder="Promo de miércoles">
+
+        <label>Tipo de promo</label>
+        <select id="promo-type">
+          <option value="fixed_price">Precio fijo por simulador</option>
+          <option value="percent_discount">Porcentaje de descuento</option>
+        </select>
+
+        <label>Tipo de simulador</label>
+        <select id="promo-simulator-type">
+          <option value="standard">Standard</option>
+          <option value="premium">Premium</option>
+          <option value="all">Todos</option>
+        </select>
+
+        <label>Precio fijo en Lempiras</label>
+        <input id="promo-fixed-price" type="number" min="0" placeholder="Ej: 150">
+
+        <label>Descuento %</label>
+        <input id="promo-percent" type="number" min="0" max="100" placeholder="Ej: 20">
+
+        <label>Activo</label>
+        <select id="promo-active">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+
+        <button type="submit">Guardar promo</button>
+        <button type="button" id="clear-promo">Limpiar</button>
+      </form>
+
+      <div class="promo-list-wrap">
+        <h3>Promos guardadas</h3>
+        <div id="promos-list" class="promos-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-usuarios" class="admin-section">
+    <div class="section-head">
+      <div>
+        <h2>Usuarios</h2>
+        <p>Usuarios registrados y horas gratis.</p>
+      </div>
+      <button id="refresh-users">Actualizar</button>
+    </div>
+
+    <div class="credit-box">
+      <h3>Acreditar horas gratis</h3>
+      <select id="credit-user"></select>
+      <input id="credit-hours" type="number" min="1" placeholder="Horas gratis">
+      <textarea id="credit-note" placeholder="Nota interna"></textarea>
+      <button id="credit-hours-btn">Acreditar</button>
+    </div>
+
+    <div id="users-list" class="users-list"></div>
+  </section>
+</main>
+
+<script type="module" src="/admin.js"></script>
+</body>
+</html>
