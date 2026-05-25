@@ -1,6 +1,6 @@
 .profile-page {
   width: min(1400px, 92%);
-  margin-left: 4vw;
+  margin-left: auto;
   margin-right: auto;
   padding-top: 140px;
   padding-bottom: 5rem;
@@ -32,6 +32,7 @@
 }
 
 .profile-avatar-box {
+  position: relative;
   width: 140px;
   height: 140px;
   margin: 0 auto 1.5rem;
@@ -41,6 +42,8 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 0 45px rgba(255,140,26,.25);
+  cursor: pointer;
+  overflow: hidden;
 }
 
 .profile-avatar-box img {
@@ -48,6 +51,27 @@
   height: 112px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.profile-avatar-box::after {
+  content: "Cambiar";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: white;
+  opacity: 0;
+  transition: .25s;
+}
+
+.profile-avatar-box:hover::after {
+  opacity: 1;
 }
 
 .profile-card h1 {
@@ -118,6 +142,7 @@
 
 .records-panel {
   padding: 2.5rem;
+  overflow: hidden;
 }
 
 .records-panel h2 {
@@ -126,6 +151,7 @@
   font-size: clamp(3rem, 6vw, 6rem);
   line-height: .9;
   color: white;
+  word-break: break-word;
 }
 
 .records-panel p {
@@ -138,9 +164,10 @@
 
 .records-table {
   margin-top: 2.5rem;
-  overflow: hidden;
+  overflow-x: auto;
   border-radius: 24px;
   border: 1px solid rgba(255,255,255,.06);
+  -webkit-overflow-scrolling: touch;
 }
 
 .records-header,
@@ -189,17 +216,40 @@
   font-weight: 700;
 }
 
+.record-category {
+  display: flex;
+  align-items: center;
+}
+
+.record-category-icon {
+  width: 165px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* ========================= */
+/* TABLET */
+/* ========================= */
+
 @media (max-width: 950px) {
+
+  .profile-page {
+    width: 94%;
+    padding-top: 110px;
+  }
+
   .profile-hero {
     grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .profile-card,
+  .records-panel {
+    border-radius: 26px;
   }
 
   .records-panel h2 {
     font-size: 3.5rem;
-  }
-
-  .records-table {
-    overflow-x: auto;
   }
 
   .records-header,
@@ -207,39 +257,169 @@
     min-width: 620px;
   }
 }
-.profile-avatar-box {
-  position: relative;
-  cursor: pointer;
-  overflow: hidden;
+
+/* ========================= */
+/* PHONE */
+/* ========================= */
+
+@media (max-width: 640px) {
+
+  .profile-page {
+    width: 100%;
+    padding-top: 90px;
+    padding-bottom: 3rem;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .profile-hero {
+    gap: 1.2rem;
+  }
+
+  .profile-card,
+  .records-panel {
+    border-radius: 22px;
+  }
+
+  .profile-card {
+    padding: 1.4rem;
+  }
+
+  .records-panel {
+    padding: 1.4rem;
+  }
+
+  .profile-avatar-box {
+    width: 110px;
+    height: 110px;
+    margin-bottom: 1rem;
+  }
+
+  .profile-avatar-box img {
+    width: 88px;
+    height: 88px;
+  }
+
+  .profile-card h1 {
+    font-size: 1.25rem;
+  }
+
+  .profile-card p {
+    font-size: .95rem;
+  }
+
+  .profile-label {
+    font-size: .74rem;
+    margin-top: 1rem;
+  }
+
+  .profile-input {
+    height: 52px;
+    font-size: .95rem;
+    border-radius: 15px;
+  }
+
+  .profile-save {
+    height: 54px;
+    border-radius: 16px;
+    font-size: .92rem;
+  }
+
+  .records-panel h2 {
+    margin-top: 0;
+    font-size: 2.1rem;
+    line-height: 1;
+  }
+
+  .records-panel p {
+    margin-top: .8rem;
+    font-size: .95rem;
+    line-height: 1.5;
+  }
+
+  .records-table {
+    margin-top: 1.5rem;
+    border-radius: 18px;
+  }
+
+  .records-header,
+  .record-row {
+    min-width: 560px;
+    padding: 0 .9rem;
+  }
+
+  .records-header {
+    height: 58px;
+  }
+
+  .record-row {
+    min-height: 62px;
+  }
+
+  .records-header span {
+    font-size: .75rem;
+    letter-spacing: 1px;
+  }
+
+  .record-row span {
+    font-size: .9rem;
+  }
+
+  .record-category-icon {
+    width: 110px;
+  }
+
+  .empty-records {
+    padding: 1.2rem;
+    font-size: .95rem;
+  }
 }
 
-.profile-avatar-box::after {
-  content: "Cambiar";
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: white;
-  opacity: 0;
-  transition: .25s;
-}
+/* ========================= */
+/* SMALL PHONE */
+/* ========================= */
 
-.profile-avatar-box:hover::after {
-  opacity: 1;
-}
-.record-category {
-  display: flex;
-  align-items: center;
-}
+@media (max-width: 420px) {
 
-.record-category-icon {
-width: 165px;
-height: auto;
-  object-fit: contain;
+  .profile-page {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .profile-card,
+  .records-panel {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .profile-avatar-box {
+    width: 95px;
+    height: 95px;
+  }
+
+  .profile-avatar-box img {
+    width: 76px;
+    height: 76px;
+  }
+
+  .profile-card h1 {
+    font-size: 1.1rem;
+  }
+
+  .records-panel h2 {
+    font-size: 1.7rem;
+  }
+
+  .records-panel p {
+    font-size: .88rem;
+  }
+
+  .records-header,
+  .record-row {
+    min-width: 500px;
+  }
+
+  .record-category-icon {
+    width: 90px;
+  }
 }

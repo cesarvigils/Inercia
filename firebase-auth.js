@@ -186,3 +186,11 @@ if (document.readyState === "loading") {
 } else {
   initAuthUI()
 }
+const navToggle = document.getElementById("nav-menu-toggle")
+const navLinks = document.querySelector(".nav-links")
+
+if (navToggle && navLinks) {
+  navToggle.addEventListener("click", () => {
+    navLinks.classList.toggle("open")
+  })
+}

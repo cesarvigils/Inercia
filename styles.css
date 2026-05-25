@@ -2178,3 +2178,57 @@ h2 {
 .hidden-auth{
   display:none!important;
 }
+.nav-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 850px) {
+  .nav-wrapper {
+    position: relative;
+  }
+
+  .nav-menu-toggle {
+    display: flex;
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    background: rgba(255,255,255,.05);
+    color: white;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 1002;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 76px;
+    left: 12px;
+    right: 12px;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    padding: 1rem;
+    border-radius: 22px;
+    background: rgba(12,12,12,.98);
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 24px 70px rgba(0,0,0,.55);
+    z-index: 1001;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-links a {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 14px;
+  }
+
+  .nav-right {
+    margin-left: auto;
+  }
+}
