@@ -1,6 +1,17 @@
 {
   "rewrites": [
     {
+      "has": [
+        {
+          "type": "host",
+          "value": "admin.inerciahn.com"
+        }
+      ],
+      "source": "/",
+      "destination": "/admin.html"
+    },
+
+    {
       "source": "/standings",
       "destination": "/standings.html"
     },
@@ -15,17 +26,6 @@
     {
       "source": "/perfil",
       "destination": "/perfil.html"
-    },
-
-    {
-      "has": [
-        {
-          "type": "host",
-          "value": "admin.inerciahn.com"
-        }
-      ],
-      "source": "/",
-      "destination": "/admin.html"
     }
   ]
 }
