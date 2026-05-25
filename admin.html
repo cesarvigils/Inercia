@@ -46,6 +46,32 @@
       </div>
       <button id="refresh-bookings">Actualizar</button>
     </div>
+    <form id="manual-booking-form" class="manual-booking-form">
+  <h3>Agregar reserva manual</h3>
+
+  <div class="manual-grid">
+    <input id="manual-name" type="text" placeholder="Nombre">
+    <input id="manual-phone" type="tel" placeholder="Teléfono">
+    <input id="manual-email" type="email" placeholder="Correo">
+    <input id="manual-date" type="date">
+
+    <select id="manual-time" multiple>
+      <option value="14:00">2:00 PM - 3:00 PM</option>
+      <option value="15:00">3:00 PM - 4:00 PM</option>
+      <option value="16:00">4:00 PM - 5:00 PM</option>
+      <option value="17:00">5:00 PM - 6:00 PM</option>
+      <option value="18:00">6:00 PM - 7:00 PM</option>
+      <option value="19:00">7:00 PM - 8:00 PM</option>
+      <option value="20:00">8:00 PM - 9:00 PM</option>
+    </select>
+
+    <input id="manual-rigs" type="text" placeholder="Rigs separados por coma. Ej: Rig#1, Premium 1">
+    <input id="manual-total" type="number" min="0" placeholder="Total L">
+  </div>
+
+  <button type="submit">Crear reserva manual</button>
+</form>
+
     <div id="bookings-board" class="bookings-board"></div>
   </section>
 

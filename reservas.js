@@ -91,9 +91,33 @@ function getSubtotalPerHour() {
   return getSelectedRigDetails().reduce((total, rig) => total + rig.price, 0)
 }
 
+function getFreeHoursAvailable() {
+  return Number(state.userProfile?.freeHours || 0)
+}
+
+function hasSelectedStandardRig() {
+  return getSelectedRigDetails().some((rig) => rig.type === "standard")
+}
+
+function getFreeHoursUsed() {
+  if (!hasSelectedStandardRig()) return 0
+
+  return Math.min(
+    getFreeHoursAvailable(),
+    state.timesSelected.length || 0
+  )
+}
+
+function getFreeHoursDiscount() {
+  return getFreeHoursUsed() * 200
+}
+
 function getTotalHNL() {
   const hoursCount = state.timesSelected.length || 1
-  return getSubtotalPerHour() * hoursCount
+  const subtotal = getSubtotalPerHour() * hoursCount
+  const discount = getFreeHoursDiscount()
+
+  return Math.max(0, subtotal - discount)
 }
 
 function getTotalUSD() {
@@ -541,7 +565,17 @@ timeButtons.forEach((button) => {
     updateSummary()
   })
 })
+async function getUserBookingsForDate(uid, date) {
+  const response = await fetch(`/api/user-booking-count?uid=${encodeURIComponent(uid)}&date=${encodeURIComponent(date)}`)
+  const data = await response.json()
 
+  if (!response.ok) {
+    console.error(data)
+    throw new Error("No se pudo verificar límite diario.")
+  }
+
+  return Number(data.count || 0)
+}
 if (reserveBtn) {
   reserveBtn.addEventListener("click", async () => {
     if (!state.user) {
@@ -583,6 +617,20 @@ if (reserveBtn) {
     try {
       reserveBtn.disabled = true
       reserveBtn.textContent = "Reservando..."
+const bookingCountToday = await getUserBookingsForDate(state.user.uid, state.date)
+
+if (bookingCountToday >= 2) {
+  alert("Solo podés hacer 2 reservas por día.")
+  return
+}
+
+const freeHoursAvailable = getFreeHoursAvailable()
+const freeHoursUsed = getFreeHoursUsed()
+const freeHoursDiscount = getFreeHoursDiscount()
+
+if (freeHoursAvailable > 0 && freeHoursUsed > 0) {
+  alert(`Tenés ${freeHoursAvailable} hora(s) gratis. Se aplicará descuento de L ${freeHoursDiscount}.`)
+}
 
       const bookingRef = push(ref(db, "bookings"))
       const bookingId = bookingRef.key
@@ -593,7 +641,8 @@ if (reserveBtn) {
         name: getUserName(),
         email: state.user.email,
         phone: state.userProfile.phone,
-
+freeHoursUsed,
+freeHoursDiscount,
         date: state.date,
         times: state.timesSelected,
         hoursCount: state.timesSelected.length,
@@ -628,6 +677,12 @@ if (reserveBtn) {
       }
 
       await set(bookingRef, bookingData)
+      if (freeHoursUsed > 0) {
+  await set(
+    ref(db, `users/${state.user.uid}/freeHours`),
+    Math.max(0, freeHoursAvailable - freeHoursUsed)
+  )
+}
 await fetch("/api/send-booking-email", {
   method: "POST",
 

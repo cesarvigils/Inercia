@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "has": [{ "type": "host", "value": "admin.inerciahn.com" }],
+      "source": "/",
+      "destination": "/admin.html"
+    },
+    {
+      "has": [{ "type": "host", "value": "admin.inerciahn.com" }],
+      "source": "/:path*",
+      "destination": "/admin.html"
+    }
+  ]
+}
