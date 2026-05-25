@@ -2,104 +2,89 @@
 <html lang="es">
 
 <head>
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Simuladores Inercia</title>
+  <title>Resultados | Simuladores Inercia</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FIcono_Inercia_2026_transparenteconBorde1-01.png?alt=media&token=13110b1e-8a3a-48e1-9b8f-514d60de2fcf">
-
   <link rel="stylesheet" href="/styles.css">
-
 </head>
 
 <body>
-
   <div class="bg-grid"></div>
 
- 
+  <header class="navbar">
 
-  <div id="auth-overlay" class="auth-overlay hidden-auth">
+    <div class="container nav-wrapper">
 
-    <div class="auth-modal">
+      <a href="/" class="logo">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+      </a>
 
-      <button id="close-auth" class="close-auth">
-        ✕
+      <button id="nav-menu-toggle" class="nav-menu-toggle" type="button">
+        ☰
       </button>
 
-      <div class="auth-tabs">
+      <nav class="nav-links">
+        <a href="/standings">Resultados</a>
+        <a href="/reservas">Reservas</a>
+        <a href="/contacto">Contacto</a>
+      </nav>
 
-        <button id="login-tab" class="auth-tab active-tab">
-          Login
-        </button>
+      <div class="nav-right">
+        <div class="nav-auth">
 
-        <button id="register-tab" class="auth-tab">
-          Registro
-        </button>
+          <button id="open-auth" class="nav-btn">
+            Login
+          </button>
 
-      </div>
+          <button id="profile-trigger" class="profile-trigger hidden-auth" type="button">
+            <img id="navbar-pfp" src="/assets/default-user.png" alt="">
+          </button>
 
-      <div id="login-form" class="auth-form">
+          <div id="profile-menu" class="profile-menu hidden-auth">
 
-        <h2>
-          Bienvenido de nuevo.
-        </h2>
+            <div class="profile-avatar-wrap">
+              <img id="profile-menu-pfp" src="/assets/default-user.png" alt="">
+            </div>
 
-        <p>
-          Inicia sesión para competir y reservar.
-        </p>
+            <h3 id="profile-menu-name">
+              Piloto
+            </h3>
 
-        <input id="login-email" type="email" placeholder="Correo electrónico">
+            <p id="profile-menu-email">
+              correo@email.com
+            </p>
 
-        <input id="login-password" type="password" placeholder="Contraseña">
-        <input
-  id="register-phone"
-  type="tel"
-  placeholder="Teléfono">
+            <p id="profile-menu-phone">
+              Sin teléfono
+            </p>
 
-        <button id="login-btn" class="auth-submit">
-          Iniciar Sesión
-        </button>
+            <a href="/perfil" class="profile-link">
+              Mi Perfil
+            </a>
 
-        <button id="google-login" class="google-btn">
-          <span>
-            Continuar con Google
-          </span>
-        </button>
+            <button id="logout-btn" class="logout-btn" type="button">
+              Cerrar Sesión
+            </button>
 
-      </div>
+          </div>
 
-      <div id="register-form" class="auth-form hidden-auth">
-
-        <h2>
-          Crea tu perfil.
-        </h2>
-
-        <p>
-          Únete a la comunidad Inercia.
-        </p>
-
-        <input id="register-name" type="text" placeholder="Nombre de usuario">
-
-        <input id="register-email" type="email" placeholder="Correo electrónico">
-
-        <input id="register-password" type="password" placeholder="Contraseña">
-
-        <button id="register-btn" class="auth-submit">
-          Crear Cuenta
-        </button>
-
+        </div>
       </div>
 
     </div>
 
-  </div>
+  </header>
+<div class="bg-grid"></div>
+
+ 
+
+  
 
   <section class="hero-header">
 
@@ -160,71 +145,83 @@
 
   </main>
 
-  <script type="module" src="./firebase-auth.js"></script>
-  <script type="module" src="./standings.js"></script>
+  <div id="auth-overlay" class="auth-overlay hidden-auth">
 
-</body>
+    <div class="auth-modal">
 
-</html> <header class="navbar">
+      <button id="close-auth" class="close-auth" type="button">
+        ✕
+      </button>
 
-    <div class="container nav-wrapper">
+      <div class="auth-tabs">
 
-      <a href="/" class="logo">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
-      </a>
-<button id="nav-menu-toggle" class="nav-menu-toggle" type="button">
-  ☰
-</button>
-      <nav class="nav-links">
-        <a href="/standings">Resultados</a>
-        <a href="/reservas">Reservas</a>
-        <a href="/contacto">Contacto</a>
-      </nav>
+        <button id="login-tab" class="auth-tab active-tab" type="button">
+          Login
+        </button>
 
-      <div class="nav-right">
+        <button id="register-tab" class="auth-tab" type="button">
+          Registro
+        </button>
 
-        <div class="nav-auth">
+      </div>
 
-          <button id="open-auth" class="nav-btn">
-            Login
-          </button>
+      <div id="login-form" class="auth-form">
 
-          <button id="profile-trigger" class="profile-trigger hidden-auth">
-            <img id="navbar-pfp" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fimages.jpg?alt=media&token=35f503b6-a785-422b-90aa-638379b45349" alt="">
-          </button>
+        <h2>
+          Bienvenido de nuevo.
+        </h2>
 
-          <div id="profile-menu" class="profile-menu hidden-auth">
+        <p>
+          Inicia sesión para competir y reservar.
+        </p>
 
-            <div class="profile-avatar-wrap">
-              <img id="profile-menu-pfp" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fimages.jpg?alt=media&token=35f503b6-a785-422b-90aa-638379b45349" alt="">
-            </div>
+        <input id="login-email" type="email" placeholder="Correo electrónico">
 
-            <h3 id="profile-menu-name">
-              Piloto
-            </h3>
+        <input id="login-password" type="password" placeholder="Contraseña">
 
-            <p id="profile-menu-email">
-              correo@email.com
-            </p>
+        <button id="login-btn" class="auth-submit" type="button">
+          Iniciar Sesión
+        </button>
 
-            <p id="profile-menu-phone">
-              Sin teléfono
-            </p>
+        <button id="google-login" class="google-btn" type="button">
+          <span>
+            Continuar con Google
+          </span>
+        </button>
 
-            <a href="/perfil" class="profile-link">
-              Mi Perfil
-            </a>
+      </div>
 
-            <button id="logout-btn" class="logout-btn">
-              Cerrar Sesión
-            </button>
+      <div id="register-form" class="auth-form hidden-auth">
 
-          </div>
+        <h2>
+          Crea tu perfil.
+        </h2>
 
-        </div>
+        <p>
+          Únete a la comunidad Inercia.
+        </p>
+
+        <input id="register-name" type="text" placeholder="Nombre de usuario">
+
+        <input id="register-email" type="email" placeholder="Correo electrónico">
+
+        <input id="register-phone" type="tel" placeholder="Teléfono">
+
+        <input id="register-password" type="password" placeholder="Contraseña">
+
+        <button id="register-btn" class="auth-submit" type="button">
+          Crear Cuenta
+        </button>
 
       </div>
 
     </div>
 
-  </header>
+  </div>
+
+  <script type="module" src="/firebase-auth.js"></script>
+  <script type="module" src="/standings.js"></script>
+
+</body>
+
+</html>
