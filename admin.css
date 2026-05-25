@@ -1,1 +1,78 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,rgba(255,140,26,.14),transparent 34%),#050505;color:#fff;font-family:'Inter',sans-serif}.hidden{display:none!important}.admin-login{min-height:100vh;display:grid;place-items:center;padding:1rem}.login-card{width:min(430px,100%);padding:2rem;border-radius:28px;background:rgba(15,15,15,.96);border:1px solid rgba(255,255,255,.08);box-shadow:0 35px 90px rgba(0,0,0,.55)}.login-logo{width:210px;display:block;margin-bottom:1.5rem}.login-card h1,.admin-header h1,.section-head h2{font-family:'Orbitron',sans-serif;margin:0}.login-card p,.section-head p{color:rgba(255,255,255,.58)}.login-card input,.admin-form input,.admin-form select,.credit-box input,.credit-box select,.credit-box textarea{width:100%;height:52px;margin-top:.75rem;padding:0 1rem;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.045);color:white;outline:none}.admin-form select,.credit-box select{background:#111}.credit-box textarea{min-height:84px;padding-top:1rem;resize:vertical}button{border:none;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:900}.login-card button,.admin-form button,.credit-box button,.section-head button,.admin-header button{min-height:48px;padding:0 1.2rem;border-radius:14px;background:#ff8c1a;color:white;margin-top:1rem}#login-error{display:block;margin-top:1rem;color:#ff5c5c}.admin-app{width:min(1600px,96%);margin:0 auto;padding:2rem 0 5rem}.admin-header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.4rem;border-radius:26px;background:rgba(15,15,15,.94);border:1px solid rgba(255,255,255,.08)}.admin-header span{color:#ff8c1a;font-family:'Rajdhani',sans-serif;font-weight:900;letter-spacing:2px}.admin-tabs{display:flex;gap:.8rem;margin:1.2rem 0;overflow-x:auto}.admin-tab{min-width:150px;height:48px;border-radius:999px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.65)}.admin-tab.active{background:#ff8c1a;color:white}.admin-section{display:none}.admin-section.active{display:block}.section-head{display:flex;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:1rem}.bookings-board{display:grid;grid-template-columns:repeat(6,minmax(260px,1fr));gap:1rem;overflow-x:auto;padding-bottom:1rem}.day-column{min-width:260px;background:rgba(15,15,15,.9);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:1rem}.day-column h3{margin:0 0 1rem;font-family:'Orbitron',sans-serif;font-size:.95rem;color:#ff8c1a}.booking-card{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:1rem;margin-bottom:.8rem}.booking-card strong{font-family:'Rajdhani',sans-serif;font-size:1.15rem}.booking-card p{margin:.45rem 0;color:rgba(255,255,255,.66);font-size:.9rem}.status-pill{display:inline-block;margin-top:.5rem;padding:.28rem .7rem;border-radius:999px;background:rgba(255,140,26,.18);color:#ff8c1a;font-family:'Rajdhani',sans-serif;font-weight:900}.promo-grid{display:grid;grid-template-columns:420px 1fr;gap:1rem}.admin-form,.promo-list-wrap,.credit-box,.users-list{padding:1.2rem;border-radius:22px;background:rgba(15,15,15,.9);border:1px solid rgba(255,255,255,.08)}.admin-form label{display:block;margin-top:1rem;color:rgba(255,255,255,.6);font-family:'Rajdhani',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:1px}.promo-card,.user-card{display:grid;gap:.45rem;padding:1rem;margin-bottom:.8rem;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08)}.promo-card h4,.user-card h4{margin:0;color:#ff8c1a}.promo-actions{display:flex;gap:.5rem;flex-wrap:wrap}.promo-actions button{padding:.55rem .85rem;border-radius:10px;color:white;background:rgba(255,255,255,.12)}.promo-actions button.delete{background:rgba(255,60,60,.22)}.credit-box{margin-bottom:1rem;display:grid;grid-template-columns:1fr 160px 1fr auto;gap:.7rem;align-items:start}.credit-box h3{grid-column:1/-1;margin:0}@media(max-width:1050px){.bookings-board{grid-template-columns:repeat(6,280px)}.promo-grid,.credit-box{grid-template-columns:1fr}.admin-header,.section-head{align-items:flex-start;flex-direction:column}}@media(max-width:600px){.admin-app{width:100%;padding:.8rem .8rem 4rem}.admin-header{border-radius:20px}.admin-header h1{font-size:1.4rem}.bookings-board{grid-template-columns:repeat(6,86vw)}}
+.manual-booking-form {
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+  border-radius: 22px;
+  background: rgba(15,15,15,.9);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.manual-booking-form h3 {
+  margin: 0 0 1rem;
+  color: #ff8c1a;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.manual-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
+}
+
+.manual-grid input,
+.manual-grid select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 1rem;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: #111;
+  color: white;
+  outline: none;
+}
+
+.manual-grid select[multiple] {
+  min-height: 116px;
+  padding: .75rem;
+}
+
+.booking-actions {
+  display: flex;
+  gap: .45rem;
+  margin-top: .8rem;
+  flex-wrap: wrap;
+}
+
+.booking-actions button {
+  padding: .5rem .72rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,.12);
+  color: white;
+}
+
+.booking-actions button.complete { background: rgba(40,180,90,.28); }
+.booking-actions button.delete { background: rgba(255,55,55,.22); }
+
+.status-paid,
+.status-confirmed,
+.status-completed {
+  background: rgba(40,180,90,.18);
+  color: #2ee87a;
+}
+
+.status-pending_bank_review,
+.status-pending_cash,
+.status-admin_manual {
+  background: rgba(255,140,26,.18);
+  color: #ff8c1a;
+}
+
+.status-rejected,
+.status-expired {
+  background: rgba(255,55,55,.18);
+  color: #ff6262;
+}
+
+@media (max-width: 950px) {
+  .manual-grid { grid-template-columns: 1fr; }
+}

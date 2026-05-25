@@ -23,3 +23,162 @@ document.getElementById("refresh-bookings").onclick=loadBookings;document.getEle
 document.getElementById("promo-form").onsubmit=async e=>{e.preventDefault();const payload={id:document.getElementById("promo-id").value.trim()||null,name:document.getElementById("promo-name").value.trim(),type:document.getElementById("promo-type").value,simulatorType:document.getElementById("promo-simulator-type").value,fixedPrice:Number(document.getElementById("promo-fixed-price").value||0),percent:Number(document.getElementById("promo-percent").value||0),active:document.getElementById("promo-active").value==="true"};await adminFetch("/api/admin-promos",{method:"POST",body:JSON.stringify(payload)});clearPromoForm();await loadPromos()};
 document.getElementById("credit-hours-btn").onclick=async()=>{const uid=creditUser.value,hours=Number(document.getElementById("credit-hours").value||0),note=document.getElementById("credit-note").value.trim();if(!uid||hours<=0){alert("Seleccioná usuario y horas.");return}await adminFetch("/api/admin-credit-hours",{method:"POST",body:JSON.stringify({uid,hours,note})});document.getElementById("credit-hours").value="";document.getElementById("credit-note").value="";await loadUsers();alert("Horas acreditadas.")};
 onAuthStateChanged(auth,async user=>{if(!user){loginScreen.classList.remove("hidden");adminApp.classList.add("hidden");return}try{await bootAdmin()}catch(error){console.error(error);await signOut(auth);loginError.textContent="Este usuario no tiene permiso de admin.";loginScreen.classList.remove("hidden");adminApp.classList.add("hidden")}});
+function getStatusInfo(status) {
+  const map = {
+    paid: "Pagada",
+    confirmed: "Confirmada",
+    completed: "Completada",
+    pending_bank_review: "Pendiente transferencia",
+    pending_cash: "Pendiente efectivo",
+    admin_manual: "Manual admin",
+    rejected: "Rechazada",
+    expired: "Expirada"
+  }
+
+  return map[status] || status || "Pendiente"
+}
+
+function renderBookings(bookings) {
+  const days = [
+    { key: 2, label: "Martes" },
+    { key: 3, label: "Miércoles" },
+    { key: 4, label: "Jueves" },
+    { key: 5, label: "Viernes" },
+    { key: 6, label: "Sábado" },
+    { key: 0, label: "Domingo" }
+  ]
+
+  bookingsBoard.innerHTML = ""
+
+  days.forEach((day) => {
+    const column = document.createElement("div")
+    column.className = "day-column"
+
+    const items = bookings
+      .filter((booking) => getDayKey(booking.date) === day.key)
+      .sort((a, b) => String(a.times?.[0] || "").localeCompare(String(b.times?.[0] || "")))
+
+    column.innerHTML = `<h3>${day.label}</h3>`
+
+    if (!items.length) {
+      column.innerHTML += `<div class="booking-card"><p>Sin reservas</p></div>`
+    }
+
+    items.forEach((booking) => {
+      const card = document.createElement("div")
+      const status = booking.status || "pending"
+
+      card.className = "booking-card"
+
+      card.innerHTML = `
+        <strong>${booking.name || "Cliente"}</strong>
+        <p>${formatDate(booking.date)}</p>
+        <p><b>Hora:</b> ${(booking.times || []).join(", ")}</p>
+        <p><b>Tel:</b> ${booking.phone || "-"}</p>
+        <p><b>Correo:</b> ${booking.email || "-"}</p>
+        <p><b>Rigs:</b> ${normalizeRigs(booking)}</p>
+        <p><b>Total:</b> L ${Number(booking.totalHNL || booking.total || 0).toFixed(2)}</p>
+        <span class="status-pill status-${status}">${getStatusInfo(status)}</span>
+
+        <div class="booking-actions">
+          <button class="complete" data-complete="${booking.id}">Completar</button>
+          <button data-confirm="${booking.id}">Confirmar</button>
+          <button data-reject="${booking.id}">Rechazar</button>
+          <button class="delete" data-delete="${booking.id}">Borrar</button>
+        </div>
+      `
+
+      card.querySelector("[data-complete]").onclick = async () => {
+        if (!confirm("¿Completar y quitar esta reserva de la lista?")) return
+
+        await adminFetch("/api/admin-bookings", {
+          method: "PATCH",
+          body: JSON.stringify({
+            id: booking.id,
+            action: "complete"
+          })
+        })
+
+        await loadBookings()
+      }
+
+      card.querySelector("[data-confirm]").onclick = async () => {
+        await adminFetch("/api/admin-bookings", {
+          method: "PATCH",
+          body: JSON.stringify({
+            id: booking.id,
+            status: "confirmed"
+          })
+        })
+
+        await loadBookings()
+      }
+
+      card.querySelector("[data-reject]").onclick = async () => {
+        await adminFetch("/api/admin-bookings", {
+          method: "PATCH",
+          body: JSON.stringify({
+            id: booking.id,
+            status: "rejected"
+          })
+        })
+
+        await loadBookings()
+      }
+
+      card.querySelector("[data-delete]").onclick = async () => {
+        if (!confirm("¿Borrar esta reserva?")) return
+
+        await adminFetch(`/api/admin-bookings?id=${booking.id}`, {
+          method: "DELETE"
+        })
+
+        await loadBookings()
+      }
+
+      column.appendChild(card)
+    })
+
+    bookingsBoard.appendChild(column)
+  })
+}
+
+const manualBookingForm = document.getElementById("manual-booking-form")
+
+if (manualBookingForm) {
+  manualBookingForm.onsubmit = async (event) => {
+    event.preventDefault()
+
+    const times = Array.from(document.getElementById("manual-time").selectedOptions)
+      .map((option) => option.value)
+
+    const rigs = document.getElementById("manual-rigs").value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+    const payload = {
+      name: document.getElementById("manual-name").value.trim(),
+      phone: document.getElementById("manual-phone").value.trim(),
+      email: document.getElementById("manual-email").value.trim(),
+      date: document.getElementById("manual-date").value,
+      times,
+      rigs,
+      totalHNL: Number(document.getElementById("manual-total").value || 0)
+    }
+
+    if (!payload.name || !payload.phone || !payload.email || !payload.date || !times.length || !rigs.length) {
+      alert("Llená todos los campos de la reserva manual.")
+      return
+    }
+
+    await adminFetch("/api/admin-bookings", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    })
+
+    manualBookingForm.reset()
+    await loadBookings()
+    alert("Reserva manual creada.")
+  }
+}
