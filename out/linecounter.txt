@@ -1,0 +1,72 @@
+===============================================================================
+EXTENSION NAME : linecounter
+EXTENSION VERSION : 0.2.7
+-------------------------------------------------------------------------------
+count time : 2026-05-24 23:17:42
+count workspace : c:\Users\Cesar Vigil\Documents\Web Simuladores Inercia V.1
+total files : 50
+total code lines : 9634
+total comment lines : 78
+total blank lines : 2245
+
+    statistics
+   |      extension|     total code|  total comment|    total blank|percent|
+   -------------------------------------------------------------------------
+   |          .html|           1870|              6|            678|     19|
+   |           .css|           2872|             62|            987|     30|
+   |          .json|           2998|              0|            100|     31|
+   |               |             31|              0|              5|   0.32|
+   |            .js|           1811|             10|            475|     19|
+   |           .svg|             52|              0|              0|   0.54|
+   -------------------------------------------------------------------------
+.gitignore, code is 31, comment is 0, blank is 5.
+api\paypal-capture-order.js, code is 61, comment is 0, blank is 25.
+api\paypal-create-order.js, code is 128, comment is 0, blank is 54.
+api\send-booking-email.js, code is 81, comment is 0, blank is 15.
+api\standings.js, code is 19, comment is 1, blank is 11.
+api\telegram-booking-action.js, code is 181, comment is 2, blank is 42.
+api\telegram-send-proof.js, code is 105, comment is 1, blank is 19.
+assets\default-user.png, it is a binary file.
+contacto.css, code is 206, comment is 4, blank is 81.
+contacto.html, code is 143, comment is 2, blank is 36.
+dist\assets\contacto-8OrDIPMK.css, code is 1, comment is 0, blank is 0.
+dist\assets\default-user-RzG1OWQi.png, it is a binary file.
+dist\assets\firebase-auth-CAIJIEad.js, code is 1, comment is 0, blank is 0.
+dist\assets\firebase-auth-DXQygPmQ.css, code is 1, comment is 1, blank is 0.
+dist\assets\perfil-6SCpVzPo.js, code is 20, comment is 0, blank is 0.
+dist\assets\perfil-BKENHoqB.css, code is 1, comment is 0, blank is 0.
+dist\assets\reservas-Bc60BJLd.js, code is 28, comment is 1, blank is 1.
+dist\assets\reservas-CwbqQOiZ.css, code is 1, comment is 0, blank is 0.
+dist\assets\standings-Cgiolh_o.js, code is 22, comment is 0, blank is 3.
+dist\contacto.html, code is 143, comment is 2, blank is 36.
+dist\favicon.svg, code is 1, comment is 0, blank is 0.
+dist\icons.svg, code is 24, comment is 0, blank is 0.
+dist\index.html, code is 286, comment is 1, blank is 47.
+dist\perfil.html, code is 111, comment is 0, blank is 52.
+dist\reservas.html, code is 218, comment is 0, blank is 108.
+dist\standings.html, code is 143, comment is 0, blank is 81.
+firebase-auth.js, code is 161, comment is 0, blank is 27.
+index.html, code is 305, comment is 1, blank is 68.
+package-lock.json, code is 2953, comment is 0, blank is 100.
+package.json, code is 21, comment is 0, blank is 0.
+paypal-loader.js, code is 16, comment is 1, blank is 5.
+perfil.css, code is 348, comment is 9, blank is 68.
+perfil.html, code is 111, comment is 0, blank is 52.
+perfil.js, code is 257, comment is 0, blank is 75.
+public\favicon.svg, code is 1, comment is 0, blank is 0.
+public\icons.svg, code is 24, comment is 0, blank is 0.
+reservas.css, code is 466, comment is 36, blank is 168.
+reservas.html, code is 267, comment is 0, blank is 117.
+reservas.js, code is 534, comment is 0, blank is 149.
+src\assets\hero.png, it is a binary file.
+src\assets\javascript.svg, code is 1, comment is 0, blank is 0.
+src\assets\vite.svg, code is 1, comment is 0, blank is 0.
+src\counter.js, code is 9, comment is 0, blank is 0.
+src\main.js, code is 55, comment is 0, blank is 5.
+src\style.css, code is 258, comment is 0, blank is 38.
+standings.html, code is 143, comment is 0, blank is 81.
+standings.js, code is 118, comment is 4, blank is 42.
+styles.css, code is 1590, comment is 12, blank is 632.
+vercel.json, code is 24, comment is 0, blank is 0.
+vite.config.js, code is 15, comment is 0, blank is 2.
+===============================================================================

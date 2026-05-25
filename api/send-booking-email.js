@@ -94,8 +94,3 @@ const transporter =
     })
   }
 }
-console.log({
-  smtpUser: process.env.SMTP_USER,
-  hasPass: Boolean(process.env.SMTP_PASS),
-  passLength: process.env.SMTP_PASS?.length
-})
