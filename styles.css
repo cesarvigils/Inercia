@@ -2232,3 +2232,520 @@ h2 {
     margin-left: auto;
   }
 }
+/* ================= MOBILE FULL FIX ================= */
+
+@media (max-width: 900px) {
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .container,
+  .hero-content,
+  .hero-header,
+  .standings-wrapper,
+  .section-grid,
+  .event-wrapper,
+  .pricing-grid,
+  .footer-grid {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* ================= NAVBAR ================= */
+
+  .navbar {
+    height: 74px;
+    padding: 0;
+  }
+
+  .nav-wrapper {
+    height: 74px;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .logo img {
+    width: 115px;
+  }
+
+  .nav-menu-toggle {
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 78px;
+    left: 12px;
+    right: 12px;
+
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+
+    padding: 1rem;
+
+    border-radius: 24px;
+
+    background: rgba(8,8,8,.98);
+
+    border: 1px solid rgba(255,255,255,.08);
+
+    box-shadow: 0 25px 70px rgba(0,0,0,.55);
+
+    z-index: 9999;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-links a {
+    width: 100%;
+    padding: 1rem 1rem;
+    border-radius: 14px;
+    font-size: 1rem;
+  }
+
+  .nav-links a::after {
+    display: none;
+  }
+
+  .nav-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: .5rem;
+  }
+
+  .nav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ================= HERO ================= */
+
+  .hero {
+    min-height: 100svh;
+    padding-top: 90px;
+    align-items: center;
+  }
+
+  .hero-content {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+
+    width: 100%;
+    padding-inline: 1.2rem;
+    padding-bottom: 2rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 14vw, 4.4rem);
+    line-height: .95;
+    letter-spacing: -2px;
+    max-width: 100%;
+  }
+
+  .hero p {
+    margin-top: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 100%;
+  }
+
+  .hero-actions {
+    margin-top: 2rem;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    width: 100%;
+    height: 56px;
+    border-radius: 18px;
+  }
+
+  /* ================= GENERAL ================= */
+
+  section {
+    padding: 80px 0;
+  }
+
+  h2 {
+    font-size: clamp(2rem, 9vw, 3rem);
+    line-height: 1.05;
+  }
+
+  .section-grid,
+  .event-wrapper,
+  .footer-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .section-text p,
+  .event-left p,
+  .cta-box p {
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+
+  .section-image img {
+    border-radius: 24px;
+  }
+
+  /* ================= SIM GRID ================= */
+
+  .sim-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .sim-image img {
+    height: 240px;
+  }
+
+  .sim-info {
+    padding: 1.4rem;
+  }
+
+  /* ================= EVENTS ================= */
+
+  .event-card {
+    padding: 1.2rem;
+    gap: 1rem;
+    border-radius: 24px;
+  }
+
+  .event-card span {
+    font-size: 2rem;
+    min-width: 50px;
+  }
+
+  .event-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .event-card p {
+    font-size: .95rem;
+    line-height: 1.6;
+  }
+
+  .event-logos {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .event-logos img {
+    height: 34px;
+  }
+
+  /* ================= PRICING ================= */
+
+  .pricing-grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .price-card {
+    width: 100%;
+    min-height: auto;
+    padding: 2rem 1.4rem;
+    border-radius: 28px;
+  }
+
+  .premium {
+    transform: none;
+  }
+
+  .card-label {
+    font-size: .9rem;
+    letter-spacing: 2px;
+  }
+
+  .price-number,
+  .currency {
+    font-size: 3.2rem;
+    letter-spacing: -2px;
+  }
+
+  .time-row {
+    gap: .8rem;
+    margin-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .time-row span {
+    font-size: 1.5rem;
+  }
+
+  .time-row p {
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+
+  .feature-list {
+    gap: .8rem;
+  }
+
+  .feature-list li {
+    font-size: .95rem;
+    line-height: 1.5;
+  }
+
+  .wheel-icon {
+    width: 88px;
+    height: 88px;
+  }
+
+  .wheel-icon img {
+    width: 34px;
+  }
+
+  /* ================= CTA ================= */
+
+  .cta-box {
+    padding: 2.5rem 1.4rem;
+    border-radius: 28px;
+  }
+
+  /* ================= FOOTER ================= */
+
+  .footer {
+    padding: 60px 0;
+  }
+
+  .footer-grid {
+    gap: 2.5rem;
+  }
+
+  .footer-logo {
+    width: 150px;
+  }
+
+  /* ================= STANDINGS ================= */
+
+  .hero-header {
+    width: 100%;
+    margin: 0;
+    padding: 110px 1rem 2rem;
+  }
+
+  .hero-header h1 {
+    font-size: clamp(2.3rem, 11vw, 4rem);
+    letter-spacing: -1px;
+    line-height: .95;
+    padding-bottom: 0;
+  }
+
+  .standings-topbar {
+    position: relative;
+    top: auto;
+    right: auto;
+
+    width: 100%;
+
+    margin-bottom: 1rem;
+    padding-inline: 1rem;
+
+    justify-content: stretch;
+  }
+
+  .standings-dropdown {
+    width: 100%;
+    margin: 0;
+  }
+
+  .standings-dropdown select {
+    width: 100%;
+    height: 54px;
+    font-size: .82rem;
+    padding-inline: 1rem;
+  }
+
+  .standings-wrapper {
+    width: calc(100% - 2rem);
+    margin: 0 auto;
+    border-radius: 18px;
+    overflow-x: auto;
+  }
+
+  .table-header,
+  .driver-row {
+    min-width: 640px;
+    grid-template-columns: 80px 1.3fr 1fr 1fr;
+  }
+
+  .table-header {
+    padding: .8rem;
+    font-size: .85rem;
+    letter-spacing: 1px;
+  }
+
+  .driver-row {
+    padding: .9rem .8rem;
+  }
+
+  .driver-info h3 {
+    font-size: .9rem;
+    gap: .5rem;
+  }
+
+  .driver-tag-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .lap-time,
+  .gap,
+  .position {
+    font-size: .85rem;
+  }
+
+  /* ================= AUTH MODAL ================= */
+
+  .auth-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .auth-modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 28px 28px 0 0;
+    padding: 1.5rem;
+  }
+
+  .auth-form h2 {
+    font-size: 1.8rem;
+  }
+
+  .auth-form p {
+    font-size: .95rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .auth-form input,
+  #login-form input,
+  #register-form input {
+    height: 54px;
+    border-radius: 16px;
+    font-size: .95rem;
+  }
+
+  .auth-submit,
+  .google-btn {
+    height: 54px;
+    border-radius: 16px;
+    font-size: .95rem;
+  }
+
+  .auth-tabs button {
+    height: 48px;
+    font-size: .9rem;
+  }
+
+  .close-auth {
+    width: 42px;
+    height: 42px;
+    top: 14px;
+    right: 14px;
+  }
+
+  /* ================= PROFILE MENU ================= */
+
+  .profile-menu {
+    width: 280px;
+    right: -8px;
+    top: 58px;
+    padding: 1.5rem 1.2rem;
+  }
+
+  .profile-avatar-wrap {
+    width: 72px;
+    height: 72px;
+  }
+
+  .profile-avatar-wrap img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .profile-menu h3 {
+    font-size: 1rem;
+  }
+
+  .profile-menu p {
+    font-size: .9rem;
+  }
+
+  /* ================= RESERVE BUTTON ================= */
+
+  .reserve-btn {
+    height: 68px;
+    border-radius: 20px;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    margin-top: 2rem;
+  }
+
+}
+
+/* ================= EXTRA SMALL DEVICES ================= */
+
+@media (max-width: 480px) {
+
+  .hero h1 {
+    font-size: 2.8rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  .hero p,
+  .section-text p,
+  .event-left p,
+  .feature-card p,
+  .sim-info p {
+    font-size: .95rem;
+  }
+
+  .price-number,
+  .currency {
+    font-size: 2.7rem;
+  }
+
+  .price-card {
+    padding: 1.6rem 1.2rem;
+  }
+
+  .event-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .event-card span {
+    margin-bottom: .5rem;
+  }
+
+  .cta-box {
+    padding: 2rem 1.2rem;
+  }
+
+}
