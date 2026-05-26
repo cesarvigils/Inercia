@@ -695,3 +695,134 @@ onAuthStateChanged(auth, async (user) => {
     adminApp.classList.add("hidden")
   }
 })
+const rigButtons = document.querySelectorAll(".manual-rig-btn");
+const manualRigsInput = document.getElementById("manualRigs");
+const manualTotalInput = document.getElementById("manualTotal");
+
+/* =========================================
+   PROMOS DINAMICAS
+========================================= */
+
+function calculatePromo(baseTotal, rigs){
+
+  const premiumCount = rigs.filter(r =>
+    r.toLowerCase().includes("premium")
+  ).length;
+
+  const standardCount = rigs.length - premiumCount;
+
+  let discount = 0;
+  let promoName = "";
+
+  /* =========================================
+     STANDARD PROMOS
+  ========================================= */
+
+  if(standardCount >= 2){
+    discount = 0.10;
+    promoName = "Promo x2";
+  }
+
+  if(standardCount >= 4){
+    discount = 0.15;
+    promoName = "Promo x4";
+  }
+
+  if(standardCount >= 6){
+    discount = 0.20;
+    promoName = "Promo x6";
+  }
+
+  if(standardCount >= 8){
+    discount = 0.25;
+    promoName = "Promo Full Standard";
+  }
+
+  /* =========================================
+     PREMIUM BONUS
+  ========================================= */
+
+  if(premiumCount >= 2){
+
+    discount += 0.05;
+    promoName += " + Premium Bonus";
+  }
+
+  /* limite */
+  if(discount > 0.35){
+    discount = 0.35;
+  }
+
+  const finalTotal = baseTotal - (baseTotal * discount);
+
+  return {
+    total: finalTotal,
+    discount,
+    promoName
+  };
+}
+
+/* =========================================
+   UPDATE TOTAL
+========================================= */
+
+function updateManualTotal(){
+
+  const selectedBtns = document.querySelectorAll(
+    ".manual-rig-btn.active"
+  );
+
+  const rigs = [];
+
+  let baseTotal = 0;
+
+  selectedBtns.forEach(btn => {
+
+    const rigName = btn.dataset.rig;
+    const price = Number(btn.dataset.price);
+
+    rigs.push(rigName);
+
+    baseTotal += price;
+  });
+
+  const promo = calculatePromo(baseTotal, rigs);
+
+  manualRigsInput.value = rigs.join(", ");
+
+  if(baseTotal <= 0){
+
+    manualTotalInput.value = "";
+
+    return;
+  }
+
+  /* mostrar promo */
+  if(promo.discount > 0){
+
+    manualTotalInput.value =
+      `L ${promo.total.toFixed(2)} (${promo.promoName})`;
+
+  } else {
+
+    manualTotalInput.value =
+      `L ${baseTotal.toFixed(2)}`;
+  }
+}
+
+/* =========================================
+   SELECT
+========================================= */
+
+rigButtons.forEach(btn => {
+
+  btn.addEventListener("click", () => {
+
+    btn.classList.toggle("active");
+
+    updateManualTotal();
+  });
+
+});
+
+updateManualTotal();
