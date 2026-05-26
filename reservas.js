@@ -918,7 +918,30 @@ document
 
     renderCalendar()
   })
+document.getElementById("close-bank-modal")?.addEventListener("click", () => {
+  document
+    .getElementById("bank-modal")
+    ?.classList.add("hidden-bank-modal")
+})
 
+document.querySelectorAll(".bank-account").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const value = button.dataset.copy || ""
+
+    await navigator.clipboard.writeText(value)
+
+    const msg =
+      document.getElementById("bank-copy-msg")
+
+    if (msg) {
+      msg.textContent = "Cuenta copiada."
+
+      setTimeout(() => {
+        msg.textContent = ""
+      }, 2000)
+    }
+  })
+})
 renderCalendar()
 loadPromos()
 loadRigs()
