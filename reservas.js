@@ -682,6 +682,57 @@ function renderCalendar() {
 
     daysBox.appendChild(btn)
   }
+  const bookingData = {
+  uid: state.user.uid,
+  name: getUserName(),
+  email: state.user.email,
+  phone: state.userProfile.phone,
+
+  rigs: state.rigsSelected,
+  rigDetails: selectedRigDetails,
+  rigsCount: state.rigsSelected.length,
+
+  times: state.timesSelected,
+  hoursCount: state.timesSelected.length,
+
+  date: state.date,
+
+  subtotalPerHour: getSubtotalPerHour(),
+  total: getTotal(),
+
+  paymentMethod: state.paymentMethod,
+  paypalPaid: state.paypalPaid,
+  paypalOrderId: state.paypalOrderId,
+  paypalDetails: state.paypalDetails,
+
+  status:
+    state.paymentMethod === "card"
+      ? "paid"
+      : "pending",
+
+  createdAt: Date.now()
+}
+
+await set(bookingRef, bookingData)
+const bookingId = bookingRef.key
+
+const whatsappMessage =
+  `Nueva reserva Inercia%0A%0A` +
+  `ID: ${bookingId}%0A` +
+  `Cliente: ${bookingData.name}%0A` +
+  `Teléfono: ${bookingData.phone}%0A` +
+  `Correo: ${bookingData.email || "-"}%0A` +
+  `Fecha: ${bookingData.date}%0A` +
+  `Hora: ${bookingData.times.join(", ")}%0A` +
+  `Rigs: ${bookingData.rigs.join(", ")}%0A` +
+  `Total: L ${Number(bookingData.total || 0).toFixed(2)}%0A` +
+  `Pago: ${bookingData.paymentMethod}%0A` +
+  `Estado: ${bookingData.status}`
+
+window.open(
+  `https://wa.me/50493266075?text=${whatsappMessage}`,
+  "_blank"
+)
 }
 
 document.getElementById("calendar-prev")?.addEventListener("click", () => {
