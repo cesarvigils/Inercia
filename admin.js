@@ -1,4 +1,12 @@
-import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
+/* =========================================
+   FIREBASE
+========================================= */
+
+import {
+  initializeApp,
+  getApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
 
 import {
   getAuth,
@@ -6,6 +14,10 @@ import {
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
+
+/* =========================================
+   CONFIG
+========================================= */
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,13 +29,19 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-const app = getApps().length
-  ? getApp()
-  : initializeApp(firebaseConfig)
+/* =========================================
+   INIT
+========================================= */
+
+const app =
+  getApps().length
+    ? getApp()
+    : initializeApp(firebaseConfig)
 
 const auth = getAuth(app)
 
-const $ = (id) => document.getElementById(id)
+const $ = (id) =>
+  document.getElementById(id)
 
 /* =========================================
    ELEMENTS
@@ -31,20 +49,20 @@ const $ = (id) => document.getElementById(id)
 
 const loginScreen = $("admin-login")
 const adminApp = $("admin-app")
+
 const emailInput = $("admin-email")
 const passwordInput = $("admin-password")
+
 const loginBtn = $("admin-login-btn")
-const loginError = $("login-error")
 const logoutBtn = $("admin-logout")
 
+const loginError = $("login-error")
+
 const bookingsBoard = $("bookings-board")
-const usersList = $("users-list")
-const creditUser = $("credit-user")
 
 const salesRange = $("sales-range")
 const salesTotal = $("sales-total")
 const salesList = $("sales-list")
-const productsList = $("products-list")
 
 /* =========================================
    PRICES
@@ -54,7 +72,7 @@ const STANDARD_PRICE = 200
 const PREMIUM_PRICE = 350
 
 /* =========================================
-   HELPERS
+   TOKEN
 ========================================= */
 
 async function getToken() {
@@ -66,7 +84,14 @@ async function getToken() {
   return await auth.currentUser.getIdToken(true)
 }
 
-async function adminFetch(url, options = {}) {
+/* =========================================
+   FETCH
+========================================= */
+
+async function adminFetch(
+  url,
+  options = {}
+) {
 
   const token = await getToken()
 
@@ -79,14 +104,31 @@ async function adminFetch(url, options = {}) {
     }
   })
 
-  const data = await response.json()
+  const data =
+    await response.json()
 
   if (!response.ok) {
+
     console.error(data)
-    throw new Error(data.error || "admin_request_failed")
+
+    throw new Error(
+      data.error ||
+      "admin_request_failed"
+    )
   }
 
   return data
+}
+
+/* =========================================
+   HELPERS
+========================================= */
+
+function formatMoney(value) {
+
+  return `L ${Number(
+    value || 0
+  ).toFixed(2)}`
 }
 
 function formatDate(dateString) {
@@ -102,11 +144,8 @@ function formatDate(dateString) {
   })
 }
 
-function formatMoney(value) {
-  return `L ${Number(value || 0).toFixed(2)}`
-}
-
 function getDayKey(dateString) {
+
   return new Date(
     `${dateString}T12:00:00`
   ).getDay()
@@ -114,17 +153,34 @@ function getDayKey(dateString) {
 
 function normalizeRigs(booking) {
 
-  if (Array.isArray(booking.rigDetails)) {
+  if (
+    Array.isArray(
+      booking.rigDetails
+    )
+  ) {
+
     return booking.rigDetails
-      .map((r) => r.name || r.id || r)
+      .map(
+        r =>
+          r.name ||
+          r.id ||
+          r
+      )
       .join(", ")
   }
 
-  if (Array.isArray(booking.rigs)) {
+  if (
+    Array.isArray(
+      booking.rigs
+    )
+  ) {
+
     return booking.rigs
-      .map((r) => typeof r === "string"
-        ? r
-        : r.name
+      .map(
+        r =>
+          typeof r === "string"
+            ? r
+            : r.name
       )
       .join(", ")
   }
@@ -138,14 +194,21 @@ function getStatusInfo(status) {
     paid: "Pagada",
     confirmed: "Confirmada",
     completed: "Completada",
-    pending_bank_review: "Pendiente transferencia",
-    pending_cash: "Pendiente efectivo",
-    admin_manual: "Manual admin",
+    pending_bank_review:
+      "Pendiente transferencia",
+    pending_cash:
+      "Pendiente efectivo",
+    admin_manual:
+      "Manual admin",
     rejected: "Rechazada",
     expired: "Expirada"
   }
 
-  return map[status] || status || "Pendiente"
+  return (
+    map[status] ||
+    status ||
+    "Pendiente"
+  )
 }
 
 /* =========================================
@@ -153,6 +216,8 @@ function getStatusInfo(status) {
 ========================================= */
 
 function renderBookings(bookings) {
+
+  if (!bookingsBoard) return
 
   const days = [
     { key: 2, label: "Martes" },
@@ -165,24 +230,33 @@ function renderBookings(bookings) {
 
   bookingsBoard.innerHTML = ""
 
-  days.forEach((day) => {
+  days.forEach(day => {
 
-    const column = document.createElement("div")
-    column.className = "day-column"
+    const column =
+      document.createElement("div")
+
+    column.className =
+      "day-column"
 
     const items = bookings
       .filter(
-        (booking) =>
-          getDayKey(booking.date) === day.key
+        booking =>
+          getDayKey(
+            booking.date
+          ) === day.key
       )
       .sort((a, b) =>
-        String(a.times?.[0] || "")
-          .localeCompare(
-            String(b.times?.[0] || "")
+        String(
+          a.times?.[0] || ""
+        ).localeCompare(
+          String(
+            b.times?.[0] || ""
           )
+        )
       )
 
-    column.innerHTML = `<h3>${day.label}</h3>`
+    column.innerHTML =
+      `<h3>${day.label}</h3>`
 
     if (!items.length) {
 
@@ -193,33 +267,34 @@ function renderBookings(bookings) {
       `
     }
 
-    items.forEach((booking) => {
+    items.forEach(booking => {
 
-      const card = document.createElement("div")
+      const card =
+        document.createElement(
+          "div"
+        )
 
       const status =
-        booking.status || "pending"
+        booking.status ||
+        "pending"
 
-      card.className = "booking-card"
+      card.className =
+        "booking-card"
 
       card.innerHTML = `
-        <strong>${booking.name || "Cliente"}</strong>
+        <strong>
+          ${booking.name || "Cliente"}
+        </strong>
 
-        <p>${formatDate(booking.date)}</p>
+        <p>
+          ${formatDate(
+            booking.date
+          )}
+        </p>
 
         <p>
           <b>Hora:</b>
           ${(booking.times || []).join(", ")}
-        </p>
-
-        <p>
-          <b>Tel:</b>
-          ${booking.phone || "-"}
-        </p>
-
-        <p>
-          <b>Correo:</b>
-          ${booking.email || "-"}
         </p>
 
         <p>
@@ -239,269 +314,27 @@ function renderBookings(bookings) {
         <span class="status-pill status-${status}">
           ${getStatusInfo(status)}
         </span>
-
-        <div class="booking-actions">
-          <button class="complete" data-complete="${booking.id}">
-            Completar
-          </button>
-
-          <button data-confirm="${booking.id}">
-            Confirmar
-          </button>
-
-          <button data-reject="${booking.id}">
-            Rechazar
-          </button>
-
-          <button class="delete" data-delete="${booking.id}">
-            Borrar
-          </button>
-        </div>
       `
-
-      card.querySelector("[data-complete]").onclick = async () => {
-
-        if (!confirm(
-          "¿Completar y quitar esta reserva de la lista?"
-        )) return
-
-        await adminFetch(
-          "/api/admin?action=bookings",
-          {
-            method: "PATCH",
-            body: JSON.stringify({
-              id: booking.id,
-              action: "complete"
-            })
-          }
-        )
-
-        await Promise.all([
-          loadBookings(),
-          loadSales()
-        ])
-      }
-
-      card.querySelector("[data-confirm]").onclick = async () => {
-
-        await adminFetch(
-          "/api/admin?action=bookings",
-          {
-            method: "PATCH",
-            body: JSON.stringify({
-              id: booking.id,
-              status: "confirmed"
-            })
-          }
-        )
-
-        await loadBookings()
-      }
-
-      card.querySelector("[data-reject]").onclick = async () => {
-
-        await adminFetch(
-          "/api/admin?action=bookings",
-          {
-            method: "PATCH",
-            body: JSON.stringify({
-              id: booking.id,
-              status: "rejected"
-            })
-          }
-        )
-
-        await loadBookings()
-      }
-
-      card.querySelector("[data-delete]").onclick = async () => {
-
-        if (!confirm(
-          "¿Borrar esta reserva?"
-        )) return
-
-        await adminFetch(
-          `/api/admin?action=bookings&id=${booking.id}`,
-          {
-            method: "DELETE"
-          }
-        )
-
-        await Promise.all([
-          loadBookings(),
-          loadSales()
-        ])
-      }
 
       column.appendChild(card)
     })
 
-    bookingsBoard.appendChild(column)
+    bookingsBoard.appendChild(
+      column
+    )
   })
 }
 
 async function loadBookings() {
 
-  const data = await adminFetch(
-    "/api/admin?action=bookings"
+  const data =
+    await adminFetch(
+      "/api/admin?action=bookings"
+    )
+
+  renderBookings(
+    data.bookings || []
   )
-
-  renderBookings(data.bookings || [])
-}
-
-/* =========================================
-   PROMOS
-========================================= */
-
-function calculatePromo(baseTotal, rigs) {
-
-  /*
-    NO HAY DESCUENTOS AUTOMATICOS
-  */
-
-  return baseTotal;
-}
-/* =========================================
-   MANUAL TOTAL
-========================================= */
-
-function updateManualTotal() {
-
-  const selectedBtns = document.querySelectorAll(
-    ".manual-rig-btn.active"
-  );
-
-  const rigs = [];
-
-  const selectedTimes = Array.from(
-    document.getElementById("manual-time").selectedOptions
-  );
-
-  const hoursCount = selectedTimes.length || 1;
-
-  let baseTotal = 0;
-
-  selectedBtns.forEach(btn => {
-
-    const rigName = (
-      btn.dataset.rig ||
-      btn.textContent ||
-      ""
-    ).trim();
-
-    rigs.push(rigName);
-
-    let rigPrice = 0;
-
-    if (
-      rigName.toLowerCase().includes("premium")
-    ) {
-
-      rigPrice = 350;
-
-    } else {
-
-      rigPrice = 200;
-    }
-
-    /*
-      MULTIPLICAR POR HORAS
-    */
-
-    baseTotal += rigPrice * hoursCount;
-
-  });
-
-  const manualRigsInput =
-    document.getElementById("manual-rigs") ||
-    document.getElementById("manualRigs");
-
-  const manualTotalInput =
-    document.getElementById("manual-total") ||
-    document.getElementById("manualTotal");
-
-  if (manualRigsInput) {
-    manualRigsInput.value = rigs.join(", ");
-  }
-
-  if (!manualTotalInput) return;
-
-  if (baseTotal <= 0) {
-
-    manualTotalInput.value = "";
-
-    return;
-  }
-
-  manualTotalInput.value = `L ${baseTotal}`;
-}
-document
-  .getElementById("manual-time")
-  .addEventListener("change", updateManualTotal);
-/* =========================================
-   RIG BUTTONS
-========================================= */
-
-document
-  .querySelectorAll(".manual-rig-btn")
-  .forEach(btn => {
-
-    btn.addEventListener("click", () => {
-
-      btn.classList.toggle("active")
-
-      updateManualTotal()
-    })
-  })
-
-/* =========================================
-   USERS
-========================================= */
-
-function renderUsers(users) {
-
-  usersList.innerHTML = ""
-  creditUser.innerHTML = ""
-
-  users.forEach((user) => {
-
-    const option =
-      document.createElement("option")
-
-    option.value = user.uid
-
-    option.textContent =
-      `${user.name || "Usuario"} · ${user.email || user.uid}`
-
-    creditUser.appendChild(option)
-
-    const card =
-      document.createElement("div")
-
-    card.className = "user-card"
-
-    card.innerHTML = `
-      <h4>${user.name || "Usuario"}</h4>
-      <span>${user.email || "-"}</span>
-      <span>Tel: ${user.phone || "-"}</span>
-      <span>UID: ${user.uid}</span>
-      <span>
-        Horas gratis:
-        ${Number(user.freeHours || 0)}
-      </span>
-    `
-
-    usersList.appendChild(card)
-  })
-}
-
-async function loadUsers() {
-
-  const data = await adminFetch(
-    "/api/admin?action=users"
-  )
-
-  renderUsers(data.users || [])
 }
 
 /* =========================================
@@ -509,13 +342,11 @@ async function loadUsers() {
 ========================================= */
 
 let currentSalesType = "all"
-let cachedSales = []
-let cachedSalesTotal = 0
 
-function renderSales(sales, total) {
-
-  cachedSales = sales
-  cachedSalesTotal = total
+function renderSales(
+  sales,
+  total
+) {
 
   if (salesTotal) {
     salesTotal.textContent =
@@ -531,7 +362,8 @@ function renderSales(sales, total) {
       ? sales
       : sales.filter(
           sale =>
-            sale.type === currentSalesType
+            sale.type ===
+            currentSalesType
         )
 
   if (!filtered.length) {
@@ -545,38 +377,31 @@ function renderSales(sales, total) {
     return
   }
 
-  filtered.forEach((sale) => {
+  filtered.forEach(sale => {
 
     const card =
-      document.createElement("div")
+      document.createElement(
+        "div"
+      )
 
-    card.className = "sale-card"
+    card.className =
+      "sale-card"
 
     card.innerHTML = `
-      <h4>${sale.description || "Venta"}</h4>
+      <h4>
+        ${sale.description || "Venta"}
+      </h4>
 
       <p>
         <b>Monto:</b>
-        ${formatMoney(sale.amount)}
+        ${formatMoney(
+          sale.amount
+        )}
       </p>
 
       <p>
         <b>Método:</b>
         ${sale.method || "-"}
-      </p>
-
-      <p>
-        <b>Tipo:</b>
-        ${sale.type || "-"}
-      </p>
-
-      <p>
-        <b>Fecha:</b>
-        ${new Date(
-          Number(
-            sale.createdAt || Date.now()
-          )
-        ).toLocaleString("es-HN")}
       </p>
     `
 
@@ -588,9 +413,10 @@ async function loadSales() {
 
   if (!salesRange) return
 
-  const data = await adminFetch(
-    `/api/admin?action=sales&range=${salesRange.value}`
-  )
+  const data =
+    await adminFetch(
+      `/api/admin?action=sales&range=${salesRange.value}`
+    )
 
   renderSales(
     data.sales || [],
@@ -599,68 +425,157 @@ async function loadSales() {
 }
 
 /* =========================================
-   LOGIN
+   PROMOS
 ========================================= */
 
-loginBtn.onclick = async () => {
+function calculatePromo(
+  baseTotal
+) {
 
-  try {
+  /*
+    SIN DESCUENTOS AUTOMATICOS
+  */
 
-    loginError.textContent = ""
-
-    await signInWithEmailAndPassword(
-      auth,
-      emailInput.value.trim(),
-      passwordInput.value
-    )
-
-  } catch (error) {
-
-    console.error(error)
-
-    loginError.textContent =
-      "No se pudo iniciar sesión."
-  }
-}
-
-logoutBtn.onclick = async () => {
-
-  await signOut(auth)
-
-  window.location.reload()
+  return baseTotal
 }
 
 /* =========================================
-   TABS
+   TOTAL
+========================================= */
+
+function updateManualTotal() {
+
+  const selectedBtns =
+    document.querySelectorAll(
+      ".manual-rig-btn.active"
+    )
+
+  const rigs = []
+
+  const timeSelect =
+    document.getElementById(
+      "manual-time"
+    )
+
+  const selectedTimes =
+    timeSelect
+      ? Array.from(
+          timeSelect.selectedOptions
+        )
+      : []
+
+  const hoursCount =
+    selectedTimes.length || 1
+
+  let baseTotal = 0
+
+  selectedBtns.forEach(btn => {
+
+    const rigName = (
+      btn.dataset.rig ||
+      btn.textContent ||
+      ""
+    ).trim()
+
+    rigs.push(rigName)
+
+    let rigPrice = 0
+
+    if (
+      rigName
+        .toLowerCase()
+        .includes("premium")
+    ) {
+
+      rigPrice =
+        PREMIUM_PRICE
+
+    } else {
+
+      rigPrice =
+        STANDARD_PRICE
+    }
+
+    baseTotal +=
+      rigPrice *
+      hoursCount
+  })
+
+  const rigsInput =
+    document.getElementById(
+      "manual-rigs"
+    ) ||
+    document.getElementById(
+      "manualRigs"
+    )
+
+  const totalInput =
+    document.getElementById(
+      "manual-total"
+    ) ||
+    document.getElementById(
+      "manualTotal"
+    )
+
+  if (rigsInput) {
+
+    rigsInput.value =
+      rigs.join(", ")
+  }
+
+  if (!totalInput) return
+
+  const finalTotal =
+    calculatePromo(
+      baseTotal
+    )
+
+  if (finalTotal <= 0) {
+
+    totalInput.value = ""
+
+    return
+  }
+
+  totalInput.value =
+    `L ${finalTotal}`
+}
+
+/* =========================================
+   BUTTONS
 ========================================= */
 
 document
-  .querySelectorAll(".admin-tab")
-  .forEach((tab) => {
+  .querySelectorAll(
+    ".manual-rig-btn"
+  )
+  .forEach(btn => {
 
-    tab.onclick = () => {
+    btn.addEventListener(
+      "click",
+      () => {
 
-      document
-        .querySelectorAll(".admin-tab")
-        .forEach((i) =>
-          i.classList.remove("active")
+        btn.classList.toggle(
+          "active"
         )
 
-      document
-        .querySelectorAll(".admin-section")
-        .forEach((i) =>
-          i.classList.remove("active")
-        )
-
-      tab.classList.add("active")
-
-      document
-        .getElementById(
-          `tab-${tab.dataset.tab}`
-        )
-        .classList.add("active")
-    }
+        updateManualTotal()
+      }
+    )
   })
+
+const timeSelector =
+  document.getElementById(
+    "manual-time"
+  )
+
+if (timeSelector) {
+
+  timeSelector.addEventListener(
+    "change",
+    updateManualTotal
+  )
+}
 
 /* =========================================
    MANUAL BOOKING
@@ -672,35 +587,83 @@ const manualBookingForm =
 if (manualBookingForm) {
 
   manualBookingForm.onsubmit =
-    async (event) => {
+    async event => {
 
       event.preventDefault()
 
-      const times = Array.from(
-        $("manual-time").selectedOptions
-      ).map(option => option.value)
+      const timeSelect =
+        $("manual-time")
+
+      const times =
+        timeSelect
+          ? Array.from(
+              timeSelect.selectedOptions
+            ).map(
+              option =>
+                option.value
+            )
+          : []
+
+      const rigsInput =
+        document.getElementById(
+          "manual-rigs"
+        ) ||
+        document.getElementById(
+          "manualRigs"
+        )
+
+      const totalInput =
+        document.getElementById(
+          "manual-total"
+        ) ||
+        document.getElementById(
+          "manualTotal"
+        )
 
       const rigs = (
-        $("manual-rigs").value || ""
+        rigsInput?.value ||
+        ""
       )
         .split(",")
-        .map(item => item.trim())
+        .map(
+          item =>
+            item.trim()
+        )
         .filter(Boolean)
 
       const totalValue =
         String(
-          $("manual-total").value || ""
-        )
-          .replace(/[^\d]/g, "")
+          totalInput?.value ||
+          ""
+        ).replace(/[^\d]/g, "")
 
       const payload = {
-        name: $("manual-name").value.trim(),
-        phone: $("manual-phone").value.trim(),
-        email: $("manual-email").value.trim(),
-        date: $("manual-date").value,
+        name:
+          $("manual-name")
+            ?.value
+            ?.trim() || "",
+
+        phone:
+          $("manual-phone")
+            ?.value
+            ?.trim() || "",
+
+        email:
+          $("manual-email")
+            ?.value
+            ?.trim() || "",
+
+        date:
+          $("manual-date")
+            ?.value || "",
+
         times,
         rigs,
-        totalHNL: Number(totalValue || 0)
+
+        totalHNL:
+          Number(
+            totalValue || 0
+          )
       }
 
       if (
@@ -722,7 +685,9 @@ if (manualBookingForm) {
         "/api/admin?action=bookings",
         {
           method: "POST",
-          body: JSON.stringify(payload)
+          body: JSON.stringify(
+            payload
+          )
         }
       )
 
@@ -732,9 +697,12 @@ if (manualBookingForm) {
         .querySelectorAll(
           ".manual-rig-btn.active"
         )
-        .forEach(btn =>
-          btn.classList.remove("active")
-        )
+        .forEach(btn => {
+
+          btn.classList.remove(
+            "active"
+          )
+        })
 
       updateManualTotal()
 
@@ -743,9 +711,92 @@ if (manualBookingForm) {
         loadSales()
       ])
 
-      alert("Reserva creada.")
+      alert(
+        "Reserva creada."
+      )
     }
 }
+
+/* =========================================
+   LOGIN
+========================================= */
+
+loginBtn.onclick =
+  async () => {
+
+    try {
+
+      loginError.textContent =
+        ""
+
+      await signInWithEmailAndPassword(
+        auth,
+        emailInput.value.trim(),
+        passwordInput.value
+      )
+
+    } catch (error) {
+
+      console.error(error)
+
+      loginError.textContent =
+        "No se pudo iniciar sesión."
+    }
+  }
+
+logoutBtn.onclick =
+  async () => {
+
+    await signOut(auth)
+
+    window.location.reload()
+  }
+
+/* =========================================
+   TABS
+========================================= */
+
+document
+  .querySelectorAll(
+    ".admin-tab"
+  )
+  .forEach(tab => {
+
+    tab.onclick = () => {
+
+      document
+        .querySelectorAll(
+          ".admin-tab"
+        )
+        .forEach(i =>
+          i.classList.remove(
+            "active"
+          )
+        )
+
+      document
+        .querySelectorAll(
+          ".admin-section"
+        )
+        .forEach(i =>
+          i.classList.remove(
+            "active"
+          )
+        )
+
+      tab.classList.add(
+        "active"
+      )
+
+      document
+        .getElementById(
+          `tab-${tab.dataset.tab}`
+        )
+        ?.classList.add(
+          "active"
+        )
+    }
+  })
 
 /* =========================================
    AUTH
@@ -753,15 +804,15 @@ if (manualBookingForm) {
 
 onAuthStateChanged(
   auth,
-  async (user) => {
+  async user => {
 
     if (!user) {
 
-      loginScreen.classList.remove(
+      loginScreen?.classList.remove(
         "hidden"
       )
 
-      adminApp.classList.add(
+      adminApp?.classList.add(
         "hidden"
       )
 
@@ -770,17 +821,16 @@ onAuthStateChanged(
 
     try {
 
-      loginScreen.classList.add(
+      loginScreen?.classList.add(
         "hidden"
       )
 
-      adminApp.classList.remove(
+      adminApp?.classList.remove(
         "hidden"
       )
 
       await Promise.all([
         loadBookings(),
-        loadUsers(),
         loadSales()
       ])
 
