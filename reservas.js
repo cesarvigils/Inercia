@@ -918,27 +918,43 @@ document
 
     renderCalendar()
   })
-document.getElementById("close-bank-modal")?.addEventListener("click", () => {
-  document
-    .getElementById("bank-modal")
-    ?.classList.add("hidden-bank-modal")
+const bankModal =
+  document.getElementById("bank-modal")
+
+const closeBankModal =
+  document.getElementById("close-bank-modal")
+
+closeBankModal?.addEventListener("click", () => {
+  bankModal?.classList.add("hidden-bank-modal")
+})
+
+bankModal?.addEventListener("click", (event) => {
+  if (event.target === bankModal) {
+    bankModal.classList.add("hidden-bank-modal")
+  }
 })
 
 document.querySelectorAll(".bank-account").forEach((button) => {
   button.addEventListener("click", async () => {
-    const value = button.dataset.copy || ""
+    const number = button.dataset.copy || ""
 
-    await navigator.clipboard.writeText(value)
+    try {
+      await navigator.clipboard.writeText(number)
 
-    const msg =
-      document.getElementById("bank-copy-msg")
+      const msg =
+        document.getElementById("bank-copy-msg")
 
-    if (msg) {
-      msg.textContent = "Cuenta copiada."
+      if (msg) {
+        msg.textContent =
+          `Cuenta copiada: ${number}`
 
-      setTimeout(() => {
-        msg.textContent = ""
-      }, 2000)
+        setTimeout(() => {
+          msg.textContent = ""
+        }, 2500)
+      }
+    } catch (error) {
+      console.error(error)
+      alert("No se pudo copiar la cuenta.")
     }
   })
 })
