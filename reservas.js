@@ -620,6 +620,81 @@ onAuthStateChanged(auth, async (user) => {
 
   await loadUserProfile(user)
 })
+let calendarDate = new Date()
+
+function renderCalendar() {
+  const title = document.getElementById("calendar-title")
+  const daysBox = document.getElementById("calendar-days")
+
+  if (!title || !daysBox) return
+
+  const year = calendarDate.getFullYear()
+  const month = calendarDate.getMonth()
+
+  title.textContent = calendarDate.toLocaleDateString("es-HN", {
+    month: "long",
+    year: "numeric"
+  })
+
+  daysBox.innerHTML = ""
+
+  const firstDay = new Date(year, month, 1).getDay()
+  const lastDate = new Date(year, month + 1, 0).getDate()
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  for (let i = 0; i < firstDay; i++) {
+    daysBox.appendChild(document.createElement("div"))
+  }
+
+  for (let day = 1; day <= lastDate; day++) {
+    const date = new Date(year, month, day)
+    const dateValue = date.toISOString().split("T")[0]
+
+    const btn = document.createElement("button")
+    btn.type = "button"
+    btn.className = "calendar-day"
+    btn.textContent = day
+
+    const isMonday = date.getDay() === 1
+    const isPast = date < today
+
+    if (isMonday) btn.classList.add("monday")
+
+    if (isMonday || isPast) {
+      btn.classList.add("disabled")
+      btn.disabled = true
+    }
+
+    if (state.date === dateValue) {
+      btn.classList.add("active")
+    }
+
+    btn.onclick = () => {
+      state.date = dateValue
+      dateInput.value = dateValue
+
+      resetPaymentState()
+      updateSummary()
+      renderCalendar()
+      renderRigs()
+    }
+
+    daysBox.appendChild(btn)
+  }
+}
+
+document.getElementById("calendar-prev")?.addEventListener("click", () => {
+  calendarDate.setMonth(calendarDate.getMonth() - 1)
+  renderCalendar()
+})
+
+document.getElementById("calendar-next")?.addEventListener("click", () => {
+  calendarDate.setMonth(calendarDate.getMonth() + 1)
+  renderCalendar()
+})
+
+renderCalendar()
 loadPromos()
 loadRigs()
 renderPaymentUI()

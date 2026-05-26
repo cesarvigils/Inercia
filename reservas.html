@@ -115,8 +115,27 @@
         2. Seleccioná la fecha
       </h2>
 
-      <input id="booking-date" class="booking-date" type="date">
+<input id="booking-date" type="hidden">
 
+<div class="custom-calendar">
+  <div class="calendar-head">
+    <button id="calendar-prev" type="button">‹</button>
+    <h3 id="calendar-title"></h3>
+    <button id="calendar-next" type="button">›</button>
+  </div>
+
+  <div class="calendar-weekdays">
+    <span>Dom</span>
+    <span>Lun</span>
+    <span>Mar</span>
+    <span>Mié</span>
+    <span>Jue</span>
+    <span>Vie</span>
+    <span>Sáb</span>
+  </div>
+
+  <div id="calendar-days" class="calendar-days"></div>
+</div>
     </section>
 
     <section class="booking-panel time-panel">
