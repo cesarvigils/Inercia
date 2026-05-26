@@ -76,7 +76,18 @@ const defaultRigs = [
   { id: "premium1", name: "Premium 1", type: "premium", active: true },
   { id: "premium2", name: "Premium 2", type: "premium", active: true }
 ]
+let activePromos = []
+async function loadPromos() {
+  const snap = await get(ref(db, "admin/promotions"))
 
+  const data = snap.exists()
+    ? snap.val()
+    : {}
+
+  activePromos = Object.values(data).filter((promo) => promo.active !== false)
+
+  updateSummary()
+}
 function getUserName() {
   return (
     state.userProfile?.name ||
@@ -86,7 +97,49 @@ function getUserName() {
 }
 
 function getRigPrice(rig) {
-  return rig.type === "premium" ? 350 : 200
+  const basePrice =
+    rig.type === "premium"
+      ? 350
+      : 200
+
+  const date =
+    state.date || document.getElementById("booking-date")?.value
+
+  const day =
+    date
+      ? new Date(`${date}T12:00:00`).getDay()
+      : null
+
+  const promo = activePromos.find((promo) => {
+    const appliesType =
+      promo.simulatorType === "all" ||
+      promo.simulatorType === rig.type
+
+    const appliesDay =
+      !promo.days ||
+      !promo.days.length ||
+      promo.days.includes(day)
+
+    const appliesDate =
+      !promo.endsAt ||
+      !date ||
+      date <= promo.endsAt
+
+    return appliesType && appliesDay && appliesDate
+  })
+
+  if (!promo) return basePrice
+
+  if (promo.type === "fixed_price") {
+    return Number(promo.fixedPrice || basePrice)
+  }
+
+  if (promo.type === "percent_discount") {
+    const discount = Number(promo.percent || 0)
+    return Math.max(0, basePrice - basePrice * (discount / 100))
+  }
+
+  return basePrice
 }
 
 function getSelectedRigDetails() {
@@ -517,7 +570,7 @@ onAuthStateChanged(auth, async (user) => {
 
   await loadUserProfile(user)
 })
-
+loadPromos()
 loadRigs()
 renderPaymentUI()
 updateSummary()
