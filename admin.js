@@ -355,37 +355,12 @@ async function loadBookings() {
 
 function calculatePromo(baseTotal, rigs) {
 
-  const premiumCount = rigs.filter(r =>
-    r.toLowerCase().includes("premium")
-  ).length
-
-  const standardCount =
-    rigs.length - premiumCount
-
-  let discount = 0
-
   /*
-    SOLO STANDARD TIENE DESCUENTO AUTOMATICO
+    NO HAY DESCUENTOS AUTOMATICOS
   */
 
-  if (standardCount >= 8) {
-    discount = 0.25
-  }
-  else if (standardCount >= 6) {
-    discount = 0.20
-  }
-  else if (standardCount >= 4) {
-    discount = 0.15
-  }
-  else if (standardCount >= 2) {
-    discount = 0.10
-  }
-
-  return Math.round(
-    baseTotal * (1 - discount)
-  )
+  return baseTotal;
 }
-
 /* =========================================
    MANUAL TOTAL
 ========================================= */
