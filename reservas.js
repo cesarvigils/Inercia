@@ -78,7 +78,7 @@ const defaultRigs = [
 ]
 let activePromos = []
 async function loadPromos() {
-  const snap = await get(ref(db, "admin/promotions"))
+  const snap = await get(ref(db, "promotions"))
 
   const data = snap.exists()
     ? snap.val()
