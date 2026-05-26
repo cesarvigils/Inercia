@@ -415,15 +415,15 @@ function renderPaymentUI() {
 
 if (state.paymentMethod === "bank") {
   paymentExtra.innerHTML = `
-    <div class="payment-placeholder">
+    <div class="payment-placeholder bank-help">
       Primero realizá la transferencia y luego subí el comprobante.
     </div>
 
-    <button id="open-bank-modal" class="bank-action-btn" type="button">
+    <button id="open-bank-modal" class="bank-open-btn" type="button">
       Ver cuentas bancarias
     </button>
 
-    <label class="bank-action-btn bank-upload-btn">
+    <label class="bank-upload-label" for="bank-proof">
       Subir comprobante
       <input
         id="bank-proof"
