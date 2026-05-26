@@ -6,9 +6,7 @@ function isTuesdayToSunday(dateString) {
 }
 
 function parseBody(req) {
-  return typeof req.body === "string"
-    ? JSON.parse(req.body || "{}")
-    : req.body || {}
+  return typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {}
 }
 
 export default async function handler(req, res) {
@@ -18,23 +16,16 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       const snap = await adminDb.ref("bookings").get()
       const data = snap.exists() ? snap.val() : {}
-
       const bookings = Object.entries(data)
         .map(([id, booking]) => ({ id, ...booking }))
         .filter((booking) => booking.date && isTuesdayToSunday(booking.date))
-        .sort((a, b) => {
-          const dc = String(a.date).localeCompare(String(b.date))
-          if (dc !== 0) return dc
-          return String(a.times?.[0] || "").localeCompare(String(b.times?.[0] || ""))
-        })
-
       return res.status(200).json({ ok: true, bookings })
     }
 
     if (req.method === "POST") {
       const body = parseBody(req)
 
-      if (!body.name || !body.phone || !body.email || !body.date || !body.times?.length || !body.rigs?.length) {
+      if (!body.name || !body.phone || !body.date || !body.times?.length || !body.rigs?.length) {
         return res.status(400).json({ error: "missing_booking_fields" })
       }
 
@@ -46,7 +37,7 @@ export default async function handler(req, res) {
         uid: body.uid || "manual-admin",
         name: body.name,
         phone: body.phone,
-        email: body.email,
+        email: body.email || "",
         date: body.date,
         times: body.times,
         hoursCount: body.times.length,
@@ -65,12 +56,24 @@ export default async function handler(req, res) {
 
       await bookingRef.set(bookingData)
 
+      if (bookingData.totalHNL > 0) {
+        const saleRef = adminDb.ref("admin/sales").push()
+        await saleRef.set({
+          id: saleRef.key,
+          type: "booking_manual",
+          description: `Reserva manual - ${bookingData.name}`,
+          bookingId,
+          amount: bookingData.totalHNL,
+          method: "admin",
+          createdAt: Date.now()
+        })
+      }
+
       return res.status(200).json({ ok: true, booking: bookingData })
     }
 
     if (req.method === "PATCH") {
       const body = parseBody(req)
-
       if (!body.id) return res.status(400).json({ error: "missing_booking_id" })
 
       if (body.action === "complete") {
@@ -85,25 +88,22 @@ export default async function handler(req, res) {
         })
 
         await adminDb.ref(`bookings/${body.id}`).remove()
-
-        return res.status(200).json({ ok: true, completed: true, removedFromBoard: true })
+        return res.status(200).json({ ok: true, completed: true })
       }
 
-      const updates = { updatedAt: Date.now() }
-      if (body.status) updates.status = body.status
+      await adminDb.ref(`bookings/${body.id}`).update({
+        status: body.status,
+        updatedAt: Date.now()
+      })
 
-      await adminDb.ref(`bookings/${body.id}`).update(updates)
-
-      return res.status(200).json({ ok: true, updated: true })
+      return res.status(200).json({ ok: true })
     }
 
     if (req.method === "DELETE") {
       const id = req.query.id
       if (!id) return res.status(400).json({ error: "missing_booking_id" })
-
       await adminDb.ref(`bookings/${id}`).remove()
-
-      return res.status(200).json({ ok: true, deleted: true })
+      return res.status(200).json({ ok: true })
     }
 
     return res.status(405).json({ error: "method_not_allowed" })
