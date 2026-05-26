@@ -65,8 +65,70 @@
       <option value="20:00">8:00 PM - 9:00 PM</option>
     </select>
 
-    <input id="manual-rigs" type="text" placeholder="Rigs separados por coma. Ej: Rig#1, Premium 1">
-    <input id="manual-total" type="number" min="0" placeholder="Total L">
+<div class="manual-rigs-selector">
+
+  <!-- STANDARD -->
+  <button type="button" class="manual-rig-btn" data-rig="Rig#1" data-price="200">
+    Rig#1
+    <span>L 200</span>
+  </button>
+
+  <button type="button" class="manual-rig-btn" data-rig="Rig#2" data-price="200">
+    Rig#2
+    <span>L 200</span>
+  </button>
+
+  <button type="button" class="manual-rig-btn" data-rig="Rig#3" data-price="200">
+    Rig#3
+    <span>L 200</span>
+  </button>
+
+  <button type="button" class="manual-rig-btn" data-rig="Rig#4" data-price="200">
+    Rig#4
+    <span>L 200</span>
+  </button>
+
+  <button type="button" class="manual-rig-btn" data-rig="Rig#5" data-price="200">
+    Rig#5
+    <span>L 200</span>
+  </button>
+
+  <button type="button" class="manual-rig-btn" data-rig="Rig#6" data-price="200">
+    Rig#6
+    <span>L 200</span>
+  </button>
+
+  <button type="button" class="manual-rig-btn" data-rig="Rig#7" data-price="200">
+    Rig#7
+    <span>L 200</span>
+  </button>
+
+  <button type="button" class="manual-rig-btn" data-rig="Rig#8" data-price="200">
+    Rig#8
+    <span>L 200</span>
+  </button>
+
+  <!-- PREMIUM -->
+  <button type="button" class="manual-rig-btn premium" data-rig="Premium 1" data-price="350">
+    Premium 1
+    <span>L 350</span>
+  </button>
+
+  <button type="button" class="manual-rig-btn premium" data-rig="Premium 2" data-price="350">
+    Premium 2
+    <span>L 350</span>
+  </button>
+
+</div>
+
+<input type="hidden" id="manualRigs">
+
+<input
+  type="text"
+  id="manualTotal"
+  placeholder="Total L"
+  readonly
+>    <input id="manual-total" type="number" min="0" placeholder="Total L">
   </div>
 
   <button type="submit">Crear reserva manual</button>
