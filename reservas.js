@@ -99,10 +99,15 @@ function getUserName() {
 }
 
 function getRigPrice(rig) {
-  const type = String(rig.type || "").toLowerCase()
+  const type =
+    String(
+      rig.type ||
+      rig.category ||
+      "standard"
+    ).toLowerCase()
 
   const basePrice =
-    type === "premium"
+    type.includes("premium")
       ? 350
       : 200
 
@@ -116,7 +121,9 @@ function getRigPrice(rig) {
 
   const promo = activePromos.find((promo) => {
     const promoType =
-      String(promo.simulatorType || "").toLowerCase()
+      String(
+        promo.simulatorType || "all"
+      ).toLowerCase()
 
     const promoDays =
       Array.isArray(promo.days)
@@ -136,22 +143,50 @@ function getRigPrice(rig) {
       !date ||
       date <= promo.endsAt
 
-    return promo.active !== false &&
+    return (
+      promo.active !== false &&
       appliesType &&
       appliesDay &&
       appliesDate
+    )
   })
 
-  if (!promo) return basePrice
+  console.log({
+    rig,
+    type,
+    promo,
+    basePrice
+  })
 
-  if (promo.type === "fixed_price") {
-    return Number(promo.fixedPrice || basePrice)
+  if (!promo) {
+    return basePrice
   }
 
-  if (promo.type === "percent_discount") {
+  if (
+    promo.type === "fixed_price" ||
+    promo.type === "fixed"
+  ) {
+    return Number(
+      promo.fixedPrice ||
+      basePrice
+    )
+  }
+
+  if (
+    promo.type === "percent_discount" ||
+    promo.type === "percentage" ||
+    promo.type === "discount"
+  ) {
+    const percent =
+      Number(
+        promo.percent ||
+        promo.discount ||
+        0
+      )
+
     return Math.max(
       0,
-      basePrice * (1 - Number(promo.percent || 0) / 100)
+      basePrice * (1 - percent / 100)
     )
   }
 
