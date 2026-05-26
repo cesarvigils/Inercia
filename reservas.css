@@ -942,3 +942,68 @@
   text-align: center;
   font-weight: 700;
 }
+.bank-open-btn {
+  width: 100%;
+  height: 54px;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 18px;
+  cursor: pointer;
+  background:
+    linear-gradient(
+      180deg,
+      #ff9a32,
+      #dc731f
+    );
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  transition: .2s;
+}
+
+.bank-open-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(255,140,26,.25);
+}
+
+.bank-upload-label {
+  width: 100%;
+  min-height: 120px;
+  margin-top: 1rem;
+  border-radius: 22px;
+  border: 2px dashed rgba(255,140,26,.45);
+  background: rgba(255,140,26,.06);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  padding: 1.5rem;
+  cursor: pointer;
+
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+
+  transition: .2s;
+}
+
+.bank-upload-label:hover {
+  background: rgba(255,140,26,.12);
+  border-color: #ff8c1a;
+}
+
+.bank-proof-name,
+#bank-proof-name {
+  display: block;
+  margin-top: .8rem;
+  color: rgba(255,255,255,.7);
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  word-break: break-word;
+}
