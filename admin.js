@@ -367,14 +367,19 @@ function calculatePromo(baseTotal, rigs) {
 
 function updateManualTotal() {
 
-  const selectedBtns =
-    document.querySelectorAll(
-      ".manual-rig-btn.active"
-    )
+  const selectedBtns = document.querySelectorAll(
+    ".manual-rig-btn.active"
+  );
 
-  const rigs = []
+  const rigs = [];
 
-  let baseTotal = 0
+  const selectedTimes = Array.from(
+    document.getElementById("manual-time").selectedOptions
+  );
+
+  const hoursCount = selectedTimes.length || 1;
+
+  let baseTotal = 0;
 
   selectedBtns.forEach(btn => {
 
@@ -382,65 +387,57 @@ function updateManualTotal() {
       btn.dataset.rig ||
       btn.textContent ||
       ""
-    ).trim()
+    ).trim();
 
-    rigs.push(rigName)
+    rigs.push(rigName);
 
-    /*
-      PRECIOS FORZADOS
-    */
+    let rigPrice = 0;
 
     if (
-      rigName.toLowerCase()
-        .includes("premium")
+      rigName.toLowerCase().includes("premium")
     ) {
 
-      baseTotal += PREMIUM_PRICE
+      rigPrice = 350;
 
     } else {
 
-      baseTotal += STANDARD_PRICE
+      rigPrice = 200;
     }
-  })
+
+    /*
+      MULTIPLICAR POR HORAS
+    */
+
+    baseTotal += rigPrice * hoursCount;
+
+  });
 
   const manualRigsInput =
-    $("manual-rigs") ||
-    $("manualRigs")
+    document.getElementById("manual-rigs") ||
+    document.getElementById("manualRigs");
 
   const manualTotalInput =
-    $("manual-total") ||
-    $("manualTotal")
+    document.getElementById("manual-total") ||
+    document.getElementById("manualTotal");
 
   if (manualRigsInput) {
-    manualRigsInput.value =
-      rigs.join(", ")
+    manualRigsInput.value = rigs.join(", ");
   }
 
-  if (!manualTotalInput) return
+  if (!manualTotalInput) return;
 
   if (baseTotal <= 0) {
 
-    manualTotalInput.value = ""
+    manualTotalInput.value = "";
 
-    return
+    return;
   }
 
-  const finalTotal =
-    calculatePromo(baseTotal, rigs)
-
-  if (
-    manualTotalInput.type === "number"
-  ) {
-
-    manualTotalInput.value = finalTotal
-
-  } else {
-
-    manualTotalInput.value =
-      `L ${finalTotal}`
-  }
+  manualTotalInput.value = `L ${baseTotal}`;
 }
-
+document
+  .getElementById("manual-time")
+  .addEventListener("change", updateManualTotal);
 /* =========================================
    RIG BUTTONS
 ========================================= */
