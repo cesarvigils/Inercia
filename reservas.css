@@ -15,27 +15,24 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
-  display: block;
 }
 
 .booking-hero-overlay {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(0,0,0,.18),
-      rgba(0,0,0,.58),
-      #050505 96%
-    );
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.2),
+    rgba(0,0,0,.55),
+    #050505 94%
+  );
 }
 
 .booking-hero-content {
   position: absolute;
-  left: clamp(1.2rem,4vw,4rem);
-  bottom: 240px;
+  left: 4vw;
+  bottom: 250px;
   z-index: 3;
-  width: min(680px, 92%);
 }
 
 .booking-hero-content span {
@@ -44,22 +41,21 @@
   font-weight: 900;
   letter-spacing: 4px;
   color: #ff8c1a;
-  font-size: .95rem;
 }
 
 .booking-hero-content h1 {
   margin-top: .8rem;
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(2.8rem, 7vw, 7rem);
+  font-size: clamp(3rem, 7vw, 7rem);
   color: white;
-  line-height: .92;
+  line-height: .9;
 }
 
 .booking-hero-content p {
   margin-top: 1rem;
   color: rgba(255,255,255,.72);
-  font-size: 1.08rem;
-  line-height: 1.55;
+  font-size: 1.2rem;
+  line-height: 1.5;
   max-width: 620px;
 }
 
@@ -76,7 +72,7 @@
 
   display: grid;
 
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 380px;
 
   grid-template-areas:
     "rigs date"
@@ -89,7 +85,8 @@
 
 .rig-panel {
   grid-area: rigs;
-  min-height: 350px;
+    min-height: 350px;
+
 }
 
 .date-panel {
@@ -102,8 +99,6 @@
 
 .payment-panel {
   grid-area: payment;
-  position: sticky;
-  top: 110px;
 }
 
 .booking-summary {
@@ -118,32 +113,21 @@
 .booking-summary {
   min-width: 0;
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(20,20,20,.95),
-      rgba(10,10,10,.96)
-    );
-
+  background: rgba(20,20,20,.92);
   border: 1px solid rgba(255,255,255,.07);
-  border-radius: 22px;
+  border-radius: 18px;
   padding: 1.4rem;
 
-  backdrop-filter: blur(14px);
-
-  box-shadow:
-    0 10px 35px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.03);
+  backdrop-filter: blur(12px);
 }
 
 .booking-panel h2,
 .booking-summary h2 {
   font-family: 'Orbitron', sans-serif;
   color: white;
-  font-size: clamp(1rem,2vw,1.25rem);
-  margin-bottom: .9rem;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
   letter-spacing: .2px;
-  line-height: 1.3;
 }
 
 .booking-note {
@@ -151,7 +135,6 @@
   color: rgba(255,255,255,.55);
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  line-height: 1.4;
 }
 
 /* =========================================================
@@ -160,27 +143,21 @@
 
 .rig-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(72px, 1fr));
   gap: 1rem;
-  align-items: stretch;
+
+  min-height: 260px;
 }
 
 .rig-card {
-  position: relative;
-
   width: 100%;
-  min-height: 128px;
-  padding: 1rem .8rem;
+  min-height: 126px;
+  padding: .75rem;
 
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.08);
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.03),
-      rgba(255,255,255,.015)
-    );
+  background: rgba(255,255,255,.025);
 
   color: white;
   cursor: pointer;
@@ -190,73 +167,35 @@
   justify-content: center;
   align-items: center;
 
-  overflow: hidden;
-
-  opacity: .58;
-
-  transition:
-    transform .22s ease,
-    border-color .22s ease,
-    opacity .22s ease,
-    box-shadow .22s ease;
-}
-
-.rig-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      circle at top,
-      rgba(255,140,26,.12),
-      transparent 70%
-    );
-  opacity: 0;
-  transition: opacity .22s ease;
+  opacity: .48;
+  transition: .25s ease;
 }
 
 .rig-card:hover {
-  opacity: 1;
+  opacity: .85;
   border-color: rgba(255,140,26,.35);
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-
-.rig-card:hover::before {
-  opacity: 1;
+  transform: translateY(-2px);
 }
 
 .rig-card.active {
   opacity: 1;
   border-color: #ff8c1a;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,140,26,.12),
-      rgba(255,140,26,.04)
-    );
-
-  box-shadow:
-    0 0 0 1px rgba(255,140,26,.12),
-    0 0 28px rgba(255,140,26,.18);
+  box-shadow: 0 0 25px rgba(255,140,26,.18);
 }
 
 .rig-card.disabled {
-  opacity: .16;
+  opacity: .15;
   pointer-events: none;
-  filter: grayscale(1);
 }
 
 .rig-card img {
   width: 58px;
   height: 58px;
   object-fit: contain;
-  user-select: none;
-  pointer-events: none;
 }
 
 .rig-card span {
-  margin-top: .55rem;
+  margin-top: .45rem;
 
   max-width: 100%;
   overflow: hidden;
@@ -264,7 +203,7 @@
   white-space: nowrap;
 
   font-family: 'Orbitron', sans-serif;
-  font-size: .78rem;
+  font-size: .72rem;
   text-align: center;
 }
 
@@ -273,7 +212,6 @@
   color: #ff8c1a;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 900;
-  font-size: .82rem;
 }
 
 /* =========================================================
@@ -303,179 +241,39 @@
 }
 
 /* =========================================================
-   CUSTOM CALENDAR
-========================================================= */
-
-.custom-calendar {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 24px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(12,12,12,.96),
-      rgba(6,6,6,.98)
-    );
-
-  border: 1px solid rgba(255,255,255,.07);
-
-  box-shadow:
-    0 10px 35px rgba(0,0,0,.3),
-    inset 0 1px 0 rgba(255,255,255,.03);
-}
-
-.calendar-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: .7rem;
-  margin-bottom: 1rem;
-}
-
-.calendar-head h3 {
-  color: #fff;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  text-align: center;
-  flex: 1;
-}
-
-.calendar-head button {
-  width: 44px;
-  height: 44px;
-
-  border: none;
-  border-radius: 14px;
-
-  background: #ff8c1a;
-  color: white;
-
-  font-size: 1.4rem;
-  font-weight: 900;
-
-  cursor: pointer;
-
-  transition:
-    transform .2s ease,
-    filter .2s ease;
-}
-
-.calendar-head button:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-}
-
-.calendar-weekdays,
-.calendar-days {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0,1fr));
-  gap: .45rem;
-}
-
-.calendar-weekdays {
-  margin-bottom: .5rem;
-}
-
-.calendar-weekdays span {
-  text-align: center;
-  color: rgba(255,255,255,.42);
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 900;
-  font-size: .88rem;
-}
-
-.calendar-day {
-  aspect-ratio: 1;
-
-  min-height: 46px;
-
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 14px;
-
-  background: rgba(255,255,255,.035);
-
-  color: rgba(255,255,255,.88);
-
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 900;
-  font-size: .95rem;
-
-  cursor: pointer;
-
-  transition:
-    background .2s ease,
-    transform .2s ease,
-    border-color .2s ease,
-    opacity .2s ease;
-}
-
-.calendar-day:hover:not(.disabled):not(.monday) {
-  background: rgba(255,140,26,.12);
-  border-color: rgba(255,140,26,.35);
-  transform: translateY(-1px);
-}
-
-.calendar-day.active {
-  background: #ff8c1a;
-  border-color: #ff8c1a;
-  color: white;
-
-  box-shadow:
-    0 0 20px rgba(255,140,26,.22);
-}
-
-.calendar-day.disabled,
-.calendar-day.monday {
-  opacity: .28;
-  background: rgba(130,130,130,.09);
-  color: rgba(255,255,255,.24);
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* =========================================================
    TIME SLOTS
 ========================================================= */
 
 .time-slots {
   display: flex;
   flex-wrap: wrap;
-  gap: .7rem;
+  gap: .6rem;
 }
 
 .time-slots button {
-  min-height: 44px;
-  padding: 0 1.1rem;
+  min-height: 42px;
+  padding: 0 1rem;
 
   border-radius: 999px;
-  border: 1px solid transparent;
+  border: none;
 
-  background: rgba(255,255,255,.07);
-  color: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.08);
+  color: white;
 
   cursor: pointer;
 
   font-family: 'Rajdhani', sans-serif;
   font-weight: 800;
-  font-size: .92rem;
 
-  transition:
-    transform .2s ease,
-    background .2s ease,
-    border-color .2s ease;
+  transition: .2s ease;
 }
 
 .time-slots button:hover {
   background: rgba(255,140,26,.15);
-  border-color: rgba(255,140,26,.25);
-  transform: translateY(-1px);
 }
 
 .time-slots button.active {
   background: #ff8c1a;
-  border-color: #ff8c1a;
-  color: white;
 }
 
 /* =========================================================
@@ -496,26 +294,17 @@
 
   padding: 1rem;
 
-  border-radius: 20px;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,.08);
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.04),
-      rgba(255,255,255,.02)
-    );
+  background: rgba(255,255,255,.03);
 
   color: white;
   cursor: pointer;
 
   text-align: left;
 
-  transition:
-    transform .22s ease,
-    border-color .22s ease,
-    background .22s ease,
-    box-shadow .22s ease;
+  transition: .25s ease;
 }
 
 .payment-card:hover {
@@ -525,23 +314,15 @@
 
 .payment-card.active {
   border-color: #ff8c1a;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,140,26,.14),
-      rgba(255,140,26,.06)
-    );
-
-  box-shadow:
-    0 0 30px rgba(255,140,26,.12);
+  background: rgba(255,140,26,.08);
+  box-shadow: 0 0 30px rgba(255,140,26,.14);
 }
 
 .payment-icon {
-  width: 56px;
-  height: 56px;
+  width: 54px;
+  height: 54px;
 
-  border-radius: 16px;
+  border-radius: 14px;
 
   display: flex;
   align-items: center;
@@ -549,28 +330,24 @@
 
   background: rgba(255,255,255,.06);
 
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
 }
 
 .payment-card h3 {
   font-family: 'Orbitron', sans-serif;
-  font-size: .98rem;
-  line-height: 1.3;
+  font-size: 1rem;
 }
 
 .payment-card p {
-  margin-top: .25rem;
-  color: rgba(255,255,255,.58);
+  margin-top: .3rem;
+  color: rgba(255,255,255,.55);
   font-size: .92rem;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .payment-extra {
   margin-top: 1rem;
-  color: rgba(255,255,255,.6);
-  font-size: .92rem;
-  line-height: 1.5;
 }
 
 /* =========================================================
@@ -580,17 +357,11 @@
 .summary-card {
   display: grid;
   grid-template-columns: 48px minmax(0,1fr) auto;
-  gap: .9rem;
+  gap: .8rem;
   align-items: center;
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.06),
-      rgba(255,255,255,.03)
-    );
-
-  border-radius: 16px;
+  background: rgba(255,255,255,.06);
+  border-radius: 14px;
   padding: 1rem;
 }
 
@@ -603,53 +374,44 @@
 .summary-card h3 {
   color: #ff8c1a;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1rem;
-  line-height: 1.3;
+  font-size: 1.05rem;
 }
 
 .summary-card p {
-  color: rgba(255,255,255,.58);
+  color: rgba(255,255,255,.55);
   font-size: .9rem;
-  line-height: 1.45;
 }
 
 .summary-card strong {
   color: white;
   font-family: 'Orbitron', sans-serif;
-  font-size: .95rem;
 }
 
 .reserve-confirm {
   width: 100%;
-  height: 58px;
+  height: 56px;
 
   margin-top: 1.2rem;
 
   border: none;
-  border-radius: 16px;
+  border-radius: 14px;
 
   background: #ff8c1a;
   color: white;
 
   font-family: 'Orbitron', sans-serif;
-  font-size: .95rem;
-
   cursor: pointer;
 
-  transition:
-    transform .2s ease,
-    filter .2s ease;
+  transition: .2s ease;
 }
 
 .reserve-confirm:hover {
   transform: translateY(-1px);
-  filter: brightness(1.03);
 }
 
 .reserve-confirm:disabled {
   opacity: .55;
   cursor: not-allowed;
-  transform: none;
 }
 
 /* =========================================================
@@ -665,7 +427,7 @@
   inset: 0;
   z-index: 99999;
 
-  background: rgba(0,0,0,.74);
+  background: rgba(0,0,0,.72);
 
   display: flex;
   align-items: center;
@@ -679,22 +441,16 @@
   max-height: 90vh;
   overflow-y: auto;
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(20,20,20,.99),
-      rgba(8,8,8,.99)
-    );
+  background: rgba(18,18,18,.98);
 
-  border: 1px solid rgba(255,140,26,.32);
-  border-radius: 24px;
+  border: 1px solid rgba(255,140,26,.35);
+  border-radius: 22px;
 
   padding: 1.5rem;
 
   position: relative;
 
-  box-shadow:
-    0 20px 60px rgba(0,0,0,.55);
+  box-shadow: 0 0 60px rgba(0,0,0,.45);
 }
 
 .bank-modal-close {
@@ -702,8 +458,8 @@
   top: 1rem;
   right: 1rem;
 
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
 
   border: none;
   border-radius: 999px;
@@ -718,8 +474,7 @@
   color: white;
   font-family: 'Orbitron', sans-serif;
   margin-bottom: .7rem;
-  font-size: 1.55rem;
-  line-height: 1.3;
+  font-size: 1.7rem;
 }
 
 .bank-owner {
@@ -742,13 +497,13 @@
   width: 100%;
 
   display: grid;
-  grid-template-columns: 54px minmax(0,1fr) auto;
+  grid-template-columns: 54px 1fr auto;
   align-items: center;
   gap: .9rem;
 
-  padding: .95rem;
+  padding: .9rem;
 
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,.08);
 
   background: rgba(255,255,255,.04);
@@ -756,16 +511,12 @@
   color: white;
   cursor: pointer;
 
-  transition:
-    transform .2s ease,
-    border-color .2s ease,
-    background .2s ease;
+  transition: .2s ease;
 }
 
 .bank-account:hover {
   border-color: #ff8c1a;
-  background: rgba(255,140,26,.08);
-  transform: translateY(-1px);
+  background: rgba(255,140,26,.1);
 }
 
 .bank-account img {
@@ -782,7 +533,7 @@
 
 .bank-account h3 {
   font-family: 'Orbitron', sans-serif;
-  font-size: .92rem;
+  font-size: .95rem;
 }
 
 .bank-account p {
@@ -811,30 +562,6 @@
    TABLET
 ========================================================= */
 
-@media (max-width: 1180px) {
-
-  .booking-page {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "rigs"
-      "date"
-      "time"
-      "payment"
-      "summary";
-
-    margin-top: -90px;
-  }
-
-  .payment-panel {
-    position: relative;
-    top: auto;
-  }
-
-  .custom-calendar {
-    max-width: 420px;
-  }
-}
-
 @media (max-width: 1000px) {
 
   .booking-hero {
@@ -842,11 +569,25 @@
   }
 
   .booking-hero-content {
-    bottom: 180px;
+    bottom: 210px;
+  }
+
+  .booking-page {
+
+    grid-template-columns: 1fr;
+
+    grid-template-areas:
+      "rigs"
+      "date"
+      "time"
+      "payment"
+      "summary";
+
+    margin-top: -80px;
   }
 
   .rig-grid {
-    grid-template-columns: repeat(3, minmax(120px, 1fr));
+    grid-template-columns: repeat(3, minmax(82px, 1fr));
   }
 }
 
@@ -854,58 +595,25 @@
    MOBILE
 ========================================================= */
 
-@media (max-width: 700px) {
+@media (max-width: 560px) {
 
   .booking-hero {
-    height: 420px;
+    height: 470px;
   }
 
   .booking-hero-content {
-    left: 1rem;
-    bottom: 120px;
-  }
-
-  .booking-hero-content p {
-    font-size: .98rem;
+    left: 1.2rem;
+    bottom: 190px;
   }
 
   .booking-page {
     width: 94%;
-    margin-top: -45px;
+    margin-top: -60px;
     gap: 1rem;
   }
 
-  .booking-panel,
-  .booking-summary {
-    border-radius: 20px;
-    padding: 1rem;
-  }
-
   .rig-grid {
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: .8rem;
-  }
-
-  .rig-card {
-    min-height: 120px;
-  }
-
-  .calendar-day {
-    min-height: 42px;
-    font-size: .88rem;
-  }
-
-  .time-slots {
-    gap: .55rem;
-  }
-
-  .time-slots button {
-    flex: 1 1 calc(50% - .55rem);
-    justify-content: center;
-    text-align: center;
-    min-width: 0;
-    padding: 0 .8rem;
-    font-size: .82rem;
+    grid-template-columns: repeat(2, minmax(82px, 1fr));
   }
 
   .payment-card {
@@ -918,7 +626,10 @@
 
   .summary-card strong {
     grid-column: 1 / -1;
-    margin-top: .3rem;
+  }
+
+  .time-slots button {
+    flex: 1 1 calc(50% - .5rem);
   }
 
   .bank-account {
@@ -934,78 +645,94 @@
    EXTRA SMALL
 ========================================================= */
 
-@media (max-width: 430px) {
-
-  .booking-hero {
-    height: 360px;
-  }
-
-  .booking-hero-content {
-    bottom: 90px;
-  }
-
-  .booking-hero-content h1 {
-    font-size: 2.2rem;
-  }
-
-  .booking-panel h2,
-  .booking-summary h2 {
-    font-size: .95rem;
-  }
+@media (max-width: 380px) {
 
   .rig-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
-  .rig-card {
-    min-height: 112px;
-    padding: .8rem .5rem;
-  }
-
-  .rig-card img {
-    width: 48px;
-    height: 48px;
-  }
-
-  .rig-card span {
-    font-size: .68rem;
-  }
-
-  .rig-card small {
-    font-size: .72rem;
-  }
-
-  .calendar-weekdays span {
-    font-size: .74rem;
-  }
-
-  .calendar-day {
-    border-radius: 12px;
-    min-height: 38px;
-    font-size: .82rem;
-  }
-
-  .calendar-head button {
-    width: 40px;
-    height: 40px;
+  .payment-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .time-slots button {
     flex: 1 1 100%;
-    min-height: 42px;
+  }
+}
+@media (max-width: 1000px) {
+
+  .rig-grid {
+    grid-template-columns: repeat(3, minmax(82px, 1fr));
+    min-height: 420px;
   }
 
-  .payment-card {
-    gap: .8rem;
-  }
+}
 
-  .payment-icon {
-    width: 48px;
-    height: 48px;
-  }
+.custom-calendar {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 24px;
+  background: rgba(10,10,10,.95);
+  border: 1px solid rgba(255,255,255,.08);
+}
 
-  .reserve-confirm {
-    height: 54px;
-    font-size: .85rem;
-  }
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-head h3 {
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.calendar-head button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 14px;
+  background: #ff8c1a;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.calendar-weekdays,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: .5rem;
+}
+
+.calendar-weekdays span {
+  text-align: center;
+  color: rgba(255,255,255,.45);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 900;
+}
+
+.calendar-day {
+  height: 48px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  background: rgba(255,255,255,.045);
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.calendar-day.active {
+  background: #ff8c1a;
+  border-color: #ff8c1a;
+}
+
+.calendar-day.disabled,
+.calendar-day.monday {
+  opacity: .35;
+  background: rgba(120,120,120,.12);
+  color: rgba(255,255,255,.35);
+  cursor: not-allowed;
 }
