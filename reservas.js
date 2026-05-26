@@ -670,14 +670,12 @@ if (reserveBtn) {
           bookingRef.key
 
         const whatsappMessage =
-          `Nueva reserva Inercia%0A%0A` +
-          `ID: ${bookingId}%0A` +
+          `Buenas, He reservado en Inercia%0A%0A` +
           `Cliente: ${bookingData.name}%0A` +
           `Teléfono: ${bookingData.phone}%0A` +
           `Correo: ${bookingData.email}%0A` +
           `Fecha: ${bookingData.date}%0A` +
           `Horas: ${bookingData.times.join(", ")}%0A` +
-          `Rigs: ${bookingData.rigs.join(", ")}%0A` +
           `Total: ${formatPrice(bookingData.total)}%0A` +
           `Pago: ${bookingData.paymentMethod}%0A` +
           `Estado: ${bookingData.status}`
