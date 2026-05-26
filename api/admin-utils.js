@@ -1,6 +1,0 @@
-import{initializeApp,getApps,cert}from"firebase-admin/app";import{getAuth}from"firebase-admin/auth";import{getDatabase}from"firebase-admin/database";
-function getServiceAccount(){const raw=process.env.FIREBASE_SERVICE_ACCOUNT;if(!raw)throw new Error("Falta FIREBASE_SERVICE_ACCOUNT");const account=JSON.parse(raw);if(account.private_key)account.private_key=account.private_key.replace(/\\n/g,"\n");return account}
-if(!getApps().length){initializeApp({credential:cert(getServiceAccount()),databaseURL:process.env.FIREBASE_DATABASE_URL})}
-export const adminAuth=getAuth();export const adminDb=getDatabase();
-export async function requireAdmin(req){const header=req.headers.authorization||"";const token=header.startsWith("Bearer ")?header.slice(7):"";if(!token)throw new Error("missing_token");const decoded=await adminAuth.verifyIdToken(token);const adminEmails=String(process.env.ADMIN_EMAILS||"").split(",").map(e=>e.trim().toLowerCase()).filter(Boolean);const email=String(decoded.email||"").toLowerCase();if(!decoded.admin&&!adminEmails.includes(email))throw new Error("not_admin");return decoded}
-export function sendError(res,error){const msg=error.message||"server_error";const status=msg==="missing_token"?401:msg==="not_admin"?403:500;return res.status(status).json({error:msg})}
