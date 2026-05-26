@@ -16,7 +16,12 @@ import {
   push,
   set
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
-
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -34,7 +39,7 @@ const app =
 
 const auth = getAuth(app)
 const db = getDatabase(app)
-
+const storage = getStorage(app)
 const RIG_ICON =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49"
 
@@ -408,14 +413,40 @@ function renderPaymentUI() {
     return
   }
 
-  if (state.paymentMethod === "bank") {
-    paymentExtra.innerHTML = `
-      <div class="payment-placeholder">
-        Transferencia bancaria.
-      </div>
-    `
-    return
-  }
+if (state.paymentMethod === "bank") {
+  paymentExtra.innerHTML = `
+    <div class="payment-placeholder">
+      Primero realizá la transferencia y luego subí el comprobante.
+    </div>
+
+    <button id="open-bank-modal" class="bank-open-btn" type="button">
+      Ver cuentas bancarias
+    </button>
+
+    <label class="bank-upload-label">
+      Subir comprobante
+      <input
+        id="bank-proof"
+        class="bank-proof"
+        type="file"
+        accept="image/*,.pdf"
+        hidden>
+    </label>
+
+    <small id="bank-proof-name"></small>
+  `
+
+  document.getElementById("open-bank-modal")?.addEventListener("click", () => {
+    document.getElementById("bank-modal")?.classList.remove("hidden-bank-modal")
+  })
+
+  document.getElementById("bank-proof")?.addEventListener("change", (event) => {
+    const file = event.target.files?.[0]
+    document.getElementById("bank-proof-name").textContent = file ? file.name : ""
+  })
+
+  return
+}
 
   if (state.paymentMethod === "card") {
     paymentExtra.innerHTML = `
@@ -606,7 +637,12 @@ if (reserveBtn) {
         alert("Completa PayPal.")
         return
       }
+const bankProofInput = document.getElementById("bank-proof")
 
+if (state.paymentMethod === "bank" && !bankProofInput?.files?.[0]) {
+  alert("Subí el comprobante de transferencia.")
+  return
+}
       try {
         reserveBtn.disabled = true
         reserveBtn.textContent =
@@ -665,7 +701,49 @@ if (reserveBtn) {
           bookingRef,
           bookingData
         )
+if (state.paymentMethod === "bank") {
+  const proofFile = bankProofInput?.files?.[0]
 
+  if (proofFile) {
+    const safeName = proofFile.name.replace(/[^\w.-]/g, "_")
+
+    const proofRef = storageRef(
+      storage,
+      `bank-proofs/${bookingRef.key}/${Date.now()}-${safeName}`
+    )
+
+    await uploadBytes(proofRef, proofFile)
+
+    const proofURL = await getDownloadURL(proofRef)
+
+    await set(ref(db, `bookings/${bookingRef.key}/proofURL`), proofURL)
+
+    const telegramResponse = await fetch("/api/send-bank-proof", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        bookingId: bookingRef.key,
+        name: bookingData.name,
+        email: bookingData.email,
+        phone: bookingData.phone,
+        date: bookingData.date,
+        times: bookingData.times,
+        rigs: bookingData.rigs,
+        total: bookingData.total,
+        proofURL
+      })
+    })
+
+    const telegramData = await telegramResponse.json()
+
+    if (!telegramResponse.ok) {
+      console.error(telegramData)
+      alert("Reserva creada, pero no se pudo enviar el comprobante a Telegram.")
+    }
+  }
+}
         const bookingId =
           bookingRef.key
 
