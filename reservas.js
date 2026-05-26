@@ -76,20 +76,31 @@ const defaultRigs = [
   { id: "premium1", name: "Premium 1", type: "premium", active: true },
   { id: "premium2", name: "Premium 2", type: "premium", active: true }
 ]
+
 let activePromos = []
+
 async function loadPromos() {
-  const snap = await get(ref(db, "promotions"))
+  try {
+    const snap = await get(ref(db, "promotions"))
 
-  const data = snap.exists()
-    ? snap.val()
-    : {}
+    const data =
+      snap.exists()
+        ? snap.val()
+        : {}
 
-  activePromos = Object.values(data)
-    .filter((promo) => promo.active !== false)
+    activePromos =
+      Object.values(data)
+        .filter((promo) => promo.active !== false)
+
+  } catch (error) {
+    console.error(error)
+    activePromos = []
+  }
 
   renderRigs()
   updateSummary()
 }
+
 function getUserName() {
   return (
     state.userProfile?.name ||
@@ -98,11 +109,14 @@ function getUserName() {
   )
 }
 
+function formatPrice(price) {
+  return `L ${Number(price || 0).toFixed(2)}`
+}
+
 function getRigPrice(rig) {
   const type =
     String(
       rig.type ||
-      rig.category ||
       "standard"
     ).toLowerCase()
 
@@ -111,52 +125,47 @@ function getRigPrice(rig) {
       ? 350
       : 200
 
-  const date =
-    state.date || dateInput?.value
+  const selectedDate =
+    state.date ||
+    dateInput?.value
 
   const day =
-    date
-      ? new Date(`${date}T12:00:00`).getDay()
+    selectedDate
+      ? new Date(`${selectedDate}T12:00:00`).getDay()
       : null
 
-  const promo = activePromos.find((promo) => {
-    const promoType =
-      String(
-        promo.simulatorType || "all"
-      ).toLowerCase()
+  const promo =
+    activePromos.find((promo) => {
+      const promoType =
+        String(
+          promo.simulatorType || "all"
+        ).toLowerCase()
 
-    const promoDays =
-      Array.isArray(promo.days)
-        ? promo.days.map(Number)
-        : []
+      const appliesType =
+        promoType === "all" ||
+        promoType === type
 
-    const appliesType =
-      promoType === "all" ||
-      promoType === type
+      const promoDays =
+        Array.isArray(promo.days)
+          ? promo.days.map(Number)
+          : []
 
-    const appliesDay =
-      !promoDays.length ||
-      promoDays.includes(day)
+      const appliesDay =
+        !promoDays.length ||
+        promoDays.includes(day)
 
-    const appliesDate =
-      !promo.endsAt ||
-      !date ||
-      date <= promo.endsAt
+      const appliesDate =
+        !promo.endsAt ||
+        !selectedDate ||
+        selectedDate <= promo.endsAt
 
-    return (
-      promo.active !== false &&
-      appliesType &&
-      appliesDay &&
-      appliesDate
-    )
-  })
-
-  console.log({
-    rig,
-    type,
-    promo,
-    basePrice
-  })
+      return (
+        promo.active !== false &&
+        appliesType &&
+        appliesDay &&
+        appliesDate
+      )
+    })
 
   if (!promo) {
     return basePrice
@@ -192,9 +201,12 @@ function getRigPrice(rig) {
 
   return basePrice
 }
+
 function getSelectedRigDetails() {
   return state.rigs
-    .filter((rig) => state.rigsSelected.includes(rig.name))
+    .filter((rig) =>
+      state.rigsSelected.includes(rig.name)
+    )
     .map((rig) => ({
       id: rig.id,
       name: rig.name,
@@ -205,22 +217,28 @@ function getSelectedRigDetails() {
 
 function getSubtotalPerHour() {
   return getSelectedRigDetails()
-    .reduce((total, rig) => total + rig.price, 0)
+    .reduce((total, rig) => {
+      return total + Number(rig.price || 0)
+    }, 0)
 }
 
 function getTotal() {
-  const hoursCount =
+  const hours =
     state.timesSelected.length || 1
 
-  return getSubtotalPerHour() * hoursCount
+  return getSubtotalPerHour() * hours
 }
 
 function getTotalUSD() {
-  return (getTotal() / HNL_TO_USD_RATE).toFixed(2)
+  return (
+    getTotal() / HNL_TO_USD_RATE
+  ).toFixed(2)
 }
 
-function formatPrice(price) {
-  return `L ${Number(price).toFixed(2)}`
+function resetPaymentState() {
+  state.paypalPaid = false
+  state.paypalOrderId = null
+  state.paypalDetails = null
 }
 
 function updateSummary() {
@@ -234,7 +252,8 @@ function updateSummary() {
       ? state.timesSelected.join(", ")
       : "Hora"
 
-  const total = getTotal()
+  const total =
+    getTotal()
 
   if (summaryTitle) {
     summaryTitle.textContent = rigsText
@@ -261,23 +280,28 @@ function updateSummary() {
 }
 
 async function loadUserProfile(user) {
-  const snapshot =
-    await get(ref(db, `users/${user.uid}`))
+  try {
+    const snapshot =
+      await get(ref(db, `users/${user.uid}`))
 
-  const profile =
-    snapshot.exists()
-      ? snapshot.val()
-      : {}
+    const profile =
+      snapshot.exists()
+        ? snapshot.val()
+        : {}
 
-  state.userProfile = profile
+    state.userProfile = profile
 
-  if (!profile.phone) {
-    alert("Antes de reservar, agrega tu número de teléfono en tu perfil.")
-    window.location.href = "/perfil"
-    return
+    if (!profile.phone) {
+      alert("Agrega tu teléfono en tu perfil.")
+      window.location.href = "/perfil"
+      return
+    }
+
+    updateSummary()
+
+  } catch (error) {
+    console.error(error)
   }
-
-  updateSummary()
 }
 
 async function loadRigs() {
@@ -289,6 +313,7 @@ async function loadRigs() {
       snapshot.exists()
         ? Object.values(snapshot.val())
         : defaultRigs
+
   } catch (error) {
     console.error(error)
     state.rigs = defaultRigs
@@ -297,23 +322,19 @@ async function loadRigs() {
   renderRigs()
 }
 
-function resetPaymentState() {
-  state.paypalPaid = false
-  state.paypalOrderId = null
-  state.paypalDetails = null
-}
-
 function toggleRig(rigName) {
   if (state.rigsSelected.includes(rigName)) {
     state.rigsSelected =
-      state.rigsSelected.filter((name) => name !== rigName)
+      state.rigsSelected.filter(
+        (name) => name !== rigName
+      )
 
     resetPaymentState()
     return
   }
 
   if (state.rigsSelected.length >= MAX_RIGS) {
-    alert(`Máximo ${MAX_RIGS} simuladores por reserva.`)
+    alert(`Máximo ${MAX_RIGS} simuladores.`)
     return
   }
 
@@ -330,14 +351,16 @@ function renderRigs() {
     const card =
       document.createElement("button")
 
-    card.className =
-      "rig-card"
+    card.type = "button"
+    card.className = "rig-card"
 
     if (!rig.active) {
       card.classList.add("disabled")
     }
 
-    if (state.rigsSelected.includes(rig.name)) {
+    if (
+      state.rigsSelected.includes(rig.name)
+    ) {
       card.classList.add("active")
     }
 
@@ -360,8 +383,6 @@ function renderRigs() {
 
     rigGrid.appendChild(card)
   })
-
-  updateSummary()
 }
 
 function isBookingReadyForPayment() {
@@ -381,7 +402,7 @@ function renderPaymentUI() {
   if (state.paymentMethod === "cash") {
     paymentExtra.innerHTML = `
       <div class="payment-placeholder">
-        Pagás al llegar al local.
+        Pagás al llegar.
       </div>
     `
     return
@@ -390,7 +411,7 @@ function renderPaymentUI() {
   if (state.paymentMethod === "bank") {
     paymentExtra.innerHTML = `
       <div class="payment-placeholder">
-        Transferencia bancaria pendiente de integración WhatsApp API.
+        Transferencia bancaria.
       </div>
     `
     return
@@ -401,10 +422,10 @@ function renderPaymentUI() {
       <div class="payment-placeholder">
         Total tarjeta: ${formatPrice(getTotal())}
         <br>
-        PayPal cobrará aprox. USD ${getTotalUSD()}.
+        USD ${getTotalUSD()}
       </div>
 
-      <div id="paypal-button-container" class="paypal-button-container"></div>
+      <div id="paypal-button-container"></div>
     `
 
     renderPayPalButton()
@@ -413,14 +434,16 @@ function renderPaymentUI() {
 
 function renderPayPalButton() {
   const container =
-    document.getElementById("paypal-button-container")
+    document.getElementById(
+      "paypal-button-container"
+    )
 
   if (!container) return
 
   if (!isBookingReadyForPayment()) {
     container.innerHTML = `
       <div class="payment-placeholder">
-        Primero seleccioná simulador, fecha y hora.
+        Selecciona fecha, hora y simuladores.
       </div>
     `
     return
@@ -429,31 +452,37 @@ function renderPayPalButton() {
   if (!window.paypal) {
     container.innerHTML = `
       <div class="payment-placeholder">
-        PayPal no cargó. Revisá VITE_PAYPAL_CLIENT_ID.
+        PayPal no cargó.
       </div>
     `
     return
   }
 
+  container.innerHTML = ""
+
   window.paypal.Buttons({
     createOrder: async () => {
       const response =
-        await fetch("/api/paypal-create-order", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            total: getTotalUSD()
-          })
-        })
+        await fetch(
+          "/api/paypal-create-order",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              total: getTotalUSD()
+            })
+          }
+        )
 
       const order =
         await response.json()
 
       if (!order.id) {
-        console.error(order)
-        throw new Error("No se pudo crear la orden de PayPal")
+        throw new Error(
+          "Error creando orden PayPal"
+        )
       }
 
       return order.id
@@ -461,30 +490,35 @@ function renderPayPalButton() {
 
     onApprove: async (data) => {
       const response =
-        await fetch("/api/paypal-capture-order", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            orderID: data.orderID
-          })
-        })
+        await fetch(
+          "/api/paypal-capture-order",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              orderID: data.orderID
+            })
+          }
+        )
 
       const details =
         await response.json()
 
       state.paypalPaid = true
-      state.paypalOrderId = data.orderID
-      state.paypalDetails = details
+      state.paypalOrderId =
+        data.orderID
 
-      alert("Pago aprobado. Ahora confirmá la reserva.")
-      updateSummary()
+      state.paypalDetails =
+        details
+
+      alert("Pago aprobado.")
     },
 
     onError: (error) => {
       console.error(error)
-      alert("Error con PayPal.")
+      alert("Error PayPal.")
     }
   }).render("#paypal-button-container")
 }
@@ -511,6 +545,8 @@ if (dateInput) {
       dateInput.value
 
     resetPaymentState()
+
+    renderRigs()
     updateSummary()
   })
 }
@@ -520,11 +556,16 @@ timeButtons.forEach((button) => {
     const time =
       button.textContent.trim()
 
-    if (state.timesSelected.includes(time)) {
+    if (
+      state.timesSelected.includes(time)
+    ) {
       state.timesSelected =
-        state.timesSelected.filter((item) => item !== time)
+        state.timesSelected.filter(
+          (item) => item !== time
+        )
 
       button.classList.remove("active")
+
     } else {
       state.timesSelected.push(time)
       button.classList.add("active")
@@ -536,78 +577,128 @@ timeButtons.forEach((button) => {
 })
 
 if (reserveBtn) {
-  reserveBtn.addEventListener("click", async () => {
-    if (!state.user) {
-      alert("Inicia sesión para reservar.")
-      return
+  reserveBtn.addEventListener(
+    "click",
+    async () => {
+      if (!state.user) {
+        alert("Inicia sesión.")
+        return
+      }
+
+      if (!state.userProfile?.phone) {
+        alert("Agrega teléfono.")
+        return
+      }
+
+      if (
+        !state.date ||
+        !state.timesSelected.length ||
+        !state.rigsSelected.length
+      ) {
+        alert("Completa la reserva.")
+        return
+      }
+
+      if (
+        state.paymentMethod === "card" &&
+        !state.paypalPaid
+      ) {
+        alert("Completa PayPal.")
+        return
+      }
+
+      try {
+        reserveBtn.disabled = true
+        reserveBtn.textContent =
+          "Reservando..."
+
+        const selectedRigDetails =
+          getSelectedRigDetails()
+
+        const bookingRef =
+          push(ref(db, "bookings"))
+
+        const bookingData = {
+          uid: state.user.uid,
+          name: getUserName(),
+          email: state.user.email || "",
+          phone: state.userProfile.phone,
+
+          rigs: state.rigsSelected,
+          rigDetails: selectedRigDetails,
+          rigsCount:
+            state.rigsSelected.length,
+
+          times: state.timesSelected,
+          hoursCount:
+            state.timesSelected.length,
+
+          date: state.date,
+
+          subtotalPerHour:
+            getSubtotalPerHour(),
+
+          total: getTotal(),
+
+          paymentMethod:
+            state.paymentMethod,
+
+          paypalPaid:
+            state.paypalPaid,
+
+          paypalOrderId:
+            state.paypalOrderId,
+
+          paypalDetails:
+            state.paypalDetails || null,
+
+          status:
+            state.paymentMethod ===
+            "card"
+              ? "paid"
+              : "pending",
+
+          createdAt: Date.now()
+        }
+
+        await set(
+          bookingRef,
+          bookingData
+        )
+
+        const bookingId =
+          bookingRef.key
+
+        const whatsappMessage =
+          `Nueva reserva Inercia%0A%0A` +
+          `ID: ${bookingId}%0A` +
+          `Cliente: ${bookingData.name}%0A` +
+          `Teléfono: ${bookingData.phone}%0A` +
+          `Correo: ${bookingData.email}%0A` +
+          `Fecha: ${bookingData.date}%0A` +
+          `Horas: ${bookingData.times.join(", ")}%0A` +
+          `Rigs: ${bookingData.rigs.join(", ")}%0A` +
+          `Total: ${formatPrice(bookingData.total)}%0A` +
+          `Pago: ${bookingData.paymentMethod}%0A` +
+          `Estado: ${bookingData.status}`
+
+        window.open(
+          `https://wa.me/50493266075?text=${whatsappMessage}`,
+          "_blank"
+        )
+
+        alert("Reserva creada.")
+
+      } catch (error) {
+        console.error(error)
+        alert("Error creando reserva.")
+
+      } finally {
+        reserveBtn.disabled = false
+        updateSummary()
+      }
     }
-
-    if (!state.userProfile?.phone) {
-      alert("Tu número de teléfono es obligatorio para reservar.")
-      window.location.href = "/perfil"
-      return
-    }
-
-    if (!state.date || !state.timesSelected.length || !state.rigsSelected.length) {
-      alert("Selecciona fecha, al menos una hora y al menos un simulador.")
-      return
-    }
-
-    if (state.paymentMethod === "card" && !state.paypalPaid) {
-      alert("Primero completá el pago con PayPal.")
-      return
-    }
-
-    try {
-      reserveBtn.disabled = true
-      reserveBtn.textContent = "Reservando..."
-
-      const selectedRigDetails =
-        getSelectedRigDetails()
-
-      const bookingRef =
-        push(ref(db, "bookings"))
-
-      await set(bookingRef, {
-        uid: state.user.uid,
-        name: getUserName(),
-        email: state.user.email,
-        phone: state.userProfile.phone,
-
-        rigs: state.rigsSelected,
-        rigDetails: selectedRigDetails,
-        rigsCount: state.rigsSelected.length,
-
-        times: state.timesSelected,
-        hoursCount: state.timesSelected.length,
-
-        date: state.date,
-
-        subtotalPerHour: getSubtotalPerHour(),
-        total: getTotal(),
-
-        paymentMethod: state.paymentMethod,
-        paypalPaid: state.paypalPaid,
-        paypalOrderId: state.paypalOrderId,
-        paypalDetails: state.paypalDetails,
-
-        status:
-          state.paymentMethod === "card"
-            ? "paid"
-            : "pending",
-
-        createdAt: Date.now()
-      })
-
-      alert(`Reserva creada para ${getUserName()}.`)
-    } catch (error) {
-      console.error(error)
-      alert("No se pudo crear la reserva.")
-    } finally {
-      reserveBtn.disabled = false
-      updateSummary()
-    }
-  })
+  )
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -620,46 +711,89 @@ onAuthStateChanged(auth, async (user) => {
 
   await loadUserProfile(user)
 })
+
 let calendarDate = new Date()
 
 function renderCalendar() {
-  const title = document.getElementById("calendar-title")
-  const daysBox = document.getElementById("calendar-days")
+  const title =
+    document.getElementById(
+      "calendar-title"
+    )
+
+  const daysBox =
+    document.getElementById(
+      "calendar-days"
+    )
 
   if (!title || !daysBox) return
 
-  const year = calendarDate.getFullYear()
-  const month = calendarDate.getMonth()
+  const year =
+    calendarDate.getFullYear()
 
-  title.textContent = calendarDate.toLocaleDateString("es-HN", {
-    month: "long",
-    year: "numeric"
-  })
+  const month =
+    calendarDate.getMonth()
+
+  title.textContent =
+    calendarDate.toLocaleDateString(
+      "es-HN",
+      {
+        month: "long",
+        year: "numeric"
+      }
+    )
 
   daysBox.innerHTML = ""
 
-  const firstDay = new Date(year, month, 1).getDay()
-  const lastDate = new Date(year, month + 1, 0).getDate()
-  const today = new Date()
+  const firstDay =
+    new Date(year, month, 1).getDay()
+
+  const lastDate =
+    new Date(
+      year,
+      month + 1,
+      0
+    ).getDate()
+
+  const today =
+    new Date()
+
   today.setHours(0, 0, 0, 0)
 
   for (let i = 0; i < firstDay; i++) {
-    daysBox.appendChild(document.createElement("div"))
+    daysBox.appendChild(
+      document.createElement("div")
+    )
   }
 
-  for (let day = 1; day <= lastDate; day++) {
-    const date = new Date(year, month, day)
-    const dateValue = date.toISOString().split("T")[0]
+  for (
+    let day = 1;
+    day <= lastDate;
+    day++
+  ) {
+    const date =
+      new Date(year, month, day)
 
-    const btn = document.createElement("button")
+    const dateValue =
+      date.toISOString().split("T")[0]
+
+    const btn =
+      document.createElement("button")
+
     btn.type = "button"
-    btn.className = "calendar-day"
+    btn.className =
+      "calendar-day"
+
     btn.textContent = day
 
-    const isMonday = date.getDay() === 1
-    const isPast = date < today
+    const isMonday =
+      date.getDay() === 1
 
-    if (isMonday) btn.classList.add("monday")
+    const isPast =
+      date < today
+
+    if (isMonday) {
+      btn.classList.add("monday")
+    }
 
     if (isMonday || isPast) {
       btn.classList.add("disabled")
@@ -672,84 +806,45 @@ function renderCalendar() {
 
     btn.onclick = () => {
       state.date = dateValue
-      dateInput.value = dateValue
+
+      if (dateInput) {
+        dateInput.value =
+          dateValue
+      }
 
       resetPaymentState()
-      updateSummary()
+
       renderCalendar()
       renderRigs()
+      updateSummary()
     }
 
     daysBox.appendChild(btn)
   }
-  const bookingData = {
-  uid: state.user.uid,
-  name: getUserName(),
-  email: state.user.email,
-  phone: state.userProfile.phone,
-
-  rigs: state.rigsSelected,
-  rigDetails: selectedRigDetails,
-  rigsCount: state.rigsSelected.length,
-
-  times: state.timesSelected,
-  hoursCount: state.timesSelected.length,
-
-  date: state.date,
-
-  subtotalPerHour: getSubtotalPerHour(),
-  total: getTotal(),
-
-  paymentMethod: state.paymentMethod,
-  paypalPaid: state.paypalPaid,
-  paypalOrderId: state.paypalOrderId,
-  paypalDetails: state.paypalDetails,
-
-  status:
-    state.paymentMethod === "card"
-      ? "paid"
-      : "pending",
-
-  createdAt: Date.now()
 }
 
-await set(bookingRef, bookingData)
-const bookingId = bookingRef.key
+document
+  .getElementById("calendar-prev")
+  ?.addEventListener("click", () => {
+    calendarDate.setMonth(
+      calendarDate.getMonth() - 1
+    )
 
-const whatsappMessage =
-  `Nueva reserva Inercia%0A%0A` +
-  `ID: ${bookingId}%0A` +
-  `Cliente: ${bookingData.name}%0A` +
-  `Teléfono: ${bookingData.phone}%0A` +
-  `Correo: ${bookingData.email || "-"}%0A` +
-  `Fecha: ${bookingData.date}%0A` +
-  `Hora: ${bookingData.times.join(", ")}%0A` +
-  `Rigs: ${bookingData.rigs.join(", ")}%0A` +
-  `Total: L ${Number(bookingData.total || 0).toFixed(2)}%0A` +
-  `Pago: ${bookingData.paymentMethod}%0A` +
-  `Estado: ${bookingData.status}`
+    renderCalendar()
+  })
 
-window.open(
-  `https://wa.me/50493266075?text=${whatsappMessage}`,
-  "_blank"
-)
-}
+document
+  .getElementById("calendar-next")
+  ?.addEventListener("click", () => {
+    calendarDate.setMonth(
+      calendarDate.getMonth() + 1
+    )
 
-document.getElementById("calendar-prev")?.addEventListener("click", () => {
-  calendarDate.setMonth(calendarDate.getMonth() - 1)
-  renderCalendar()
-})
-
-document.getElementById("calendar-next")?.addEventListener("click", () => {
-  calendarDate.setMonth(calendarDate.getMonth() + 1)
-  renderCalendar()
-})
+    renderCalendar()
+  })
 
 renderCalendar()
 loadPromos()
 loadRigs()
 renderPaymentUI()
 updateSummary()
-console.log("PROMOS", activePromos)
-console.log("RIG", rig)
-console.log("PRICE", getRigPrice(rig))
