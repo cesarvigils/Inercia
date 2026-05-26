@@ -712,54 +712,37 @@ function calculatePromo(baseTotal, rigs){
   const standardCount = rigs.length - premiumCount;
 
   let discount = 0;
-  let promoName = "";
 
-  /* =========================================
-     STANDARD PROMOS
-  ========================================= */
-
-  if(standardCount >= 2){
-    discount = 0.10;
-    promoName = "Promo x2";
-  }
-
-  if(standardCount >= 4){
-    discount = 0.15;
-    promoName = "Promo x4";
-  }
-
-  if(standardCount >= 6){
-    discount = 0.20;
-    promoName = "Promo x6";
-  }
+  /* STANDARD */
 
   if(standardCount >= 8){
     discount = 0.25;
-    promoName = "Promo Full Standard";
+  }
+  else if(standardCount >= 6){
+    discount = 0.20;
+  }
+  else if(standardCount >= 4){
+    discount = 0.15;
+  }
+  else if(standardCount >= 2){
+    discount = 0.10;
   }
 
-  /* =========================================
-     PREMIUM BONUS
-  ========================================= */
+  /* PREMIUM BONUS */
 
   if(premiumCount >= 2){
-
     discount += 0.05;
-    promoName += " + Premium Bonus";
   }
 
-  /* limite */
+  /* MAX 35% */
+
   if(discount > 0.35){
     discount = 0.35;
   }
 
-  const finalTotal = baseTotal - (baseTotal * discount);
-
-  return {
-    total: finalTotal,
-    discount,
-    promoName
-  };
+  return Math.round(
+    baseTotal * (1 - discount)
+  );
 }
 
 /* =========================================
@@ -778,15 +761,10 @@ function updateManualTotal(){
 
   selectedBtns.forEach(btn => {
 
-    const rigName = btn.dataset.rig;
-    const price = Number(btn.dataset.price);
+    rigs.push(btn.dataset.rig);
 
-    rigs.push(rigName);
-
-    baseTotal += price;
+    baseTotal += Number(btn.dataset.price);
   });
-
-  const promo = calculatePromo(baseTotal, rigs);
 
   manualRigsInput.value = rigs.join(", ");
 
@@ -797,19 +775,10 @@ function updateManualTotal(){
     return;
   }
 
-  /* mostrar promo */
-  if(promo.discount > 0){
+  const finalTotal = calculatePromo(baseTotal, rigs);
 
-    manualTotalInput.value =
-      `L ${promo.total.toFixed(2)} (${promo.promoName})`;
-
-  } else {
-
-    manualTotalInput.value =
-      `L ${baseTotal.toFixed(2)}`;
-  }
+  manualTotalInput.value = `L ${finalTotal}`;
 }
-
 /* =========================================
    SELECT
 ========================================= */
