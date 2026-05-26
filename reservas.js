@@ -84,8 +84,10 @@ async function loadPromos() {
     ? snap.val()
     : {}
 
-  activePromos = Object.values(data).filter((promo) => promo.active !== false)
+  activePromos = Object.values(data)
+    .filter((promo) => promo.active !== false)
 
+  renderRigs()
   updateSummary()
 }
 function getUserName() {
@@ -97,13 +99,15 @@ function getUserName() {
 }
 
 function getRigPrice(rig) {
+  const type = String(rig.type || "").toLowerCase()
+
   const basePrice =
-    rig.type === "premium"
+    type === "premium"
       ? 350
       : 200
 
   const date =
-    state.date || document.getElementById("booking-date")?.value
+    state.date || dateInput?.value
 
   const day =
     date
@@ -111,21 +115,31 @@ function getRigPrice(rig) {
       : null
 
   const promo = activePromos.find((promo) => {
+    const promoType =
+      String(promo.simulatorType || "").toLowerCase()
+
+    const promoDays =
+      Array.isArray(promo.days)
+        ? promo.days.map(Number)
+        : []
+
     const appliesType =
-      promo.simulatorType === "all" ||
-      promo.simulatorType === rig.type
+      promoType === "all" ||
+      promoType === type
 
     const appliesDay =
-      !promo.days ||
-      !promo.days.length ||
-      promo.days.includes(day)
+      !promoDays.length ||
+      promoDays.includes(day)
 
     const appliesDate =
       !promo.endsAt ||
       !date ||
       date <= promo.endsAt
 
-    return appliesType && appliesDay && appliesDate
+    return promo.active !== false &&
+      appliesType &&
+      appliesDay &&
+      appliesDate
   })
 
   if (!promo) return basePrice
@@ -135,13 +149,14 @@ function getRigPrice(rig) {
   }
 
   if (promo.type === "percent_discount") {
-    const discount = Number(promo.percent || 0)
-    return Math.max(0, basePrice - basePrice * (discount / 100))
+    return Math.max(
+      0,
+      basePrice * (1 - Number(promo.percent || 0) / 100)
+    )
   }
 
   return basePrice
 }
-
 function getSelectedRigDetails() {
   return state.rigs
     .filter((rig) => state.rigsSelected.includes(rig.name))
