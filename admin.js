@@ -298,6 +298,16 @@ function renderBookings(bookings) {
         </p>
 
         <p>
+          <b>Tel:</b>
+          ${booking.phone || "-"}
+        </p>
+
+        <p>
+          <b>Correo:</b>
+          ${booking.email || "-"}
+        </p>
+
+        <p>
           <b>Rigs:</b>
           ${normalizeRigs(booking)}
         </p>
@@ -314,7 +324,123 @@ function renderBookings(bookings) {
         <span class="status-pill status-${status}">
           ${getStatusInfo(status)}
         </span>
+
+        <div class="booking-actions">
+
+          <button
+            class="booking-complete-btn"
+            data-complete="${booking.id}"
+          >
+            Completar
+          </button>
+
+          <button
+            class="booking-delete-btn"
+            data-delete="${booking.id}"
+          >
+            Borrar
+          </button>
+
+        </div>
       `
+
+      /*
+        COMPLETAR
+      */
+
+      const completeBtn =
+        card.querySelector(
+          "[data-complete]"
+        )
+
+      if (completeBtn) {
+
+        completeBtn.onclick =
+          async () => {
+
+            const confirmComplete =
+              confirm(
+                "¿Completar esta reserva?"
+              )
+
+            if (!confirmComplete)
+              return
+
+            try {
+
+              await adminFetch(
+                "/api/admin?action=bookings",
+                {
+                  method: "PATCH",
+                  body: JSON.stringify({
+                    id: booking.id,
+                    action: "complete"
+                  })
+                }
+              )
+
+              await Promise.all([
+                loadBookings(),
+                loadSales()
+              ])
+
+            } catch (error) {
+
+              console.error(error)
+
+              alert(
+                "No se pudo completar la reserva."
+              )
+            }
+          }
+      }
+
+      /*
+        BORRAR
+      */
+
+      const deleteBtn =
+        card.querySelector(
+          "[data-delete]"
+        )
+
+      if (deleteBtn) {
+
+        deleteBtn.onclick =
+          async () => {
+
+            const confirmDelete =
+              confirm(
+                "¿Borrar esta reserva?"
+              )
+
+            if (!confirmDelete)
+              return
+
+            try {
+
+              await adminFetch(
+                `/api/admin?action=bookings&id=${booking.id}`,
+                {
+                  method: "DELETE"
+                }
+              )
+
+              await Promise.all([
+                loadBookings(),
+                loadSales()
+              ])
+
+            } catch (error) {
+
+              console.error(error)
+
+              alert(
+                "No se pudo borrar la reserva."
+              )
+            }
+          }
+      }
 
       column.appendChild(card)
     })
@@ -324,7 +450,6 @@ function renderBookings(bookings) {
     )
   })
 }
-
 async function loadBookings() {
 
   const data =
