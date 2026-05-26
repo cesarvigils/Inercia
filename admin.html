@@ -44,7 +44,6 @@
     <div class="section-head">
       <div>
         <h2>Reservas martes a domingo</h2>
-        <p>Vista tipo Trello agrupada por día.</p>
       </div>
       <button id="refresh-bookings">Actualizar</button>
     </div>
@@ -216,6 +215,12 @@
 
     <div class="promo-list-wrap">
       <h3>Ventas registradas</h3>
+      <div class="sales-type-tabs">
+  <button class="sales-type-tab active" data-sales-type="all">Todas</button>
+  <button class="sales-type-tab" data-sales-type="booking">Reservas</button>
+  <button class="sales-type-tab" data-sales-type="product">Productos</button>
+  <button class="sales-type-tab" data-sales-type="manual">Manual</button>
+</div>
       <div id="sales-list" class="promos-list"></div>
     </div>
   </div>
