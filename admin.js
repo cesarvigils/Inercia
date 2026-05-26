@@ -599,7 +599,18 @@ if (manualBookingForm) {
 if (salesRange) {
   salesRange.onchange = loadSales
 }
+document.querySelectorAll(".sales-type-tab").forEach((tab) => {
+  tab.onclick = () => {
+    document.querySelectorAll(".sales-type-tab").forEach((item) => {
+      item.classList.remove("active")
+    })
 
+    tab.classList.add("active")
+    currentSalesType = tab.dataset.salesType
+
+    renderSales(cachedSales, cachedSalesTotal)
+  }
+})
 const manualSaleForm = $("manual-sale-form")
 
 if (manualSaleForm) {
