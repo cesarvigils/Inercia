@@ -330,8 +330,13 @@ async function loadUsers() {
   const data = await adminFetch("/api/admin?action=users")
   renderUsers(data.users || [])
 }
-
+let currentSalesType = "all"
+let cachedSales = []
+let cachedSalesTotal = 0
 function renderSales(sales, total) {
+  cachedSales = sales
+  cachedSalesTotal = total
+
   if (salesTotal) {
     salesTotal.textContent = formatMoney(total)
   }
@@ -340,12 +345,21 @@ function renderSales(sales, total) {
 
   salesList.innerHTML = ""
 
-  if (!sales.length) {
-    salesList.innerHTML = `<div class="sale-card"><p>No hay ventas.</p></div>`
+  const filtered =
+    currentSalesType === "all"
+      ? sales
+      : sales.filter((sale) => sale.type === currentSalesType)
+
+  if (!filtered.length) {
+    salesList.innerHTML = `
+      <div class="sale-card">
+        <p>No hay ventas en esta pestaña.</p>
+      </div>
+    `
     return
   }
 
-  sales.forEach((sale) => {
+  filtered.forEach((sale) => {
     const card = document.createElement("div")
     card.className = "sale-card"
 
