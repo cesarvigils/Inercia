@@ -246,7 +246,7 @@ async function handleUsers(req, res) {
 
 async function handlePromos(req, res) {
   if (req.method === "GET") {
-    const snap = await db.ref("admin/promotions").get()
+    const snap = await db.ref("promotions").get()
     const data = snap.exists() ? snap.val() : {}
 
     const promos = Object.entries(data)
@@ -261,7 +261,7 @@ async function handlePromos(req, res) {
 
   if (req.method === "POST") {
     const body = parseBody(req)
-    const id = body.id || db.ref("admin/promotions").push().key
+    const id = body.id || db.ref("promotions").push().key
 
     const promo = {
       id,
@@ -276,8 +276,7 @@ async function handlePromos(req, res) {
       updatedAt: Date.now()
     }
 
-    await db.ref(`admin/promotions/${id}`).set(promo)
-
+await db.ref(`promotions/${id}`).set(promo)
     return res.status(200).json({
       ok: true,
       promo
@@ -323,6 +322,8 @@ async function handleCreditHours(req, res, admin) {
   }
 
   const userRef = db.ref(`users/${uid}`)
+    const snap = await get(ref(db, "promotions"))
+
   const snap = await userRef.get()
   const user = snap.exists() ? snap.val() : {}
   const current = Number(user.freeHours || 0)
