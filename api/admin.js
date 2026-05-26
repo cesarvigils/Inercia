@@ -292,8 +292,7 @@ await db.ref(`promotions/${id}`).set(promo)
       })
     }
 
-    await db.ref(`admin/promotions/${id}`).remove()
-
+await db.ref(`promotions/${id}`).remove()
     return res.status(200).json({
       ok: true
     })
@@ -322,8 +321,6 @@ async function handleCreditHours(req, res, admin) {
   }
 
   const userRef = db.ref(`users/${uid}`)
-    const snap = await get(ref(db, "promotions"))
-
   const snap = await userRef.get()
   const user = snap.exists() ? snap.val() : {}
   const current = Number(user.freeHours || 0)
