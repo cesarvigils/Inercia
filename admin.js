@@ -1,4 +1,5 @@
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"
+
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -16,29 +17,30 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-const app = getApps().length
-  ? getApp()
-  : initializeApp(firebaseConfig)
-
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 const auth = getAuth(app)
 
-const loginScreen = document.getElementById("admin-login")
-const adminApp = document.getElementById("admin-app")
-const emailInput = document.getElementById("admin-email")
-const passwordInput = document.getElementById("admin-password")
-const loginBtn = document.getElementById("admin-login-btn")
-const loginError = document.getElementById("login-error")
-const logoutBtn = document.getElementById("admin-logout")
+const $ = (id) => document.getElementById(id)
 
-const bookingsBoard = document.getElementById("bookings-board")
-const usersList = document.getElementById("users-list")
-const creditUser = document.getElementById("credit-user")
+const loginScreen = $("admin-login")
+const adminApp = $("admin-app")
+const emailInput = $("admin-email")
+const passwordInput = $("admin-password")
+const loginBtn = $("admin-login-btn")
+const loginError = $("login-error")
+const logoutBtn = $("admin-logout")
+
+const bookingsBoard = $("bookings-board")
+const usersList = $("users-list")
+const creditUser = $("credit-user")
+
+const salesRange = $("sales-range")
+const salesTotal = $("sales-total")
+const salesList = $("sales-list")
+const productsList = $("products-list")
 
 async function getToken() {
-  if (!auth.currentUser) {
-    throw new Error("No admin user")
-  }
-
+  if (!auth.currentUser) throw new Error("No admin user")
   return await auth.currentUser.getIdToken(true)
 }
 
@@ -66,15 +68,15 @@ async function adminFetch(url, options = {}) {
 
 function formatDate(dateString) {
   if (!dateString) return "-"
+  return new Date(`${dateString}T12:00:00`).toLocaleDateString("es-HN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "short"
+  })
+}
 
-  return new Date(`${dateString}T12:00:00`).toLocaleDateString(
-    "es-HN",
-    {
-      weekday: "long",
-      day: "2-digit",
-      month: "short"
-    }
-  )
+function formatMoney(value) {
+  return `L ${Number(value || 0).toFixed(2)}`
 }
 
 function getDayKey(dateString) {
@@ -83,15 +85,11 @@ function getDayKey(dateString) {
 
 function normalizeRigs(booking) {
   if (Array.isArray(booking.rigDetails)) {
-    return booking.rigDetails
-      .map((r) => r.name || r.id || r)
-      .join(", ")
+    return booking.rigDetails.map((r) => r.name || r.id || r).join(", ")
   }
 
   if (Array.isArray(booking.rigs)) {
-    return booking.rigs
-      .map((r) => typeof r === "string" ? r : r.name)
-      .join(", ")
+    return booking.rigs.map((r) => typeof r === "string" ? r : r.name).join(", ")
   }
 
   return "-"
@@ -126,24 +124,16 @@ function renderBookings(bookings) {
 
   days.forEach((day) => {
     const column = document.createElement("div")
-
     column.className = "day-column"
 
     const items = bookings
       .filter((booking) => getDayKey(booking.date) === day.key)
-      .sort((a, b) =>
-        String(a.times?.[0] || "")
-          .localeCompare(String(b.times?.[0] || ""))
-      )
+      .sort((a, b) => String(a.times?.[0] || "").localeCompare(String(b.times?.[0] || "")))
 
     column.innerHTML = `<h3>${day.label}</h3>`
 
     if (!items.length) {
-      column.innerHTML += `
-        <div class="booking-card">
-          <p>Sin reservas</p>
-        </div>
-      `
+      column.innerHTML += `<div class="booking-card"><p>Sin reservas</p></div>`
     }
 
     items.forEach((booking) => {
@@ -154,77 +144,29 @@ function renderBookings(bookings) {
 
       card.innerHTML = `
         <strong>${booking.name || "Cliente"}</strong>
-
         <p>${formatDate(booking.date)}</p>
-
-        <p>
-          <b>Hora:</b>
-          ${(booking.times || []).join(", ")}
-        </p>
-
-        <p>
-          <b>Tel:</b>
-          ${booking.phone || "-"}
-        </p>
-
-        <p>
-          <b>Correo:</b>
-          ${booking.email || "-"}
-        </p>
-
-        <p>
-          <b>Rigs:</b>
-          ${normalizeRigs(booking)}
-        </p>
-
-        <p>
-          <b>Total:</b>
-          L ${Number(
-            booking.totalHNL ||
-            booking.total ||
-            0
-          ).toFixed(2)}
-        </p>
+        <p><b>Hora:</b> ${(booking.times || []).join(", ")}</p>
+        <p><b>Tel:</b> ${booking.phone || "-"}</p>
+        <p><b>Correo:</b> ${booking.email || "-"}</p>
+        <p><b>Rigs:</b> ${normalizeRigs(booking)}</p>
+        <p><b>Total:</b> ${formatMoney(booking.totalHNL || booking.total || 0)}</p>
 
         <span class="status-pill status-${status}">
           ${getStatusInfo(status)}
         </span>
 
         <div class="booking-actions">
-          <button
-            class="complete"
-            data-complete="${booking.id}"
-          >
-            Completar
-          </button>
-
-          <button
-            data-confirm="${booking.id}"
-          >
-            Confirmar
-          </button>
-
-          <button
-            data-reject="${booking.id}"
-          >
-            Rechazar
-          </button>
-
-          <button
-            class="delete"
-            data-delete="${booking.id}"
-          >
-            Borrar
-          </button>
+          <button class="complete" data-complete="${booking.id}">Completar</button>
+          <button data-confirm="${booking.id}">Confirmar</button>
+          <button data-reject="${booking.id}">Rechazar</button>
+          <button class="delete" data-delete="${booking.id}">Borrar</button>
         </div>
       `
 
       card.querySelector("[data-complete]").onclick = async () => {
-        if (!confirm("¿Completar y quitar esta reserva de la lista?")) {
-          return
-        }
+        if (!confirm("¿Completar y quitar esta reserva de la lista?")) return
 
-        await adminFetch("/api/admin-bookings", {
+        await adminFetch("/api/admin?action=bookings", {
           method: "PATCH",
           body: JSON.stringify({
             id: booking.id,
@@ -232,11 +174,11 @@ function renderBookings(bookings) {
           })
         })
 
-        await loadBookings()
+        await Promise.all([loadBookings(), loadSales()])
       }
 
       card.querySelector("[data-confirm]").onclick = async () => {
-        await adminFetch("/api/admin-bookings", {
+        await adminFetch("/api/admin?action=bookings", {
           method: "PATCH",
           body: JSON.stringify({
             id: booking.id,
@@ -248,7 +190,7 @@ function renderBookings(bookings) {
       }
 
       card.querySelector("[data-reject]").onclick = async () => {
-        await adminFetch("/api/admin-bookings", {
+        await adminFetch("/api/admin?action=bookings", {
           method: "PATCH",
           body: JSON.stringify({
             id: booking.id,
@@ -260,18 +202,13 @@ function renderBookings(bookings) {
       }
 
       card.querySelector("[data-delete]").onclick = async () => {
-        if (!confirm("¿Borrar esta reserva?")) {
-          return
-        }
+        if (!confirm("¿Borrar esta reserva?")) return
 
-        await adminFetch(
-          `/api/admin-bookings?id=${booking.id}`,
-          {
-            method: "DELETE"
-          }
-        )
+        await adminFetch(`/api/admin?action=bookings&id=${booking.id}`, {
+          method: "DELETE"
+        })
 
-        await loadBookings()
+        await Promise.all([loadBookings(), loadSales()])
       }
 
       column.appendChild(card)
@@ -282,115 +219,75 @@ function renderBookings(bookings) {
 }
 
 async function loadBookings() {
-  const data = await adminFetch("/api/admin-bookings")
+  const data = await adminFetch("/api/admin?action=bookings")
   renderBookings(data.bookings || [])
 }
 
 function fillPromoForm(promo) {
-  document.getElementById("promo-id").value =
-    promo.id || ""
+  $("promo-id").value = promo.id || ""
+  $("promo-name").value = promo.name || ""
+  $("promo-type").value = promo.type || "fixed_price"
+  $("promo-simulator-type").value = promo.simulatorType || "standard"
+  $("promo-fixed-price").value = promo.fixedPrice || ""
+  $("promo-percent").value = promo.percent || ""
+  $("promo-active").value = String(promo.active !== false)
 
-  document.getElementById("promo-name").value =
-    promo.name || ""
+  if ($("promo-ends-at")) {
+    $("promo-ends-at").value = promo.endsAt || ""
+  }
 
-  document.getElementById("promo-type").value =
-    promo.type || "fixed_price"
-
-  document.getElementById("promo-simulator-type").value =
-    promo.simulatorType || "standard"
-
-  document.getElementById("promo-fixed-price").value =
-    promo.fixedPrice || ""
-
-  document.getElementById("promo-percent").value =
-    promo.percent || ""
-
-  document.getElementById("promo-active").value =
-    String(promo.active !== false)
+  document.querySelectorAll(".promo-day").forEach((checkbox) => {
+    checkbox.checked = Array.isArray(promo.days) && promo.days.includes(Number(checkbox.value))
+  })
 }
 
 function clearPromoForm() {
   fillPromoForm({
     active: true,
     type: "fixed_price",
-    simulatorType: "standard"
+    simulatorType: "standard",
+    days: [],
+    endsAt: ""
   })
 }
 
 function renderPromos(promos) {
-  const wrap = document.getElementById("promos-list")
-
+  const wrap = $("promos-list")
   wrap.innerHTML = ""
 
   if (!promos.length) {
-    wrap.innerHTML = `
-      <div class="promo-card">
-        No hay promociones.
-      </div>
-    `
+    wrap.innerHTML = `<div class="promo-card">No hay promociones.</div>`
     return
   }
 
   promos.forEach((promo) => {
     const card = document.createElement("div")
-
     card.className = "promo-card"
 
     card.innerHTML = `
       <h4>${promo.name || "Promo"}</h4>
-
-      <span>
-        Tipo: ${promo.type}
-      </span>
-
-      <span>
-        Simulador: ${promo.simulatorType}
-      </span>
-
-      <span>
-        Precio fijo:
-        ${promo.fixedPrice ? `L ${promo.fixedPrice}` : "-"}
-      </span>
-
-      <span>
-        Descuento:
-        ${promo.percent ? `${promo.percent}%` : "-"}
-      </span>
-
-      <span>
-        Activa:
-        ${promo.active !== false ? "Sí" : "No"}
-      </span>
+      <span>Tipo: ${promo.type}</span>
+      <span>Simulador: ${promo.simulatorType}</span>
+      <span>Precio fijo: ${promo.fixedPrice ? `L ${promo.fixedPrice}` : "-"}</span>
+      <span>Descuento: ${promo.percent ? `${promo.percent}%` : "-"}</span>
+      <span>Días: ${Array.isArray(promo.days) && promo.days.length ? promo.days.join(", ") : "Todos"}</span>
+      <span>Termina: ${promo.endsAt || "Sin fecha"}</span>
+      <span>Activa: ${promo.active !== false ? "Sí" : "No"}</span>
 
       <div class="promo-actions">
-        <button data-edit="${promo.id}">
-          Editar
-        </button>
-
-        <button
-          class="delete"
-          data-delete="${promo.id}"
-        >
-          Borrar
-        </button>
+        <button data-edit="${promo.id}">Editar</button>
+        <button class="delete" data-delete="${promo.id}">Borrar</button>
       </div>
     `
 
-    card.querySelector("[data-edit]").onclick = () => {
-      fillPromoForm(promo)
-    }
+    card.querySelector("[data-edit]").onclick = () => fillPromoForm(promo)
 
     card.querySelector("[data-delete]").onclick = async () => {
-      if (!confirm("¿Borrar esta promo?")) {
-        return
-      }
+      if (!confirm("¿Borrar esta promo?")) return
 
-      await adminFetch(
-        `/api/admin-promos?id=${promo.id}`,
-        {
-          method: "DELETE"
-        }
-      )
+      await adminFetch(`/api/admin?action=promos&id=${promo.id}`, {
+        method: "DELETE"
+      })
 
       await loadPromos()
     }
@@ -400,7 +297,7 @@ function renderPromos(promos) {
 }
 
 async function loadPromos() {
-  const data = await adminFetch("/api/admin-promos")
+  const data = await adminFetch("/api/admin?action=promos")
   renderPromos(data.promos || [])
 }
 
@@ -410,36 +307,19 @@ function renderUsers(users) {
 
   users.forEach((user) => {
     const option = document.createElement("option")
-
     option.value = user.uid
-
-    option.textContent = `
-      ${user.name || "Usuario"} · ${user.email || user.uid}
-    `
-
+    option.textContent = `${user.name || "Usuario"} · ${user.email || user.uid}`
     creditUser.appendChild(option)
 
     const card = document.createElement("div")
-
     card.className = "user-card"
 
     card.innerHTML = `
       <h4>${user.name || "Usuario"}</h4>
-
       <span>${user.email || "-"}</span>
-
-      <span>
-        Tel: ${user.phone || "-"}
-      </span>
-
-      <span>
-        UID: ${user.uid}
-      </span>
-
-      <span>
-        Horas gratis:
-        ${Number(user.freeHours || 0)}
-      </span>
+      <span>Tel: ${user.phone || "-"}</span>
+      <span>UID: ${user.uid}</span>
+      <span>Horas gratis: ${Number(user.freeHours || 0)}</span>
     `
 
     usersList.appendChild(card)
@@ -447,8 +327,123 @@ function renderUsers(users) {
 }
 
 async function loadUsers() {
-  const data = await adminFetch("/api/admin-users")
+  const data = await adminFetch("/api/admin?action=users")
   renderUsers(data.users || [])
+}
+
+function renderSales(sales, total) {
+  if (salesTotal) {
+    salesTotal.textContent = formatMoney(total)
+  }
+
+  if (!salesList) return
+
+  salesList.innerHTML = ""
+
+  if (!sales.length) {
+    salesList.innerHTML = `<div class="sale-card"><p>No hay ventas.</p></div>`
+    return
+  }
+
+  sales.forEach((sale) => {
+    const card = document.createElement("div")
+    card.className = "sale-card"
+
+    card.innerHTML = `
+      <h4>${sale.description || "Venta"}</h4>
+      <p><b>Monto:</b> ${formatMoney(sale.amount)}</p>
+      <p><b>Método:</b> ${sale.method || "-"}</p>
+      <p><b>Tipo:</b> ${sale.type || "-"}</p>
+      <p><b>Fecha:</b> ${new Date(Number(sale.createdAt || Date.now())).toLocaleString("es-HN")}</p>
+    `
+
+    salesList.appendChild(card)
+  })
+}
+
+async function loadSales() {
+  if (!salesRange) return
+
+  const data = await adminFetch(`/api/admin?action=sales&range=${salesRange.value}`)
+  renderSales(data.sales || [], data.total || 0)
+}
+
+function fillProductForm(product) {
+  $("product-id").value = product.id || ""
+  $("product-name").value = product.name || ""
+  $("product-price").value = product.price || ""
+}
+
+function clearProductForm() {
+  fillProductForm({})
+}
+
+function renderProducts(products) {
+  if (!productsList) return
+
+  productsList.innerHTML = ""
+
+  if (!products.length) {
+    productsList.innerHTML = `<div class="promo-card">No hay productos.</div>`
+    return
+  }
+
+  products.forEach((product) => {
+    const card = document.createElement("div")
+    card.className = "promo-card"
+
+    card.innerHTML = `
+      <h4>${product.name}</h4>
+      <span>Precio: ${formatMoney(product.price)}</span>
+
+      <div class="product-actions">
+        <input type="number" min="1" value="1" id="qty-${product.id}">
+        <button data-sell="${product.id}">Vender</button>
+        <button data-edit-product="${product.id}">Editar</button>
+        <button class="delete" data-delete-product="${product.id}">Borrar</button>
+      </div>
+    `
+
+    card.querySelector("[data-sell]").onclick = async () => {
+      const quantity = Number($(`qty-${product.id}`).value || 1)
+
+      await adminFetch("/api/admin?action=sales", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "product",
+          description: `${product.name} x${quantity}`,
+          amount: Number(product.price) * quantity,
+          method: "cash",
+          productId: product.id,
+          quantity
+        })
+      })
+
+      await loadSales()
+      alert("Venta de producto agregada.")
+    }
+
+    card.querySelector("[data-edit-product]").onclick = () => fillProductForm(product)
+
+    card.querySelector("[data-delete-product]").onclick = async () => {
+      if (!confirm("¿Borrar producto?")) return
+
+      await adminFetch(`/api/admin?action=products&id=${product.id}`, {
+        method: "DELETE"
+      })
+
+      await loadProducts()
+    }
+
+    productsList.appendChild(card)
+  })
+}
+
+async function loadProducts() {
+  if (!productsList) return
+
+  const data = await adminFetch("/api/admin?action=products")
+  renderProducts(data.products || [])
 }
 
 async function bootAdmin() {
@@ -458,7 +453,9 @@ async function bootAdmin() {
   await Promise.all([
     loadBookings(),
     loadPromos(),
-    loadUsers()
+    loadUsers(),
+    loadSales(),
+    loadProducts()
   ])
 }
 
@@ -484,107 +481,175 @@ logoutBtn.onclick = async () => {
 
 document.querySelectorAll(".admin-tab").forEach((tab) => {
   tab.onclick = () => {
-    document
-      .querySelectorAll(".admin-tab")
-      .forEach((i) => i.classList.remove("active"))
-
-    document
-      .querySelectorAll(".admin-section")
-      .forEach((i) => i.classList.remove("active"))
+    document.querySelectorAll(".admin-tab").forEach((i) => i.classList.remove("active"))
+    document.querySelectorAll(".admin-section").forEach((i) => i.classList.remove("active"))
 
     tab.classList.add("active")
-
-    document
-      .getElementById(`tab-${tab.dataset.tab}`)
-      .classList.add("active")
+    document.getElementById(`tab-${tab.dataset.tab}`).classList.add("active")
   }
 })
 
-document.getElementById("refresh-bookings").onclick =
-  loadBookings
+$("refresh-bookings").onclick = loadBookings
+$("refresh-users").onclick = loadUsers
+$("clear-promo").onclick = clearPromoForm
 
-document.getElementById("refresh-users").onclick =
-  loadUsers
-
-document.getElementById("clear-promo").onclick =
-  clearPromoForm
-
-document.getElementById("promo-form").onsubmit = async (e) => {
+$("promo-form").onsubmit = async (e) => {
   e.preventDefault()
 
   const payload = {
-    id:
-      document.getElementById("promo-id")
-        .value
-        .trim() || null,
-
-    name:
-      document.getElementById("promo-name")
-        .value
-        .trim(),
-
-    type:
-      document.getElementById("promo-type").value,
-
-    simulatorType:
-      document.getElementById("promo-simulator-type").value,
-
-    fixedPrice: Number(
-      document.getElementById("promo-fixed-price").value || 0
-    ),
-
-    percent: Number(
-      document.getElementById("promo-percent").value || 0
-    ),
-
-    active:
-      document.getElementById("promo-active").value === "true"
+    id: $("promo-id").value.trim() || null,
+    name: $("promo-name").value.trim(),
+    type: $("promo-type").value,
+    simulatorType: $("promo-simulator-type").value,
+    fixedPrice: Number($("promo-fixed-price").value || 0),
+    percent: Number($("promo-percent").value || 0),
+    active: $("promo-active").value === "true",
+    days: Array.from(document.querySelectorAll(".promo-day:checked")).map((item) => Number(item.value)),
+    endsAt: $("promo-ends-at")?.value || ""
   }
 
-  await adminFetch("/api/admin-promos", {
+  await adminFetch("/api/admin?action=promos", {
     method: "POST",
     body: JSON.stringify(payload)
   })
 
   clearPromoForm()
-
   await loadPromos()
 }
 
-document.getElementById("credit-hours-btn").onclick =
-  async () => {
-    const uid = creditUser.value
+$("credit-hours-btn").onclick = async () => {
+  const uid = creditUser.value
+  const hours = Number($("credit-hours").value || 0)
+  const note = $("credit-note").value.trim()
 
-    const hours = Number(
-      document.getElementById("credit-hours").value || 0
-    )
+  if (!uid || hours <= 0) {
+    alert("Seleccioná usuario y horas.")
+    return
+  }
 
-    const note = document
-      .getElementById("credit-note")
-      .value
-      .trim()
+  await adminFetch("/api/admin?action=credit-hours", {
+    method: "POST",
+    body: JSON.stringify({
+      uid,
+      hours,
+      note
+    })
+  })
 
-    if (!uid || hours <= 0) {
-      alert("Seleccioná usuario y horas.")
+  $("credit-hours").value = ""
+  $("credit-note").value = ""
+
+  await loadUsers()
+  alert("Horas acreditadas.")
+}
+
+const manualBookingForm = $("manual-booking-form")
+
+if (manualBookingForm) {
+  manualBookingForm.onsubmit = async (event) => {
+    event.preventDefault()
+
+    const times = Array.from($("manual-time").selectedOptions).map((option) => option.value)
+
+    const rigs = $("manual-rigs").value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+    const payload = {
+      name: $("manual-name").value.trim(),
+      phone: $("manual-phone").value.trim(),
+      email: $("manual-email").value.trim(),
+      date: $("manual-date").value,
+      times,
+      rigs,
+      totalHNL: Number($("manual-total").value || 0)
+    }
+
+    if (!payload.name || !payload.phone || !payload.date || !times.length || !rigs.length) {
+      alert("Llená nombre, teléfono, fecha, hora y rigs.")
       return
     }
 
-    await adminFetch("/api/admin-credit-hours", {
+    await adminFetch("/api/admin?action=bookings", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    })
+
+    manualBookingForm.reset()
+    await Promise.all([loadBookings(), loadSales()])
+    alert("Reserva manual creada.")
+  }
+}
+
+if (salesRange) {
+  salesRange.onchange = loadSales
+}
+
+const manualSaleForm = $("manual-sale-form")
+
+if (manualSaleForm) {
+  manualSaleForm.onsubmit = async (event) => {
+    event.preventDefault()
+
+    const description = $("sale-description").value.trim()
+    const amount = Number($("sale-amount").value || 0)
+    const method = $("sale-method").value
+
+    if (!description || amount <= 0) {
+      alert("Agregá descripción y monto.")
+      return
+    }
+
+    await adminFetch("/api/admin?action=sales", {
       method: "POST",
       body: JSON.stringify({
-        uid,
-        hours,
-        note
+        type: "manual",
+        description,
+        amount,
+        method
       })
     })
 
-    document.getElementById("credit-hours").value = ""
-    document.getElementById("credit-note").value = ""
-
-    await loadUsers()
-
-    alert("Horas acreditadas.")
+    manualSaleForm.reset()
+    await loadSales()
+    alert("Venta manual agregada.")
   }
+}
+
+const productForm = $("product-form")
+
+if (productForm) {
+  productForm.onsubmit = async (event) => {
+    event.preventDefault()
+
+    const payload = {
+      id: $("product-id").value.trim() || null,
+      name: $("product-name").value.trim(),
+      price: Number($("product-price").value || 0)
+    }
+
+    if (!payload.name || payload.price <= 0) {
+      alert("Agregá nombre y precio.")
+      return
+    }
+
+    await adminFetch("/api/admin?action=products", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    })
+
+    clearProductForm()
+    await loadProducts()
+    alert("Producto guardado.")
+  }
+}
+
+const clearProductBtn = $("clear-product")
+
+if (clearProductBtn) {
+  clearProductBtn.onclick = clearProductForm
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -600,81 +665,8 @@ onAuthStateChanged(auth, async (user) => {
 
     await signOut(auth)
 
-    loginError.textContent =
-      "Este usuario no tiene permiso de admin."
-
+    loginError.textContent = "Este usuario no tiene permiso de admin."
     loginScreen.classList.remove("hidden")
     adminApp.classList.add("hidden")
   }
 })
-
-const manualBookingForm =
-  document.getElementById("manual-booking-form")
-
-if (manualBookingForm) {
-  manualBookingForm.onsubmit = async (event) => {
-    event.preventDefault()
-
-    const times = Array.from(
-      document.getElementById("manual-time").selectedOptions
-    ).map((option) => option.value)
-
-    const rigs = document
-      .getElementById("manual-rigs")
-      .value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean)
-
-    const payload = {
-      name:
-        document.getElementById("manual-name")
-          .value
-          .trim(),
-
-      phone:
-        document.getElementById("manual-phone")
-          .value
-          .trim(),
-
-      email:
-        document.getElementById("manual-email")
-          .value
-          .trim(),
-
-      date:
-        document.getElementById("manual-date").value,
-
-      times,
-
-      rigs,
-
-      totalHNL: Number(
-        document.getElementById("manual-total").value || 0
-      )
-    }
-
-    if (
-      !payload.name ||
-      !payload.phone ||
-      !payload.email ||
-      !payload.date ||
-      !times.length ||
-      !rigs.length
-    ) {
-      alert("Llená todos los campos de la reserva manual.")
-      return
-    }
-
-    await adminFetch("/api/admin-bookings", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    })
-
-    manualBookingForm.reset()
-
-    await loadBookings()
-
-    alert("Reserva manual creada.")
-  }
-}
