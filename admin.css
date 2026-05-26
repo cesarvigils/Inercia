@@ -76,12 +76,17 @@ body{
 .admin-filter,
 .product-actions input{
   width:100%;
-  min-height:52px;
+  min-height:54px;
   margin-top:.75rem;
   padding:0 1rem;
   border:1px solid rgba(255,255,255,.07);
-  border-radius:15px;
-  background:rgba(255,255,255,.045);
+  border-radius:18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(22,22,22,.96),
+      rgba(10,10,10,.98)
+    );
   color:white;
   outline:none;
   transition:.25s ease;
@@ -89,8 +94,8 @@ body{
 }
 
 .credit-box textarea{
-  min-height:100px;
-  padding-top:1rem;
+  min-height:110px;
+  padding:1rem;
   resize:vertical;
 }
 
@@ -114,7 +119,7 @@ body{
 .product-actions input:focus{
   border-color:rgba(255,140,26,.55);
   box-shadow:0 0 0 4px rgba(255,140,26,.12);
-  background:rgba(255,255,255,.06);
+  background:#151515;
 }
 
 button{
@@ -138,9 +143,9 @@ button:active{
 .credit-box button,
 .section-head button,
 .admin-header button{
-  min-height:50px;
-  padding:0 1.2rem;
-  border-radius:15px;
+  min-height:52px;
+  padding:0 1.3rem;
+  border-radius:18px;
   background:#ff8c1a;
   color:white;
   margin-top:1rem;
@@ -175,7 +180,7 @@ button:active{
   align-items:center;
   gap:1rem;
   padding:1.5rem;
-  border-radius:28px;
+  border-radius:30px;
   background:
     linear-gradient(
       180deg,
@@ -291,7 +296,7 @@ button:active{
       rgba(10,10,10,.94)
     );
   border:1px solid rgba(255,255,255,.07);
-  border-radius:24px;
+  border-radius:28px;
   padding:1rem;
   box-shadow:
     0 18px 40px rgba(0,0,0,.28),
@@ -311,7 +316,7 @@ button:active{
 .sale-card{
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.06);
-  border-radius:18px;
+  border-radius:20px;
   padding:1rem;
   margin-bottom:.8rem;
   transition:.25s ease;
@@ -364,8 +369,8 @@ button:active{
 .credit-box,
 .users-list,
 .manual-booking-form{
-  padding:1.3rem;
-  border-radius:24px;
+  padding:1.4rem;
+  border-radius:28px;
   background:
     linear-gradient(
       180deg,
@@ -412,11 +417,6 @@ button:active{
   background:rgba(255,255,255,.11);
 }
 
-.promo-actions button:hover,
-.booking-actions button:hover{
-  background:rgba(255,255,255,.16);
-}
-
 .promo-actions button.delete,
 .booking-actions button.delete{
   background:rgba(255,60,60,.22);
@@ -441,23 +441,187 @@ button:active{
   margin:0;
 }
 
-/* MANUAL */
+/* =========================================
+   MANUAL BOOKING
+========================================= */
 
-.manual-booking-form h3{
-  margin:0 0 1rem;
-  color:#ff8c1a;
-  font-family:'Orbitron',sans-serif;
+.manual-booking-form{
+  overflow:hidden;
 }
 
-.manual-grid{
+.manual-booking-form h3{
+  margin:0 0 1.2rem;
+  font-size:1.25rem;
+  color:#ff8c1a;
+  letter-spacing:.5px;
+}
+
+.manual-top-fields{
   display:grid;
   grid-template-columns:repeat(4,1fr);
+  gap:1rem;
+  margin-bottom:1rem;
+}
+
+.manual-booking-grid{
+  display:grid;
+  grid-template-columns:
+    minmax(240px,.8fr)
+    minmax(340px,1fr)
+    minmax(320px,.9fr);
+  gap:1rem;
+  align-items:start;
+}
+
+/* HOURS */
+
+#manual-time{
+  width:100%;
+  min-height:490px;
+  padding:.9rem;
+  border-radius:24px;
+  background:#070707;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.08);
+  overflow-y:auto;
+  font-size:1rem;
+}
+
+#manual-time option{
+  padding:.7rem;
+  border-radius:10px;
+}
+
+#manual-time option:checked{
+  background:#ff8c1a;
+  color:#000;
+}
+
+/* RIGS */
+
+.manual-rigs-wrap{
+  display:grid;
+  grid-template-columns:1fr;
   gap:.75rem;
 }
 
-.manual-grid select[multiple]{
-  min-height:116px;
-  padding:.75rem;
+.manual-rig-btn{
+  width:100%;
+  min-height:52px;
+  border:none;
+  border-radius:18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(22,22,22,.98),
+      rgba(12,12,12,.98)
+    );
+  border:1px solid rgba(255,255,255,.08);
+  color:#fff;
+  padding:.9rem 1rem;
+  font-size:.95rem;
+  font-weight:800;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.manual-rig-btn:hover{
+  transform:translateY(-2px);
+  border-color:rgba(255,140,26,.45);
+  background:#181818;
+}
+
+.manual-rig-btn.active{
+  background:#ff8c1a;
+  color:#000;
+  border-color:#ff8c1a;
+  box-shadow:
+    0 10px 30px rgba(255,140,26,.28);
+}
+
+/* SUMMARY */
+
+.manual-summary{
+  display:flex;
+  flex-direction:column;
+  min-height:490px;
+  padding:1.2rem;
+  border-radius:24px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18,18,18,.98),
+      rgba(10,10,10,.98)
+    );
+  border:1px solid rgba(255,255,255,.07);
+}
+
+.manual-summary-title{
+  font-size:.95rem;
+  font-weight:700;
+  color:rgba(255,255,255,.55);
+  margin-bottom:1rem;
+}
+
+.manual-summary-list{
+  flex:1;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:.7rem;
+}
+
+.manual-summary-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:.8rem .9rem;
+  border-radius:14px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.05);
+}
+
+.manual-summary-total{
+  margin-top:1rem;
+  padding-top:1rem;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+.manual-summary-total span{
+  display:block;
+  color:rgba(255,255,255,.5);
+  margin-bottom:.35rem;
+}
+
+#manual-total{
+  font-size:2rem;
+  font-weight:900;
+  color:#ff8c1a;
+  font-family:'Orbitron',sans-serif;
+  line-height:1;
+}
+
+/* BUTTON */
+
+#manual-booking-form button[type="submit"]{
+  margin-top:1rem;
+  min-height:56px;
+  padding:0 1.5rem;
+  border:none;
+  border-radius:18px;
+  background:#ff8c1a;
+  color:#000;
+  font-size:1rem;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:
+    0 12px 30px rgba(255,140,26,.22);
+}
+
+#manual-booking-form button[type="submit"]:hover{
+  transform:translateY(-2px);
+  box-shadow:
+    0 18px 40px rgba(255,140,26,.28);
 }
 
 /* DAYS */
@@ -564,6 +728,36 @@ button:active{
   color:#ff6262;
 }
 
+/* SCROLLBAR */
+
+::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+
+::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.14);
+  border-radius:999px;
+}
+
+/* TABLET */
+
+@media(max-width:1200px){
+
+  .manual-booking-grid{
+    grid-template-columns:1fr;
+  }
+
+  .manual-summary{
+    min-height:auto;
+  }
+
+  #manual-time{
+    min-height:260px;
+  }
+
+}
+
 /* MOBILE */
 
 @media(max-width:1050px){
@@ -582,6 +776,7 @@ button:active{
     align-items:flex-start;
     flex-direction:column;
   }
+
 }
 
 @media(max-width:950px){
@@ -589,6 +784,11 @@ button:active{
   .manual-grid{
     grid-template-columns:1fr;
   }
+
+  .manual-top-fields{
+    grid-template-columns:1fr 1fr;
+  }
+
 }
 
 @media(max-width:900px){
@@ -600,6 +800,27 @@ button:active{
   .days-grid{
     grid-template-columns:repeat(4,1fr);
   }
+
+}
+
+@media(max-width:700px){
+
+  .manual-top-fields{
+    grid-template-columns:1fr;
+  }
+
+  .manual-rigs-wrap{
+    grid-template-columns:1fr;
+  }
+
+  .manual-rig-btn{
+    min-height:56px;
+  }
+
+  #manual-total{
+    font-size:1.6rem;
+  }
+
 }
 
 @media(max-width:600px){
@@ -656,141 +877,14 @@ button:active{
   .days-grid{
     grid-template-columns:repeat(2,1fr);
   }
-}
-/* =========================================
-   MANUAL BOOKING
-========================================= */
 
-.manual-booking-grid{
-  display:grid;
-  grid-template-columns:
-    repeat(4,minmax(0,1fr));
-  gap:1.2rem;
-  align-items:start;
-  width:100%;
-}
-
-.manual-booking-grid input,
-.manual-booking-grid select,
-.manual-booking-grid textarea{
-  width:100%;
-  background:#111;
-  border:1px solid rgba(255,255,255,.08);
-  color:#fff;
-  border-radius:18px;
-  padding:1rem 1.1rem;
-  font-size:.95rem;
-  outline:none;
-  transition:.2s;
-}
-
-.manual-booking-grid input:focus,
-.manual-booking-grid select:focus{
-  border-color:#ff7a00;
-  box-shadow:0 0 0 3px rgba(255,122,0,.15);
-}
-
-/* =========================================
-   HOURS
-========================================= */
-
-#manual-time{
-  min-height:220px;
-  background:#0d0d0d;
-  color:#fff;
-}
-
-/* =========================================
-   RIG BUTTONS
-========================================= */
-
-.manual-rigs-wrap{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:.7rem;
-}
-
-.manual-rig-btn{
-  border:none;
-  background:#161616;
-  color:#fff;
-  padding:.9rem .8rem;
-  border-radius:14px;
-  font-weight:700;
-  cursor:pointer;
-  transition:.18s;
-  border:1px solid rgba(255,255,255,.08);
-  font-size:.92rem;
-  width:100%;
-}
-
-.manual-rig-btn:hover{
-  transform:translateY(-2px);
-  border-color:#ff7a00;
-  background:#1d1d1d;
-}
-
-.manual-rig-btn.active{
-  background:#ff7a00;
-  color:#000;
-  border-color:#ff7a00;
-  box-shadow:
-    0 0 25px rgba(255,122,0,.35);
-}
-
-/* =========================================
-   TOTAL
-========================================= */
-
-#manual-total{
-  font-size:1.2rem;
-  font-weight:800;
-  color:#ff7a00;
-  text-align:center;
-  background:#111;
-}
-
-/* =========================================
-   BUTTON
-========================================= */
-
-#manual-booking-form button[type="submit"]{
-  background:#ff7a00;
-  color:#000;
-  border:none;
-  padding:1rem 1.4rem;
-  border-radius:16px;
-  font-weight:800;
-  cursor:pointer;
-  transition:.2s;
-}
-
-#manual-booking-form button[type="submit"]:hover{
-  transform:translateY(-2px);
-  box-shadow:
-    0 10px 30px rgba(255,122,0,.3);
-}
-
-/* =========================================
-   MOBILE
-========================================= */
-
-@media(max-width:980px){
-
-  .manual-booking-grid{
-    grid-template-columns:1fr;
+  .manual-booking-form{
+    padding:1rem;
+    border-radius:22px;
   }
 
-  .manual-rigs-wrap{
-    grid-template-columns:1fr 1fr;
-  }
-
-}
-
-@media(max-width:640px){
-
-  .manual-rigs-wrap{
-    grid-template-columns:1fr;
+  #manual-time{
+    min-height:220px;
   }
 
 }
