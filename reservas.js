@@ -419,21 +419,20 @@ if (state.paymentMethod === "bank") {
       Primero realizá la transferencia y luego subí el comprobante.
     </div>
 
-    <button id="open-bank-modal" class="bank-open-btn" type="button">
+    <button id="open-bank-modal" class="bank-action-btn" type="button">
       Ver cuentas bancarias
     </button>
 
-    <label class="bank-upload-label">
+    <label class="bank-action-btn bank-upload-btn">
       Subir comprobante
       <input
         id="bank-proof"
-        class="bank-proof"
         type="file"
         accept="image/*,.pdf"
         hidden>
     </label>
 
-    <small id="bank-proof-name"></small>
+    <small id="bank-proof-name" class="bank-proof-name"></small>
   `
 
   document.getElementById("open-bank-modal")?.addEventListener("click", () => {
@@ -955,6 +954,30 @@ document.querySelectorAll(".bank-account").forEach((button) => {
     } catch (error) {
       console.error(error)
       alert("No se pudo copiar la cuenta.")
+    }
+  })
+})
+document.getElementById("close-bank-modal")?.addEventListener("click", () => {
+  document
+    .getElementById("bank-modal")
+    ?.classList.add("hidden-bank-modal")
+})
+
+document.querySelectorAll(".bank-account").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const value = button.dataset.copy || ""
+
+    await navigator.clipboard.writeText(value)
+
+    const msg =
+      document.getElementById("bank-copy-msg")
+
+    if (msg) {
+      msg.textContent = "Cuenta copiada."
+
+      setTimeout(() => {
+        msg.textContent = ""
+      }, 2000)
     }
   })
 })

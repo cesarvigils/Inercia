@@ -839,3 +839,106 @@
   text-align: center;
   font-weight: 700;
 }
+.bank-modal-box {
+  position: relative;
+  width: min(92%, 540px);
+  padding: 2rem;
+  border-radius: 28px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18,18,18,.98),
+      rgba(5,5,5,.98)
+    );
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 30px 80px rgba(0,0,0,.45);
+}
+
+.bank-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.bank-modal-close:hover {
+  background: #ff8c1a;
+}
+
+.bank-modal h2 {
+  margin-bottom: 1rem;
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.bank-owner {
+  margin-bottom: 1.5rem;
+  color: rgba(255,255,255,.7);
+  line-height: 1.5;
+}
+
+.bank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bank-account {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+  transition: .2s;
+}
+
+.bank-account:hover {
+  border-color: rgba(255,140,26,.5);
+  transform: translateY(-2px);
+}
+
+.bank-account img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.bank-account div {
+  flex: 1;
+  text-align: left;
+}
+
+.bank-account h3 {
+  color: white;
+  margin-bottom: .25rem;
+}
+
+.bank-account p {
+  color: rgba(255,255,255,.65);
+}
+
+.bank-account span {
+  color: #ff8c1a;
+  font-weight: 800;
+}
+
+.bank-copy-msg {
+  display: block;
+  margin-top: 1rem;
+  color: #ff8c1a;
+  text-align: center;
+  font-weight: 700;
+}
