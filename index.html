@@ -1,328 +1,66 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simuladores Inercia</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Página en Construcción</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FIcono_Inercia_2026_transparenteconBorde1-01.png?alt=media&token=13110b1e-8a3a-48e1-9b8f-514d60de2fcf">
-  <link rel="stylesheet" href="/styles.css">
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(255,140,26,.22), transparent 35%),
+    #050505;
+  color: white;
+  font-family: Arial, sans-serif;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.card {
+  width: min(520px, 100%);
+  text-align: center;
+  padding: 3rem 2rem;
+  border-radius: 28px;
+  background: rgba(15,15,15,.92);
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+}
+
+.icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: clamp(2rem, 8vw, 4rem);
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+
+p {
+  color: rgba(255,255,255,.65);
+  font-size: 1.1rem;
+}
+
+span {
+  color: #ff8c1a;
+}
+</style>
 </head>
 
 <body>
-  <header class="navbar">
-
-    <div class="container nav-wrapper">
-
-      <a href="/" class="logo">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
-      </a>
-
-      <button id="nav-menu-toggle" class="nav-menu-toggle" type="button">
-        ☰
-      </button>
-
-      <nav class="nav-links">
-        <a href="/standings">Resultados</a>
-        <a href="/reservas">Reservas</a>
-        <a href="/contacto">Contacto</a>
-      </nav>
-
-      <div class="nav-right">
-        <div class="nav-auth">
-
-          <button id="open-auth" class="nav-btn">
-            Login
-          </button>
-
-          <button id="profile-trigger" class="profile-trigger hidden-auth" type="button">
-            <img id="navbar-pfp" src="/assets/default-user.png" alt="">
-          </button>
-
-          <div id="profile-menu" class="profile-menu hidden-auth">
-
-            <div class="profile-avatar-wrap">
-              <img id="profile-menu-pfp" src="/assets/default-user.png" alt="">
-            </div>
-
-            <h3 id="profile-menu-name">
-              Piloto
-            </h3>
-
-            <p id="profile-menu-email">
-              correo@email.com
-            </p>
-
-            <p id="profile-menu-phone">
-              Sin teléfono
-            </p>
-
-            <a href="/perfil" class="profile-link">
-              Mi Perfil
-            </a>
-
-            <button id="logout-btn" class="logout-btn" type="button">
-              Cerrar Sesión
-            </button>
-
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-
-  </header>
-<section class="hero">
-  <div class="hero-overlay"></div>
-  <div class="hero-video">
-    <video autoplay muted loop playsinline>
-      <source src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FHero.mp4?alt=media&token=7a95bb54-53d4-4354-a5b2-b756dac07aff" type="video/mp4">
-    </video>
+  <div class="card">
+    <div class="icon"></div>
+    <h1>Página web en <span>construcción</span></h1>
+    <p>Estamos trabajando para tener todo listo muy pronto.</p>
   </div>
-
-  <div class="hero-gradient"></div>
-
-  <div class="container hero-content">
-    <h1>
-      SENTÍ LA<br>
-      <span>VELOCIDAD</span>
-    </h1>
-
-    <p>
-      Simuladores ultra realistas, ambiente agradable,
-      eventos competitivos y tecnología de ultima generación.
-    </p>
-
-    <div class="hero-actions">
-      <a href="/reservas" class="primary-btn">RESERVAR</a>
-    </div>
-
-  </div>
-
-</section>
-
-  <section class="events" id="eventos">
-
-    <div class="container event-wrapper">
-
-      <div class="event-left">
-<div class="event-logos">
-
-  <img src="" alt="">
-
-</div>
-        <div class="section-tag">
-          EVENTOS
-        </div>
-
-        <h2>
-          Torneos.<br>
-          Eventos privados.<br>
-          Experiencias únicas.
-        </h2>
-
-        <p>
-          Creamos experiencias premium para grupos,
-          empresas, competencias y celebraciones.
-        </p>
-
-<a 
-  href="https://wa.me/5049326?text=Hola,%20quiero%20solicitar%20una%20cotizaci%C3%B3n%20para%20un%20evento%20corporativo." 
-  class="primary-btn"
-  target="_blank"
->
-  Reservar Evento
-</a>
-
-      </div>
-      <div class="event-right">
-        <div class="event-card">
-          <span>01</span>
-          <h3>Eventos Corporativos</h3>
-        </div>
-        <div class="event-card">
-          <span>02</span>
-          <h3>Campeonatos de Formula Uno</h3>
-        </div>
-        <div class="event-card">
-          <span>03</span>
-          <h3>Celebraciones Privadas</h3>
-        </div>
-      </div>
-    </div>
-    
-  </section>
-
- <section class="pricing" id="precios">
-
-  <div class="container">
-
-    <div class="section-header center">
-
-      <div class="section-tag">
-        PRECIOS
-      </div>
-
-      <h2>
-        Elegí tu experiencia.
-      </h2>
-
-    </div>
-
-    <div class="pricing-grid">
-
-      <div class="price-card">
-        <div class="wheel-icon">
-          <img src="FIREBASE_STEERING_ICON" alt="">
-        </div>
-
-        <span class="card-label">
-          SIMULADOR STANDARD
-        </span>
-        <div class="price-wrapper">
-          <span class="currency">L</span>
-          <span class="price-number">
-            200
-          </span>
-        </div>
-        <div class="time-row">
-          <span>⏱</span>
-          <p>1 HORA</p>
-        </div>
-        <div class="feature-list">
-          <div class="feature-item">
-            <p>SIMULADOR GT TIPO COCKPIT</p>
-          </div>
-          <div class="feature-item">
-            <p>SELECCIÓN DE PISTA Y CARRO</p>
-          </div>
-          <div class="feature-item">
-            <p>CARRERA, CLASIFICACIÓN Y PRÁCTICA</p>
-          </div>
-        </div>
-        <a href="/reservas" class="reserve-btn">
-          RESERVAR
-        </a>
-      </div>
-      <div class="price-card premium">
-        <div class="wheel-icon">
-          <img src="FIREBASE_STEERING_ICON" alt="">
-        </div>
-        <span class="card-label">
-          SIMULADOR PREMIUM
-        </span>
-        <div class="price-wrapper">
-          <span class="currency">L</span>
-          <span class="price-number">
-            350
-          </span>
-        </div>
-        <div class="time-row">
-          <span>⏱</span>
-          <p>1 HORA</p>
-        </div>
-        <div class="feature-list">
-          <div class="feature-item">
-            <p>SIMULADOR GT TIPO COCKPIT</p>
-          </div>
-          <div class="feature-item">
-            <p>TRIPLE MONITOR, EXPERIENCIA INMERSIVA</p>
-          </div>
-          <div class="feature-item">
-            <p>CARRERA, CLASIFICACIÓN Y PRÁCTICA</p>
-          </div>
-        </div>
-        <a href="/reservas" class="reserve-btn">
-          RESERVAR
-        </a>
-      </div>
-  </div>
-</section>
- 
-
-  <div id="auth-overlay" class="auth-overlay hidden-auth">
-
-    <div class="auth-modal">
-
-      <button id="close-auth" class="close-auth" type="button">
-        ✕
-      </button>
-
-      <div class="auth-tabs">
-
-        <button id="login-tab" class="auth-tab active-tab" type="button">
-          Login
-        </button>
-
-        <button id="register-tab" class="auth-tab" type="button">
-          Registro
-        </button>
-
-      </div>
-
-      <div id="login-form" class="auth-form">
-
-        <h2>
-          Bienvenido de nuevo.
-        </h2>
-
-        <p>
-          Inicia sesión para competir y reservar.
-        </p>
-
-        <input id="login-email" type="email" placeholder="Correo electrónico">
-
-        <input id="login-password" type="password" placeholder="Contraseña">
-
-        <button id="login-btn" class="auth-submit" type="button">
-          Iniciar Sesión
-        </button>
-
-        <button id="google-login" class="google-btn" type="button">
-          <span>
-            Continuar con Google
-          </span>
-        </button>
-
-      </div>
-
-      <div id="register-form" class="auth-form hidden-auth">
-
-        <h2>
-          Crea tu perfil.
-        </h2>
-
-        <p>
-          Únete a la comunidad Inercia.
-        </p>
-
-        <input id="register-name" type="text" placeholder="Nombre de usuario">
-
-        <input id="register-email" type="email" placeholder="Correo electrónico">
-
-        <input id="register-phone" type="tel" placeholder="Teléfono">
-
-        <input id="register-password" type="password" placeholder="Contraseña">
-
-        <button id="register-btn" class="auth-submit" type="button">
-          Crear Cuenta
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-  <script type="module" src="/firebase-auth.js"></script>
-
-
 </body>
-
 </html>
