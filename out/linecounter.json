@@ -740,6 +740,399 @@
                     "filename": "vite.config.js"
                 }
             ]
+        },
+        {
+            "version": "0.2.7",
+            "counttime": "2026-06-12 01:26:00",
+            "filesum": 58,
+            "codesum": 12851,
+            "commentsum": 184,
+            "blanksum": 3125,
+            "statistics": {
+                ".json": {
+                    "code": 3007,
+                    "comment": 0,
+                    "blank": 100
+                },
+                ".css": {
+                    "code": 4245,
+                    "comment": 105,
+                    "blank": 1265
+                },
+                ".js": {
+                    "code": 3139,
+                    "comment": 73,
+                    "blank": 905
+                },
+                ".html": {
+                    "code": 2377,
+                    "comment": 6,
+                    "blank": 850
+                },
+                "": {
+                    "code": 31,
+                    "comment": 0,
+                    "blank": 5
+                },
+                ".svg": {
+                    "code": 52,
+                    "comment": 0,
+                    "blank": 0
+                }
+            },
+            "filelist": [
+                {
+                    "blank": 5,
+                    "code": 31,
+                    "comment": 0,
+                    "filename": ".gitignore"
+                },
+                {
+                    "blank": 123,
+                    "code": 644,
+                    "comment": 29,
+                    "filename": "admin.css"
+                },
+                {
+                    "blank": 43,
+                    "code": 249,
+                    "comment": 2,
+                    "filename": "admin.html"
+                },
+                {
+                    "blank": 273,
+                    "code": 642,
+                    "comment": 63,
+                    "filename": "admin.js"
+                },
+                {
+                    "blank": 105,
+                    "code": 425,
+                    "comment": 0,
+                    "filename": "api\\admin.js"
+                },
+                {
+                    "blank": 25,
+                    "code": 61,
+                    "comment": 0,
+                    "filename": "api\\paypal-capture-order.js"
+                },
+                {
+                    "blank": 54,
+                    "code": 128,
+                    "comment": 0,
+                    "filename": "api\\paypal-create-order.js"
+                },
+                {
+                    "blank": 19,
+                    "code": 105,
+                    "comment": 1,
+                    "filename": "api\\send-bank-proof.js"
+                },
+                {
+                    "blank": 11,
+                    "code": 19,
+                    "comment": 1,
+                    "filename": "api\\standings.js"
+                },
+                {
+                    "blank": 42,
+                    "code": 181,
+                    "comment": 2,
+                    "filename": "api\\telegram-booking-action.js"
+                },
+                {
+                    "blank": 11,
+                    "code": 38,
+                    "comment": 0,
+                    "filename": "api\\user-booking-count.js"
+                },
+                {
+                    "filename": "assets\\default-user.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 81,
+                    "code": 206,
+                    "comment": 4,
+                    "filename": "contacto.css"
+                },
+                {
+                    "blank": 38,
+                    "code": 151,
+                    "comment": 2,
+                    "filename": "contacto.html"
+                },
+                {
+                    "blank": 18,
+                    "code": 110,
+                    "comment": 0,
+                    "filename": "dist\\admin.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "dist\\assets\\admin-DLn8C2ur.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "dist\\assets\\admin-I9ryC5GO.css"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "dist\\assets\\contacto-8OrDIPMK.css"
+                },
+                {
+                    "filename": "dist\\assets\\default-user-RzG1OWQi.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 1,
+                    "filename": "dist\\assets\\firebase-auth-BjMu6SbG.css"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "dist\\assets\\firebase-auth-BOkAXTnI.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "dist\\assets\\modulepreload-polyfill-B5Qt9EMX.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 20,
+                    "comment": 0,
+                    "filename": "dist\\assets\\perfil-BpUype4G.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "dist\\assets\\perfil-Dk_O-k41.css"
+                },
+                {
+                    "blank": 5,
+                    "code": 43,
+                    "comment": 0,
+                    "filename": "dist\\assets\\reservas-CLAOQmdB.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "dist\\assets\\reservas-Dw56Cg70.css"
+                },
+                {
+                    "blank": 3,
+                    "code": 22,
+                    "comment": 0,
+                    "filename": "dist\\assets\\standings-CBC5vLIL.js"
+                },
+                {
+                    "blank": 68,
+                    "code": 194,
+                    "comment": 2,
+                    "filename": "dist\\contacto.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "dist\\favicon.svg"
+                },
+                {
+                    "blank": 0,
+                    "code": 24,
+                    "comment": 0,
+                    "filename": "dist\\icons.svg"
+                },
+                {
+                    "blank": 77,
+                    "code": 264,
+                    "comment": 0,
+                    "filename": "dist\\index.html"
+                },
+                {
+                    "blank": 79,
+                    "code": 164,
+                    "comment": 0,
+                    "filename": "dist\\perfil.html"
+                },
+                {
+                    "blank": 113,
+                    "code": 271,
+                    "comment": 0,
+                    "filename": "dist\\reservas.html"
+                },
+                {
+                    "blank": 78,
+                    "code": 150,
+                    "comment": 0,
+                    "filename": "dist\\standings.html"
+                },
+                {
+                    "blank": 28,
+                    "code": 187,
+                    "comment": 0,
+                    "filename": "firebase-auth.js"
+                },
+                {
+                    "blank": 78,
+                    "code": 250,
+                    "comment": 0,
+                    "filename": "index.html"
+                },
+                {
+                    "blank": 100,
+                    "code": 2953,
+                    "comment": 0,
+                    "filename": "package-lock.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 21,
+                    "comment": 0,
+                    "filename": "package.json"
+                },
+                {
+                    "blank": 5,
+                    "code": 16,
+                    "comment": 1,
+                    "filename": "paypal-loader.js"
+                },
+                {
+                    "blank": 68,
+                    "code": 348,
+                    "comment": 9,
+                    "filename": "perfil.css"
+                },
+                {
+                    "blank": 51,
+                    "code": 114,
+                    "comment": 0,
+                    "filename": "perfil.html"
+                },
+                {
+                    "blank": 75,
+                    "code": 257,
+                    "comment": 0,
+                    "filename": "perfil.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "public\\favicon.svg"
+                },
+                {
+                    "blank": 0,
+                    "code": 24,
+                    "comment": 0,
+                    "filename": "public\\icons.svg"
+                },
+                {
+                    "blank": 213,
+                    "code": 801,
+                    "comment": 36,
+                    "filename": "reservas.css"
+                },
+                {
+                    "blank": 129,
+                    "code": 311,
+                    "comment": 0,
+                    "filename": "reservas.html"
+                },
+                {
+                    "blank": 201,
+                    "code": 794,
+                    "comment": 1,
+                    "filename": "reservas.js"
+                },
+                {
+                    "filename": "src\\assets\\hero.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "src\\assets\\javascript.svg"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "src\\assets\\vite.svg"
+                },
+                {
+                    "blank": 0,
+                    "code": 9,
+                    "comment": 0,
+                    "filename": "src\\counter.js"
+                },
+                {
+                    "blank": 5,
+                    "code": 55,
+                    "comment": 0,
+                    "filename": "src\\main.js"
+                },
+                {
+                    "blank": 38,
+                    "code": 258,
+                    "comment": 0,
+                    "filename": "src\\style.css"
+                },
+                {
+                    "blank": 78,
+                    "code": 149,
+                    "comment": 0,
+                    "filename": "standings.html"
+                },
+                {
+                    "blank": 42,
+                    "code": 118,
+                    "comment": 4,
+                    "filename": "standings.js"
+                },
+                {
+                    "blank": 742,
+                    "code": 1983,
+                    "comment": 26,
+                    "filename": "styles.css"
+                },
+                {
+                    "blank": 0,
+                    "code": 33,
+                    "comment": 0,
+                    "filename": "vercel.json"
+                },
+                {
+                    "blank": 1,
+                    "code": 16,
+                    "comment": 0,
+                    "filename": "vite.config.js"
+                }
+            ]
         }
     ]
 }
