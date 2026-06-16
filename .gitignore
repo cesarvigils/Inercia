@@ -37,3 +37,6 @@ dist
 node_modules
 dist
 .vercel
+node_modules/
+dist/
+.vercel/
