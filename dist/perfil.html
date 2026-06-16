@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil | Simuladores Inercia</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FIcono_Inercia_2026_transparenteconBorde1-01.png?alt=media&token=13110b1e-8a3a-48e1-9b8f-514d60de2fcf">
+  <script type="module" crossorigin src="/assets/perfil-BpUype4G.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/firebase-auth-BOkAXTnI.js">
+  <link rel="stylesheet" crossorigin href="/assets/firebase-auth-BjMu6SbG.css">
+  <link rel="stylesheet" crossorigin href="/assets/perfil-Dk_O-k41.css">
+</head>
+
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="navbar">
+
+    <div class="container nav-wrapper">
+
+      <a href="/" class="logo">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+      </a>
+
+      <button id="nav-menu-toggle" class="nav-menu-toggle" type="button">
+        ☰
+      </button>
+
+      <nav class="nav-links">
+        <a href="/standings">Resultados</a>
+        <a href="/reservas">Reservas</a>
+        <a href="/contacto">Contacto</a>
+      </nav>
+
+      <div class="nav-right">
+        <div class="nav-auth">
+
+          <button id="open-auth" class="nav-btn">
+            Login
+          </button>
+
+          <button id="profile-trigger" class="profile-trigger hidden-auth" type="button">
+            <img id="navbar-pfp" src="/assets/default-user-RzG1OWQi.png" alt="">
+          </button>
+
+          <div id="profile-menu" class="profile-menu hidden-auth">
+
+            <div class="profile-avatar-wrap">
+              <img id="profile-menu-pfp" src="/assets/default-user-RzG1OWQi.png" alt="">
+            </div>
+
+            <h3 id="profile-menu-name">
+              Piloto
+            </h3>
+
+            <p id="profile-menu-email">
+              correo@email.com
+            </p>
+
+            <p id="profile-menu-phone">
+              Sin teléfono
+            </p>
+
+            <a href="/perfil" class="profile-link">
+              Mi Perfil
+            </a>
+
+            <button id="logout-btn" class="logout-btn" type="button">
+              Cerrar Sesión
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </header>
+<div class="bg-grid"></div>
+
+  
+
+  <main class="profile-page">
+
+    <section class="profile-hero">
+
+      <div class="profile-card">
+
+   <div class="profile-avatar-box">
+
+  <img
+    id="profile-photo"
+    src="/assets/default-user-RzG1OWQi.png"
+    alt="">
+
+  <input
+    id="photo-upload"
+    type="file"
+    accept="image/*"
+    hidden>
+
+</div>
+
+        <h1 id="profile-name">
+          Piloto
+        </h1>
+
+        <p id="profile-email">
+          correo@email.com
+        </p>
+
+
+        <label class="profile-label">
+          Teléfono
+        </label>
+
+        <input id="phone-input" class="profile-input" type="tel" placeholder="+504 9999-9999">
+
+        <button id="save-profile" class="profile-save">
+          Guardar Perfil
+        </button>
+
+      </div>
+
+      <div class="records-panel">
+
+        <div class="section-tag">
+          RECORDS
+        </div>
+
+        <h2>
+          Tus tiempos.
+        </h2>
+
+        <p>
+          Sincronizado cada hora, tus mejores tiempos se mostrarán aquí para que podás compartirlos y compararlos.
+        </p>
+
+        <div class="records-table">
+
+          <div class="records-header">
+            <span>POS</span>
+            <span>PISTA</span>
+            <span>TIEMPO</span>
+            <span>CATEGORÍA</span>
+          </div>
+
+          <div id="profile-records"></div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <div id="auth-overlay" class="auth-overlay hidden-auth">
+
+    <div class="auth-modal">
+
+      <button id="close-auth" class="close-auth" type="button">
+        ✕
+      </button>
+
+      <div class="auth-tabs">
+
+        <button id="login-tab" class="auth-tab active-tab" type="button">
+          Login
+        </button>
+
+        <button id="register-tab" class="auth-tab" type="button">
+          Registro
+        </button>
+
+      </div>
+
+      <div id="login-form" class="auth-form">
+
+        <h2>
+          Bienvenido de nuevo.
+        </h2>
+
+        <p>
+          Inicia sesión para competir y reservar.
+        </p>
+
+        <input id="login-email" type="email" placeholder="Correo electrónico">
+
+        <input id="login-password" type="password" placeholder="Contraseña">
+
+        <button id="login-btn" class="auth-submit" type="button">
+          Iniciar Sesión
+        </button>
+
+        <button id="google-login" class="google-btn" type="button">
+          <span>
+            Continuar con Google
+          </span>
+        </button>
+
+      </div>
+
+      <div id="register-form" class="auth-form hidden-auth">
+
+        <h2>
+          Crea tu perfil.
+        </h2>
+
+        <p>
+          Únete a la comunidad Inercia.
+        </p>
+
+        <input id="register-name" type="text" placeholder="Nombre de usuario">
+
+        <input id="register-email" type="email" placeholder="Correo electrónico">
+
+        <input id="register-phone" type="tel" placeholder="Teléfono">
+
+        <input id="register-password" type="password" placeholder="Contraseña">
+
+        <button id="register-btn" class="auth-submit" type="button">
+          Crear Cuenta
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+</body>
+
+</html>
