@@ -1,33 +1,4 @@
 {
-  "redirects": [
-    {
-      "has": [
-        {
-          "type": "host",
-          "value": "admin.inerciahn.com"
-        }
-      ],
-      "source": "/",
-      "destination": "/admin.html",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/standings",
-      "destination": "/standings.html"
-    },
-    {
-      "source": "/contacto",
-      "destination": "/contacto.html"
-    },
-    {
-      "source": "/reservas",
-      "destination": "/reservas.html"
-    },
-    {
-      "source": "/perfil",
-      "destination": "/perfil.html"
-    }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": false
 }
