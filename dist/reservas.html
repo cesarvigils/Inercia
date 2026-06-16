@@ -11,11 +11,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FIcono_Inercia_2026_transparenteconBorde1-01.png?alt=media&token=13110b1e-8a3a-48e1-9b8f-514d60de2fcf">
-  <script type="module" crossorigin src="/assets/reservas-CLAOQmdB.js"></script>
+  <script type="module" crossorigin src="/assets/reservas-Yz0A4H3C.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
   <link rel="modulepreload" crossorigin href="/assets/firebase-auth-BOkAXTnI.js">
   <link rel="stylesheet" crossorigin href="/assets/firebase-auth-BjMu6SbG.css">
-  <link rel="stylesheet" crossorigin href="/assets/reservas-Dw56Cg70.css">
+  <link rel="stylesheet" crossorigin href="/assets/reservas-BH_oedpz.css">
 </head>
 
 <body>
@@ -118,8 +118,27 @@
         2. Seleccioná la fecha
       </h2>
 
-      <input id="booking-date" class="booking-date" type="date">
+<input id="booking-date" type="hidden">
 
+<div class="custom-calendar">
+  <div class="calendar-head">
+    <button id="calendar-prev" type="button">‹</button>
+    <h3 id="calendar-title"></h3>
+    <button id="calendar-next" type="button">›</button>
+  </div>
+
+  <div class="calendar-weekdays">
+    <span>Dom</span>
+    <span>Lun</span>
+    <span>Mar</span>
+    <span>Mié</span>
+    <span>Jue</span>
+    <span>Vie</span>
+    <span>Sáb</span>
+  </div>
+
+  <div id="calendar-days" class="calendar-days"></div>
+</div>
     </section>
 
     <section class="booking-panel time-panel">
@@ -256,49 +275,86 @@
 
   <div class="bank-modal-box">
 
-    <button id="close-bank-modal" class="bank-modal-close">
+    <button
+      id="close-bank-modal"
+      class="bank-modal-close"
+      type="button">
       ✕
     </button>
 
-    <h2>
+    <h2 class="bank-modal-title">
       Cuentas para transferencia
     </h2>
+
     <p class="bank-owner">
-      A nombre de <strong>Mauro Daniel Salgado Diaz</strong>
+      A nombre de
+      <strong>Mauro Daniel Salgado Diaz</strong>
+
       <br>
-      DNI: <strong>0801198616666</strong>
+
+      DNI:
+      <strong>0801198616666</strong>
     </p>
+
     <div class="bank-list">
-      <button class="bank-account" data-copy="202-005-764-1">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FBANCATLAN.png?alt=media&token=4dd9e93d-cf67-4a5a-8ee3-d75e17bb6414" alt="Banco Atlántida">
-        <div>
+
+      <button
+        class="bank-account"
+        data-copy="202-005-764-1"
+        type="button">
+
+        <img
+          src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FBANCATLAN.png?alt=media&token=4dd9e93d-cf67-4a5a-8ee3-d75e17bb6414"
+          alt="Banco Atlántida">
+
+        <div class="bank-account-info">
           <h3>Banco Atlántida</h3>
           <p>202-005-764-1</p>
         </div>
+
         <span>Copiar</span>
       </button>
 
-      <button class="bank-account" data-copy="200-016-679-886">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FFICHOSA.jpg?alt=media&token=02945d22-1627-42df-930f-459283c29438" alt="Banco Ficohsa">
-        <div>
+      <button
+        class="bank-account"
+        data-copy="200-016-679-886"
+        type="button">
+
+        <img
+          src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FFICHOSA.jpg?alt=media&token=02945d22-1627-42df-930f-459283c29438"
+          alt="Banco Ficohsa">
+
+        <div class="bank-account-info">
           <h3>Banco Ficohsa</h3>
           <p>200-016-679-886</p>
         </div>
+
         <span>Copiar</span>
       </button>
 
-      <button class="bank-account" data-copy="758-610-001">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FBAC.png?alt=media&token=adbc1a4e-8765-4112-aa11-74b81b643535" alt="BAC Credomatic">
-        <div>
+      <button
+        class="bank-account"
+        data-copy="758-610-001"
+        type="button">
+
+        <img
+          src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FBAC.png?alt=media&token=adbc1a4e-8765-4112-aa11-74b81b643535"
+          alt="BAC Credomatic">
+
+        <div class="bank-account-info">
           <h3>BAC Credomatic</h3>
           <p>758-610-001</p>
         </div>
+
         <span>Copiar</span>
       </button>
 
     </div>
 
-    <small id="bank-copy-msg" class="bank-copy-msg"></small>
+    <small
+      id="bank-copy-msg"
+      class="bank-copy-msg">
+    </small>
 
   </div>
 
