@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacto | Simuladores Inercia</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FIcono_Inercia_2026_transparenteconBorde1-01.png?alt=media&token=13110b1e-8a3a-48e1-9b8f-514d60de2fcf">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/firebase-auth-BOkAXTnI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/firebase-auth-BjMu6SbG.css">
+  <link rel="stylesheet" crossorigin href="/assets/contacto-8OrDIPMK.css">
+</head>
+
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="navbar">
+
+    <div class="container nav-wrapper">
+
+      <a href="/" class="logo">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
+      </a>
+
+      <button id="nav-menu-toggle" class="nav-menu-toggle" type="button">
+        ☰
+      </button>
+
+      <nav class="nav-links">
+        <a href="/standings">Resultados</a>
+        <a href="/reservas">Reservas</a>
+        <a href="/contacto">Contacto</a>
+      </nav>
+
+      <div class="nav-right">
+        <div class="nav-auth">
+
+          <button id="open-auth" class="nav-btn">
+            Login
+          </button>
+
+          <button id="profile-trigger" class="profile-trigger hidden-auth" type="button">
+            <img id="navbar-pfp" src="/assets/default-user-RzG1OWQi.png" alt="">
+          </button>
+
+          <div id="profile-menu" class="profile-menu hidden-auth">
+
+            <div class="profile-avatar-wrap">
+              <img id="profile-menu-pfp" src="/assets/default-user-RzG1OWQi.png" alt="">
+            </div>
+
+            <h3 id="profile-menu-name">
+              Piloto
+            </h3>
+
+            <p id="profile-menu-email">
+              correo@email.com
+            </p>
+
+            <p id="profile-menu-phone">
+              Sin teléfono
+            </p>
+
+            <a href="/perfil" class="profile-link">
+              Mi Perfil
+            </a>
+
+            <button id="logout-btn" class="logout-btn" type="button">
+              Cerrar Sesión
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </header>
+<div class="bg-grid"></div>
+
+  <!-- HERO CONTACT -->
+  <section class="contact-layout">
+    <div class="contact-left">
+      <div class="section-tag">
+        CONTACTO
+      </div>
+      <h2>
+        Vive la experiencia<br>
+        definitiva del<br>
+        Sim Racing.
+      </h2>
+      <p>
+        Entrena, compite y disfruta simuladores profesionales
+        con la experiencia más premium de Honduras.
+      </p>
+      <div class="contact-cards">
+        <a href="https://instagram.com/inercia_hn" target="_blank" class="contact-card">
+          <div class="contact-icon">
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FInstagram_icon.png?alt=media&token=20b90c08-9b2b-4281-9561-f0eb339e9601"
+              alt="Instagram">
+          </div>
+          <div>
+            <span>Instagram</span>
+            <h3>@inercia_hn</h3>
+          </div>
+        </a>
+        <a href="https://wa.me/50493266075" target="_blank" class="contact-card">
+
+          <div class="contact-icon">
+
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FWhatsApp_icon.png?alt=media&token=39b91ca8-56e9-494c-bf20-a1e9d42e329e"
+              alt="WhatsApp">
+
+          </div>
+
+          <div>
+
+            <span>WhatsApp</span>
+            <h3>+504 9326-6075</h3>
+          </div>
+        </a>
+        <a href="https://tiktok.com/@inerciahn" target="_blank" class="contact-card">
+          <div class="contact-icon">
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftiktok-logo-tik-tok-logo-icon-png-svg.png?alt=media&token=cb1e8b26-b85d-4982-be41-ab377571ec32"
+              alt="TikTok">
+          </div>
+          <div>
+            <span>TikTok</span>
+            <h3>@inerciahn</h3>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div class="contact-right">
+      <div class="contact-carousel">
+        <div class="carousel-track">
+          <img
+            src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FDise%C3%B1o%20sin%20t%C3%ADtulo%20(4).png?alt=media&token=7f8a2d0e-d995-4d52-8e20-7849963f9db4"
+            alt="Sim Racing">
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- MAPA MÁS LIMPIO -->
+  <section class="maps-section">
+
+    <div class="maps-header">
+
+      <div class="section-tag">
+        UBICACIÓN
+      </div>
+
+      <h2>
+        Encuéntranos.
+      </h2>
+
+      <p>
+        Fácil acceso, ambiente premium y simuladores listos para competir.
+      </p>
+
+    </div>
+
+    <div class="maps-wrapper">
+
+      <iframe
+        src="https://maps.google.com/maps?width=1200&height=500&hl=en&q=Simuladores%20Inercia&t=p&z=16&ie=UTF8&iwloc=B&output=embed"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+
+    </div>
+
+  </section>
+
+  <div id="auth-overlay" class="auth-overlay hidden-auth">
+
+    <div class="auth-modal">
+
+      <button id="close-auth" class="close-auth" type="button">
+        ✕
+      </button>
+
+      <div class="auth-tabs">
+
+        <button id="login-tab" class="auth-tab active-tab" type="button">
+          Login
+        </button>
+
+        <button id="register-tab" class="auth-tab" type="button">
+          Registro
+        </button>
+
+      </div>
+
+      <div id="login-form" class="auth-form">
+
+        <h2>
+          Bienvenido de nuevo.
+        </h2>
+
+        <p>
+          Inicia sesión para competir y reservar.
+        </p>
+
+        <input id="login-email" type="email" placeholder="Correo electrónico">
+
+        <input id="login-password" type="password" placeholder="Contraseña">
+
+        <button id="login-btn" class="auth-submit" type="button">
+          Iniciar Sesión
+        </button>
+
+        <button id="google-login" class="google-btn" type="button">
+          <span>
+            Continuar con Google
+          </span>
+        </button>
+
+      </div>
+
+      <div id="register-form" class="auth-form hidden-auth">
+
+        <h2>
+          Crea tu perfil.
+        </h2>
+
+        <p>
+          Únete a la comunidad Inercia.
+        </p>
+
+        <input id="register-name" type="text" placeholder="Nombre de usuario">
+
+        <input id="register-email" type="email" placeholder="Correo electrónico">
+
+        <input id="register-phone" type="tel" placeholder="Teléfono">
+
+        <input id="register-password" type="password" placeholder="Contraseña">
+
+        <button id="register-btn" class="auth-submit" type="button">
+          Crear Cuenta
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+</body>
+
+</html>
