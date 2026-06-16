@@ -1,4 +1,21 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false
+  "redirects": [
+    {
+      "has": [
+        {
+          "type": "host",
+          "value": "admin.inerciahn.com"
+        }
+      ],
+      "source": "/",
+      "destination": "/admin.html",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/standings",
+      "destination": "/standings.html"
+    }
+  ]
 }
