@@ -1,4 +1,4 @@
-const RANGE = "6. Junio RB Ring!A15:Z"
+const RANGE = "7. Julio SPA!A15:Z"
 
 const ICONO_TEAM =
   "https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FTeam%20Inercia%20Casco%20REV2.png?alt=media&token=18016ad1-2185-48c6-a9e5-500f2a6fb9db"
