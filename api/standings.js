@@ -2,7 +2,7 @@ export default async function handler(req, res) {
 
   const SHEET_ID = process.env.SHEET_ID
   const API_KEY = process.env.GOOGLE_API_KEY
-  const RANGE = "6. Junio RB Ring!A15:Z"
+  const RANGE = "8. Agosto Zandvoort!A15:Z"
 
   try {
 
