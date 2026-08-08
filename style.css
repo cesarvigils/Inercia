@@ -412,3 +412,51 @@ img, svg { display: block; max-width: 100%; }
 
     pointer-events: none;
 }
+.auth-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    outline: none;
+    border-radius: 50%;
+
+    background: transparent;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.auth-pfp {
+    width: 48px;
+    height: 48px;
+
+    display: block;
+    object-fit: contain;
+    object-position: center;
+
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+}
+
+.auth-btn:hover {
+    background: transparent;
+}
+
+.auth-btn:focus {
+    outline: none;
+}
+
+.auth-btn:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+}
