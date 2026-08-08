@@ -1,0 +1,7 @@
+git checkout preview
+
+# make changes
+
+git add .
+git commit -m "Update website"
+git push

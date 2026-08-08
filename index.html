@@ -1,227 +1,104 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resultados | Simuladores Inercia</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <link rel="icon" type="image/x-icon" href="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FIcono_Inercia_2026_transparenteconBorde1-01.png?alt=media&token=13110b1e-8a3a-48e1-9b8f-514d60de2fcf">
-  <link rel="stylesheet" href="/styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simuladores Inercia | Reservá tu simulador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-  <div class="bg-grid"></div>
 
-  <!-- <header class="navbar">
-
-    <div class="container nav-wrapper">
-
-      <a href="/" class="logo">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Inercia">
-      </a>
-
-      <button id="nav-menu-toggle" class="nav-menu-toggle" type="button">
-        ☰
+  <div class="header-wrap">
+    <header class="header">
+      <button class="menu-btn" aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="12" cy="12" r="2.4" fill="currentColor"/>
+        </svg>
       </button>
 
-      <nav class="nav-links">
-        <a href="/standings">Resultados</a>
-        <a href="/reservas">Reservas</a>
-        <a href="/contacto">Contacto</a>
-      </nav>
-
-      <div class="nav-right">
-        <div class="nav-auth">
-
-          <button id="open-auth" class="nav-btn">
-            Login
-          </button>
-
-          <button id="profile-trigger" class="profile-trigger hidden-auth" type="button">
-            <img id="navbar-pfp" src="/assets/default-user.png" alt="">
-          </button>
-
-          <div id="profile-menu" class="profile-menu hidden-auth">
-
-            <div class="profile-avatar-wrap">
-              <img id="profile-menu-pfp" src="/assets/default-user.png" alt="">
-            </div>
-
-            <h3 id="profile-menu-name">
-              Piloto
-            </h3>
-
-            <p id="profile-menu-email">
-              correo@email.com
-            </p>
-
-            <p id="profile-menu-phone">
-              Sin teléfono
-            </p>
-
-            <a href="/perfil" class="profile-link">
-              Mi Perfil
-            </a>
-
-            <button id="logout-btn" class="logout-btn" type="button">
-              Cerrar Sesión
-            </button>
-
-          </div>
-
-        </div>
+      <div class="logo">
+        <img class="logo-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Simuladores Inercia">
       </div>
 
-    </div>
-
-  </header>
-<div class="bg-grid"></div> -->
-
- 
-
-  
-
-  <section class="hero-header">
-
-    <div>
-
-      <span class="section-label">
-        CAMPEONATO DE FORMULA 1
-      </span>
-
-      <h1>
-        RESULTADOS
-      </h1>
-
-    </div>
-
-  </section>
-
-  <div class="standings-topbar">
-
-    <div class="standings-dropdown">
-
-      <select id="category-select">
-
-        <option value="ALL">
-          Todos
-        </option>
-
-        <option value="M">
-          Masculino
-        </option>
-
-        <option value="F">
-          Femenino
-        </option>
-
-        <option value="TEAM">
-          Team Inercia
-        </option>
-
-      </select>
-
-    </div>
-
+<button class="auth-btn" id="authBtn" type="button" aria-label="Iniciar sesión">
+    <img
+        src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FDefault_pfp%20(1).jpg?alt=media&token=cab22723-a00b-4269-ba20-008fbc01c515"
+        alt="Perfil"
+        class="auth-pfp"
+        id="authPfp"
+    >
+</button>
+    </header>   
   </div>
 
-  <main class="standings-wrapper">
-
-    <div class="table-header">
-
-      <span>POS</span>
-      <span>PILOTO</span>
-      <span>TIEMPO</span>
-      <span>DIFERENCIA</span>
-
+  <!-- ============ HERO ============ -->
+  <section class="hero reveal">
+    <div class="hero-art" role="img" aria-label="Sala de simuladores de carreras con luces de neón">
+      <img class="hero-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fpanoramicarigs.jpg?alt=media&token=4b312fec-49b1-4239-ab79-4c143d6531ca" alt="Sala de simuladores de carreras con luces de neón">
+      <div class="hero-vignette"></div>
     </div>
 
-    <div id="leaderboard" class="leaderboard"></div>
+    <div class="hero-copy">
+      <h1 class="reveal-up d1">RESERVÁ TU SIMULADOR</h1>
+      <p class="reveal-up d2">TENEMOS SIMULADORES QUE SE AJUSTAN A UNA EXPERIENCIA ÚNICA</p>
+    </div>
+  </section>
+
+  <!-- ============ PACKAGES ============ -->
+  <main id="reserva" class="packages">
+
+    <article class="card reveal">
+      <div class="card-art" aria-hidden="true">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fduron.jpg?alt=media&token=fa8002b1-9042-4dae-93aa-93e81304eaeb" alt="Simulador Standard">
+      </div>
+      <div class="card-body">
+        <p class="eyebrow reveal-up">SIMULADOR</p>
+        <h2 class="reveal-up">STANDARD</h2>
+        <p class="desc reveal-up">Butaca deportiva, volante con feedback y monitor. Ideal para los que se inician en el simracing y buscan experimentar las carreras con periféricos adecuados para el deporte electrónico.</p>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-art" aria-hidden="true">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftriple23.jpg?alt=media&token=0711d1b9-ea96-44ae-bedf-a2d594cf75b3" alt="Simulador Premium">
+      </div>
+      <div class="card-body">
+        <p class="eyebrow reveal-up">SIMULADOR</p>
+        <h2 class="reveal-up">PREMIUM</h2>
+        <p class="desc reveal-up">Butaca deportiva, volante con feedback y monitor. Ideal para los que se inician en el simracing y buscan experimentar las carreras con periféricos adecuados para el deporte electrónico.</p>
+      </div>
+    </article>
 
   </main>
 
- <!---- <div id="auth-overlay" class="auth-overlay hidden-auth">
+  <footer class="footer">
+    <p>© <span id="year"></span> Simuladores Inercia — Todos los derechos reservados</p>
+  </footer>
 
-    <div class="auth-modal">
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
 
-      <button id="close-auth" class="close-auth" type="button">
-        ✕
-      </button>
+  // Reveal / "pull up" animation on load + on scroll
+  const revealEls = document.querySelectorAll('.reveal, .reveal-up');
 
-      <div class="auth-tabs">
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
 
-        <button id="login-tab" class="auth-tab active-tab" type="button">
-          Login
-        </button>
-
-        <button id="register-tab" class="auth-tab" type="button">
-          Registro
-        </button>
-
-      </div>
-
-      <div id="login-form" class="auth-form">
-
-        <h2>
-          Bienvenido de nuevo.
-        </h2>
-
-        <p>
-          Inicia sesión para competir y reservar.
-        </p>
-
-        <input id="login-email" type="email" placeholder="Correo electrónico">
-
-        <input id="login-password" type="password" placeholder="Contraseña">
-
-        <button id="login-btn" class="auth-submit" type="button">
-          Iniciar Sesión
-        </button>
-
-        <button id="google-login" class="google-btn" type="button">
-          <span>
-            Continuar con Google
-          </span>
-        </button>
-
-      </div>
-
-      <div id="register-form" class="auth-form hidden-auth">
-
-        <h2>
-          Crea tu perfil.
-        </h2>
-
-        <p>
-          Únete a la comunidad Inercia.
-        </p>
-
-        <input id="register-name" type="text" placeholder="Nombre de usuario">
-
-        <input id="register-email" type="email" placeholder="Correo electrónico">
-
-        <input id="register-phone" type="tel" placeholder="Teléfono">
-
-        <input id="register-password" type="password" placeholder="Contraseña">
-
-        <button id="register-btn" class="auth-submit" type="button">
-          Crear Cuenta
-        </button>
-
-      </div>
-
-    </div> --->
-
-  </div>
-
-  <script type="module" src="/firebase-auth.js"></script>
-  <script type="module" src="/index.js"></script>
-
+  revealEls.forEach(el => io.observe(el));
+</script>
 </body>
-
+<video class="page-bg-video" autoplay muted loop playsinline>
+    <source src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fbackground1.mp4?alt=media&token=cc4f4fcf-328b-4e9f-a13e-e90faa3ae8ce" type="video/mp4">
+</video>
 </html>
