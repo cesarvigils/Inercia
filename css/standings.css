@@ -1,7 +1,7 @@
 @font-face {
     font-family: 'Kenyan Coffee';
     src:
-        url('../fonts/KenyanCoffeeRg.woff2') format('woff2'),
+        url('../fonts/') format('woff2'),
         url('../fonts/KenyanCoffeeRg.woff') format('woff');
     font-weight: 400;
     font-style: normal;
@@ -26,11 +26,6 @@
     --font-body:
         'Poppins',
         'Segoe UI',
-        sans-serif;
-
-    --font-table:
-        'Alumni Sans',
-        'Arial Narrow',
         sans-serif;
 
     --max-width: 430px;
@@ -428,7 +423,7 @@ body {
 
     color: #fff;
 
-    font-family: var(--font-table);
+    font-family: var(--font-display);
 
     font-size: 14px;
 
@@ -466,7 +461,7 @@ body {
 
     color: #fff;
 
-    font-family: var(--font-table);
+    font-family: var(--font-display);
 
     font-size: 14px;
 
@@ -640,6 +635,7 @@ body {
         margin-bottom: 10px;
     }
 
+
     .leaderboard-head,
     .standing-row {
         grid-template-columns:
@@ -651,9 +647,12 @@ body {
         column-gap: 10px;
     }
 
+
     .leaderboard-head {
         font-size: 19px;
     }
+
+
     .standing-row {
         min-height: 30px;
 
