@@ -28,6 +28,11 @@
         'Segoe UI',
         sans-serif;
 
+    --font-table:
+        'Alumni Sans',
+        'Arial Narrow',
+        sans-serif;
+
     --max-width: 430px;
     --gutter: 20px;
 }
@@ -423,7 +428,7 @@ body {
 
     color: #fff;
 
-    font-family: var(--font-display);
+    font-family: var(--font-table);
 
     font-size: 14px;
 
@@ -461,7 +466,7 @@ body {
 
     color: #fff;
 
-    font-family: var(--font-display);
+    font-family: var(--font-table);
 
     font-size: 14px;
 
