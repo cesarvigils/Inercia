@@ -1,7 +1,7 @@
 @font-face {
   font-family: 'Kenyan Coffee';
-  src: url('fonts/Kenyan\ Coffee\ Rg.woff2') format('woff2'),
-       url('fonts/Kenyan\ Coffee\ Rg.woff.woff') format('woff');
+  src: url('../fonts/KenyanCoffeeRg.woff2') format('woff2'),
+       url('../fonts/KenyanCoffeeRg.woff') format('woff');
   font-weight: 400 700;
   font-display: swap;
 }

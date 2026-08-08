@@ -1,0 +1,661 @@
+@font-face {
+    font-family: 'Kenyan Coffee';
+    src:
+        url('../fonts/KenyanCoffeeRg.woff2') format('woff2'),
+        url('../fonts/KenyanCoffeeRg.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+:root {
+    --orange: #ff8b00;
+    --orange-light: #ff9d22;
+
+    --bg: #121212;
+    --ink: #f4f4f4;
+    --ink-dim: #b8b8b8;
+
+    --font-display:
+        'Kenyan Coffee',
+        'Anton',
+        'Arial Narrow',
+        sans-serif;
+
+    --font-body:
+        'Poppins',
+        'Segoe UI',
+        sans-serif;
+
+    --max-width: 430px;
+    --gutter: 20px;
+}
+
+
+* {
+    box-sizing: border-box;
+}
+
+
+html {
+    scroll-behavior: smooth;
+}
+
+
+body {
+    margin: 0;
+
+    min-height: 100vh;
+
+    background: #121212;
+    color: var(--ink);
+
+    font-family: var(--font-body);
+
+    overflow-x: hidden;
+
+    -webkit-font-smoothing: antialiased;
+}
+
+
+/* =========================================================
+   FULL PAGE BACKGROUND
+========================================================= */
+
+.page-bg-video {
+    position: fixed;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+    object-position: center;
+
+    z-index: -3;
+
+    pointer-events: none;
+}
+
+
+.page-overlay {
+    position: fixed;
+    inset: 0;
+
+    z-index: -2;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(10, 8, 13, 0.50) 0%,
+            rgba(10, 8, 13, 0.62) 30%,
+            rgba(10, 8, 13, 0.76) 65%,
+            rgba(8, 8, 8, 0.94) 100%
+        );
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   PAGE WIDTH
+========================================================= */
+
+.header-wrap,
+.standings {
+    width: 100%;
+    max-width: var(--max-width);
+
+    margin-inline: auto;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header-wrap {
+    position: relative;
+
+    z-index: 20;
+}
+
+
+.header {
+    width: 100%;
+    height: 82px;
+
+    padding: 12px var(--gutter);
+
+    display: grid;
+    grid-template-columns: 52px 1fr 52px;
+
+    align-items: center;
+
+    gap: 12px;
+
+    background: transparent;
+}
+
+
+/* Logo */
+
+.logo {
+    width: 100%;
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.logo-img {
+    display: block;
+
+    width: 100%;
+    max-width: 205px;
+
+    height: auto;
+
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   PROFILE BUTTON
+========================================================= */
+
+.auth-btn {
+    width: 48px;
+    height: 48px;
+
+    padding: 0;
+    margin: 0;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+
+.auth-pfp {
+    display: block;
+
+    width: 48px;
+    height: 48px;
+
+    object-fit: contain;
+
+    background: transparent;
+    border: 0;
+}
+
+
+/* =========================================================
+   STANDINGS
+========================================================= */
+
+.standings {
+    padding:
+        6px
+        var(--gutter)
+        60px;
+}
+
+
+/* =========================================================
+   EVENT INFORMATION
+========================================================= */
+
+.event-header {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        135px;
+
+    align-items: start;
+
+    gap: 10px;
+}
+
+
+.event-info {
+    min-width: 0;
+}
+
+
+.event-month {
+    margin: 0 0 1px;
+
+    color: var(--orange);
+
+    font-family: var(--font-display);
+
+    font-size: 17px;
+    line-height: 1;
+
+    letter-spacing: 0.6px;
+
+    text-transform: uppercase;
+}
+
+
+.event-info h1 {
+    margin: 0 0 3px;
+
+    color: #fff;
+
+    font-family: var(--font-display);
+
+    font-size: 27px;
+    font-weight: 400;
+
+    line-height: 0.95;
+
+    letter-spacing: 0.5px;
+
+    text-transform: uppercase;
+}
+
+
+.event-detail {
+    margin: 2px 0;
+
+    color: #fff;
+
+    font-family: var(--font-display);
+
+    font-size: 15px;
+
+    line-height: 1;
+
+    letter-spacing: 0.3px;
+
+    text-transform: uppercase;
+}
+
+
+.event-detail strong {
+    color: var(--orange);
+
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   RECORD
+========================================================= */
+
+.record {
+    margin-top: 14px;
+}
+
+
+.record p {
+    margin: 2px 0;
+
+    color: #fff;
+
+    font-family: var(--font-display);
+
+    font-size: 14px;
+
+    line-height: 1;
+
+    letter-spacing: 0.25px;
+
+    text-transform: uppercase;
+}
+
+
+.record strong {
+    color: var(--orange);
+
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   TRACK / CATEGORY
+========================================================= */
+
+.track-area {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    gap: 12px;
+}
+
+
+.track-map {
+    display: block;
+
+    width: 125px;
+    height: 92px;
+
+    object-fit: contain;
+}
+
+
+.category-badge {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 5px 8px 4px;
+
+    background: var(--orange);
+
+    color: #111;
+
+    font-family: var(--font-display);
+
+    font-size: 15px;
+
+    line-height: 1;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   ORANGE DIVIDER
+========================================================= */
+
+.orange-line {
+    width: 100%;
+    height: 2px;
+
+    margin-top: 10px;
+    margin-bottom: 7px;
+
+    background: var(--orange);
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.leaderboard {
+    width: 100%;
+}
+
+
+/* Header */
+
+.leaderboard-head,
+.standing-row {
+    display: grid;
+
+    grid-template-columns:
+        26px
+        minmax(0, 1fr)
+        68px
+        72px;
+
+    column-gap: 4px;
+
+    align-items: center;
+}
+
+
+.leaderboard-head {
+    padding-bottom: 5px;
+
+    color: #fff;
+
+    font-family: var(--font-display);
+
+    font-size: 14px;
+
+    line-height: 1;
+
+    text-transform: uppercase;
+}
+
+
+.leaderboard-head span:nth-child(1) {
+    text-align: left;
+}
+
+
+.leaderboard-head span:nth-child(3),
+.leaderboard-head span:nth-child(4) {
+    text-align: right;
+}
+
+
+/* =========================================================
+   ROWS
+========================================================= */
+
+.leaderboard-body {
+    display: flex;
+    flex-direction: column;
+
+    gap: 1px;
+}
+
+
+.standing-row {
+    min-height: 22px;
+
+    color: #fff;
+
+    font-family: var(--font-display);
+
+    font-size: 14px;
+
+    line-height: 1;
+}
+
+
+.position {
+    text-align: center;
+}
+
+
+.driver {
+    min-width: 0;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+
+.time,
+.difference {
+    text-align: right;
+
+    white-space: nowrap;
+}
+
+
+.difference {
+    color: #d4d4d4;
+}
+
+
+/* Leader */
+
+.standing-row.leader .difference {
+    color: var(--orange);
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 370px) {
+
+    :root {
+        --gutter: 16px;
+    }
+
+
+    .event-header {
+        grid-template-columns:
+            minmax(0, 1fr)
+            115px;
+    }
+
+
+    .event-info h1 {
+        font-size: 24px;
+    }
+
+
+    .track-map {
+        width: 108px;
+    }
+
+
+    .leaderboard-head,
+    .standing-row {
+        grid-template-columns:
+            23px
+            minmax(0, 1fr)
+            62px
+            66px;
+    }
+
+
+    .standing-row,
+    .leaderboard-head {
+        font-size: 13px;
+    }
+}
+
+
+/* =========================================================
+   DESKTOP / TABLET
+========================================================= */
+
+@media (min-width: 860px) {
+
+    :root {
+        --max-width: 1080px;
+    }
+
+
+    .header {
+        height: 94px;
+
+        padding:
+            18px
+            32px;
+
+        grid-template-columns:
+            56px
+            1fr
+            56px;
+    }
+
+
+    .logo-img {
+        max-width: 260px;
+    }
+
+
+    .standings {
+        padding:
+            20px
+            32px
+            80px;
+    }
+
+
+    .event-header {
+        grid-template-columns:
+            minmax(0, 1fr)
+            260px;
+
+        gap: 40px;
+    }
+
+
+    .event-month {
+        font-size: 23px;
+    }
+
+
+    .event-info h1 {
+        font-size: 42px;
+    }
+
+
+    .event-detail {
+        font-size: 20px;
+    }
+
+
+    .record p {
+        font-size: 18px;
+    }
+
+
+    .track-map {
+        width: 230px;
+        height: 140px;
+    }
+
+
+    .category-badge {
+        font-size: 19px;
+
+        padding: 7px 12px 6px;
+    }
+
+
+    .orange-line {
+        margin-top: 18px;
+        margin-bottom: 10px;
+    }
+
+
+    .leaderboard-head,
+    .standing-row {
+        grid-template-columns:
+            55px
+            minmax(0, 1fr)
+            130px
+            140px;
+
+        column-gap: 10px;
+    }
+
+
+    .leaderboard-head {
+        font-size: 19px;
+    }
+
+
+    .standing-row {
+        min-height: 30px;
+
+        font-size: 18px;
+    }
+}
