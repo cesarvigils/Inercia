@@ -452,12 +452,12 @@ body {
     display: grid;
 
     grid-template-columns:
-        26px
+        24px
         minmax(0, 1fr)
-        68px
-        72px;
+        58px
+        64px;
 
-    column-gap: 4px;
+    column-gap: 10px;
 
     align-items: center;
 }
@@ -472,7 +472,7 @@ body {
     font-weight: 700;
     font-style: italic;
 
-    font-size: 14px;
+    font-size: 16px;
 
     line-height: 1;
 
@@ -504,7 +504,7 @@ body {
 
 
 .standing-row {
-    min-height: 22px;
+    min-height: 26px;
 
     color: #fff;
 
@@ -512,7 +512,7 @@ body {
     font-weight: 700;
     font-style: normal;
 
-    font-size: 14px;
+    font-size: 16px;
 
     line-height: 1;
 }
@@ -671,16 +671,18 @@ body {
     .leaderboard-head,
     .standing-row {
         grid-template-columns:
-            23px
+            22px
             minmax(0, 1fr)
-            62px
-            66px;
+            52px
+            58px;
+
+        column-gap: 8px;
     }
 
 
     .standing-row,
     .leaderboard-head {
-        font-size: 13px;
+        font-size: 15px;
     }
 }
 
@@ -783,23 +785,107 @@ body {
     .leaderboard-head,
     .standing-row {
         grid-template-columns:
-            55px
+            50px
             minmax(0, 1fr)
-            130px
-            140px;
+            105px
+            115px;
 
-        column-gap: 10px;
+        column-gap: 20px;
     }
 
 
     .leaderboard-head {
-        font-size: 19px;
+        font-size: 21px;
     }
 
 
     .standing-row {
-        min-height: 30px;
+        min-height: 34px;
 
-        font-size: 18px;
+        font-size: 20px;
     }
+}
+.auth-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    outline: none;
+    border-radius: 50%;
+
+    background: transparent;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.auth-pfp {
+    width: 48px;
+    height: 48px;
+
+    display: block;
+    object-fit: contain;
+    object-position: center;
+
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+}
+
+.auth-btn:hover {
+    background: transparent;
+}
+
+.auth-btn:focus {
+    outline: none;
+}
+
+.auth-btn:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+}
+.menu-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: #ff8b00;
+    color: #fff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    box-shadow: none;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+}
+
+.menu-btn svg {
+    width: 25px;
+    height: 25px;
+    stroke: #fff;
+    stroke-width: 1.7;
+}
+
+.menu-btn:hover {
+    background: #ff9d22;
+    color: #fff;
+    transform: none;
+    box-shadow: none;
 }
