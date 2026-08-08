@@ -1,3 +1,4 @@
+
 const FIRST_ROW = 15;
 const LAST_ROW = 168;
 
@@ -36,31 +37,16 @@ module.exports = async function handler(req, res) {
     const rows = await fetchSheetRows(SPREADSHEET_ID, GOOGLE_SHEETS_API_KEY, sheetTitle);
     const drivers = parseDrivers(rows);
 
-    if (drivers.length === 0) {
-      res.status(200).json({
-        monthNumber, month: monthName, year,
-        circuito: trackName, record: null, drivers: [],
-      });
-      return;
-    }
-
-    const fastestMs = drivers[0].ms;
-    const leaderboard = drivers.map((d, i) => ({
-      position: i + 1,
-      name: d.name,
-      time: d.timeStr,
-      difference: i === 0 ? 'LEADER' : formatDifference(d.ms - fastestMs),
-    }));
-
-    // Edge/CDN cache for a minute so every page load doesn't hit the Sheets API.
+    // Sorting, category filtering (Femenino / Masculino / Team Inercia), position
+    // numbers, and NT/diff formatting all happen client-side in js/standings.js so
+    // switching the category dropdown doesn't need another request.
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.status(200).json({
       monthNumber,
       month: monthName,
       year,
       circuito: trackName,
-      record: { time: drivers[0].timeStr, piloto: drivers[0].name.toUpperCase() },
-      drivers: leaderboard,
+      drivers,
     });
   } catch (err) {
     console.error('Error en /api/standings:', err);
@@ -97,24 +83,37 @@ async function fetchSheetRows(spreadsheetId, apiKey, sheetTitle) {
   return data.values || [];
 }
 
-/** Column offsets within C:H — C=0, D=1, E=2, F=3, G=4, H=5. */
+/**
+ * Column offsets within C:H — C=0, D=1, E=2, F=3, G=4, H=5.
+ * A row only needs a name to count as an entry now — a blank time (Col H)
+ * is kept and shown as "NT" on the client instead of being dropped.
+ * Team Inercia members are identified by "(S)" anywhere in the name (Col C);
+ * gender (Col F) is expected to be "M" or "F".
+ */
 function parseDrivers(rows) {
   const drivers = [];
 
-  rows.forEach((row) => {
-    const name = (row[0] || '').trim();    // Col C
-    const gender = (row[3] || '').trim();  // Col F — not exposed to the client
-    const timeStr = (row[5] || '').trim(); // Col H
+  rows.forEach((row, idx) => {
+    const name = (row[0] || '').trim();          // Col C
+    const genderRaw = (row[3] || '').trim().toUpperCase(); // Col F
+    const timeStr = (row[5] || '').trim();        // Col H
 
-    if (!name || !timeStr) return;
+    if (!name) return; // still need a name to count as a real entry
 
-    const ms = parseTimeToMs(timeStr);
-    if (ms === null) return;
+    const isTeam = /\(s\)/i.test(name);
+    const gender = genderRaw === 'M' || genderRaw === 'F' ? genderRaw : null;
+    const ms = timeStr ? parseTimeToMs(timeStr) : null;
 
-    drivers.push({ name, gender, timeStr, ms });
+    drivers.push({
+      name,
+      gender,
+      team: isTeam,
+      timeStr: ms !== null ? timeStr : null,
+      ms,
+      rowOrder: idx, // stable tiebreaker for NT entries, which have no time to sort by
+    });
   });
 
-  drivers.sort((a, b) => a.ms - b.ms);
   return drivers;
 }
 
@@ -127,15 +126,4 @@ function parseTimeToMs(timeStr) {
   const millis = parseInt(match[3].padEnd(3, '0'), 10);
 
   return (minutes * 60 + seconds) * 1000 + millis;
-}
-
-function formatDifference(diffMs) {
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const millis = diffMs % 1000;
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const millisStr = String(millis).padStart(3, '0');
-
-  if (minutes > 0) return `+${minutes}:${String(seconds).padStart(2, '0')}.${millisStr}`;
-  return `+${seconds}.${millisStr}`;
 }
