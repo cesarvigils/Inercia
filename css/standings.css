@@ -640,7 +640,6 @@ body {
         margin-bottom: 10px;
     }
 
-
     .leaderboard-head,
     .standing-row {
         grid-template-columns:
@@ -652,12 +651,9 @@ body {
         column-gap: 10px;
     }
 
-
     .leaderboard-head {
         font-size: 19px;
     }
-
-
     .standing-row {
         min-height: 30px;
 
