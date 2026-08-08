@@ -51,6 +51,8 @@ function getSelectedCategory() {
 
 /** Splits the full roster into the selected category. See rules in the header comment. */
 function filterByCategory(drivers, category) {
+  if (category === 'todos') return [...drivers];
+
   return drivers.filter((d) => {
     if (category === 'team') return d.team;
     if (category === 'masculino') return !d.team && d.gender === 'M';

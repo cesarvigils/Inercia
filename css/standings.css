@@ -469,6 +469,8 @@ body {
     color: #fff;
 
     font-family: var(--font-table);
+    font-weight: 700;
+    font-style: italic;
 
     font-size: 14px;
 
@@ -507,6 +509,8 @@ body {
     color: #fff;
 
     font-family: var(--font-table);
+    font-weight: 700;
+    font-style: normal;
 
     font-size: 14px;
 
@@ -564,6 +568,75 @@ body {
     line-height: 1.3;
 
     text-transform: uppercase;
+}
+
+
+/* =========================================================
+   PHONE: PAGE LOCKED TO VIEWPORT, ONLY THE TABLE SCROLLS
+========================================================= */
+
+@media (max-width: 859px) {
+
+    html,
+    body {
+        height: 100%;
+    }
+
+
+    body {
+        display: flex;
+        flex-direction: column;
+
+        height: 100dvh;
+        min-height: 100dvh;
+
+        overflow: hidden;
+    }
+
+
+    .header-wrap {
+        flex: 0 0 auto;
+    }
+
+
+    .standings {
+        display: flex;
+        flex-direction: column;
+
+        flex: 1 1 auto;
+        min-height: 0;
+
+        padding-bottom: 10px;
+    }
+
+
+    .event-header,
+    .orange-line {
+        flex: 0 0 auto;
+    }
+
+
+    .leaderboard {
+        display: flex;
+        flex-direction: column;
+
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+
+    .leaderboard-head {
+        flex: 0 0 auto;
+    }
+
+
+    .leaderboard-body {
+        flex: 1 1 auto;
+        min-height: 0;
+
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 
