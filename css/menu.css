@@ -1,0 +1,181 @@
+/* =========================================================
+   HAMBURGER / SIDE MENU
+========================================================= */
+
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 98;
+
+    background: rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(3px);
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition:
+        opacity 0.3s ease,
+        visibility 0.3s ease;
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/* SIDE PANEL */
+
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 99;
+
+    width: min(82vw, 340px);
+    height: 100dvh;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 26px 22px;
+
+    background: rgba(18, 18, 18, 0.97);
+    border-right: 1px solid var(--line);
+
+    transform: translateX(-105%);
+
+    transition: transform 0.4s cubic-bezier(.22, 1, .36, 1);
+}
+
+.side-menu.active {
+    transform: translateX(0);
+}
+
+
+/* HEADER */
+
+.side-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: 1px;
+
+    color: var(--orange);
+}
+
+
+/* CLOSE BUTTON */
+
+.menu-close {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 50%;
+
+    background: var(--orange);
+    color: #fff;
+
+    font-family: Arial, sans-serif;
+    font-size: 30px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+}
+
+.menu-close:hover {
+    background: #ff9d22;
+    transform: rotate(90deg);
+}
+
+
+/* LINKS */
+
+.side-menu-links {
+    display: flex;
+    flex-direction: column;
+
+    margin-top: 28px;
+}
+
+.side-menu-link {
+    position: relative;
+
+    padding: 18px 4px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+    color: var(--ink);
+    text-decoration: none;
+
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: 1px;
+
+    transition:
+        color 0.2s ease,
+        padding-left 0.25s ease;
+}
+
+.side-menu-link:hover {
+    color: var(--orange);
+    padding-left: 10px;
+}
+
+
+/* ORANGE INDICATOR */
+
+.side-menu-link::before {
+    content: '';
+
+    position: absolute;
+    left: -22px;
+    top: 50%;
+
+    width: 4px;
+    height: 0;
+
+    border-radius: 0 4px 4px 0;
+
+    background: var(--orange);
+
+    transform: translateY(-50%);
+
+    transition: height 0.25s ease;
+}
+
+.side-menu-link:hover::before {
+    height: 28px;
+}
+.side-menu-footer {
+    margin-top: auto;
+    padding-top: 20px;
+
+    border-top: 1px solid var(--line);
+
+    color: #777;
+
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+body.menu-open {
+    overflow: hidden;
+}

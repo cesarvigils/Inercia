@@ -1,0 +1,129 @@
+
+const FIRST_ROW = 15;
+const LAST_ROW = 168;
+
+const MONTHS_ES = [
+  null,
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+module.exports = async function handler(req, res) {
+  try {
+    const { SPREADSHEET_ID, GOOGLE_SHEETS_API_KEY } = process.env;
+
+    if (!SPREADSHEET_ID || !GOOGLE_SHEETS_API_KEY) {
+      res.status(500).json({
+        error: 'Faltan las variables de entorno SPREADSHEET_ID / GOOGLE_SHEETS_API_KEY en Vercel.',
+      });
+      return;
+    }
+
+    const now = new Date();
+    const monthNumber = now.getMonth() + 1; // 1-12
+    const monthName = MONTHS_ES[monthNumber];
+    const year = now.getFullYear();
+
+    const sheetTitle = await findSheetTitleForMonth(
+      SPREADSHEET_ID, GOOGLE_SHEETS_API_KEY, monthNumber, monthName
+    );
+
+    if (!sheetTitle) {
+      res.status(404).json({ error: `No se encontró una hoja para ${monthName} ${year}.` });
+      return;
+    }
+
+    const trackName = extractTrackName(sheetTitle, monthNumber, monthName);
+    const rows = await fetchSheetRows(SPREADSHEET_ID, GOOGLE_SHEETS_API_KEY, sheetTitle);
+    const drivers = parseDrivers(rows);
+
+    // Sorting, category filtering (Femenino / Masculino / Team Inercia), position
+    // numbers, and NT/diff formatting all happen client-side in js/standings.js so
+    // switching the category dropdown doesn't need another request.
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    res.status(200).json({
+      monthNumber,
+      month: monthName,
+      year,
+      circuito: trackName,
+      drivers,
+    });
+  } catch (err) {
+    console.error('Error en /api/standings:', err);
+    res.status(500).json({ error: 'Error al cargar la tabla de tiempos.' });
+  }
+};
+
+async function findSheetTitleForMonth(spreadsheetId, apiKey, monthNumber, monthName) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
+    `?key=${apiKey}&fields=sheets.properties.title`;
+
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`No se pudo leer la lista de hojas (HTTP ${r.status})`);
+  const data = await r.json();
+  const titles = (data.sheets || []).map((s) => s.properties.title);
+
+  const prefixRegex = new RegExp(`^\\s*${monthNumber}\\.\\s*${monthName}\\b`, 'i');
+  return titles.find((t) => prefixRegex.test(t)) || null;
+}
+
+function extractTrackName(sheetTitle, monthNumber, monthName) {
+  const prefixRegex = new RegExp(`^\\s*${monthNumber}\\.\\s*${monthName}\\s*`, 'i');
+  return sheetTitle.replace(prefixRegex, '').trim() || 'N/D';
+}
+
+async function fetchSheetRows(spreadsheetId, apiKey, sheetTitle) {
+  const range = `'${sheetTitle}'!C${FIRST_ROW}:H${LAST_ROW}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
+    `/values/${encodeURIComponent(range)}?key=${apiKey}`;
+
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`No se pudieron leer los tiempos (HTTP ${r.status})`);
+  const data = await r.json();
+  return data.values || [];
+}
+
+/**
+ * Column offsets within C:H — C=0, D=1, E=2, F=3, G=4, H=5.
+ * A row only needs a name to count as an entry now — a blank time (Col H)
+ * is kept and shown as "NT" on the client instead of being dropped.
+ * Team Inercia members are identified by "(S)" anywhere in the name (Col C);
+ * gender (Col F) is expected to be "M" or "F".
+ */
+function parseDrivers(rows) {
+  const drivers = [];
+
+  rows.forEach((row, idx) => {
+    const name = (row[0] || '').trim();          // Col C
+    const genderRaw = (row[3] || '').trim().toUpperCase(); // Col F
+    const timeStr = (row[5] || '').trim();        // Col H
+
+    if (!name) return; // still need a name to count as a real entry
+
+    const isTeam = /\(s\)/i.test(name);
+    const gender = genderRaw === 'M' || genderRaw === 'F' ? genderRaw : null;
+    const ms = timeStr ? parseTimeToMs(timeStr) : null;
+
+    drivers.push({
+      name,
+      gender,
+      team: isTeam,
+      timeStr: ms !== null ? timeStr : null,
+      ms,
+      rowOrder: idx, // stable tiebreaker for NT entries, which have no time to sort by
+    });
+  });
+
+  return drivers;
+}
+
+function parseTimeToMs(timeStr) {
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})\.(\d{1,3})$/);
+  if (!match) return null;
+
+  const minutes = parseInt(match[1], 10);
+  const seconds = parseInt(match[2], 10);
+  const millis = parseInt(match[3].padEnd(3, '0'), 10);
+
+  return (minutes * 60 + seconds) * 1000 + millis;
+}

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simuladores Inercia</title>
+  <link rel="stylesheet" href="css/standings.css">
+  <link rel="stylesheet" href="css/menu.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Alumni+Sans:ital,wght@0,400;0,500;0,600;0,700;1,700&display=swap"
+    rel="stylesheet"
+  >
+</head>
+<body>
+  <video
+    class="page-bg-video"
+    autoplay
+    muted
+    loop
+    playsinline
+  >
+    <source src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fbackground1.mp4?alt=media&token=cc4f4fcf-328b-4e9f-a13e-e90faa3ae8ce" type="video/mp4">
+  </video>
+
+  <div class="page-overlay"></div>
+  <div class="header-wrap">
+
+    <header class="header">
+
+<button
+  class="menu-btn"
+  id="menuBtn"
+  type="button"
+  aria-label="Abrir menú"
+  aria-expanded="false"
+  aria-controls="sideMenu"
+>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M4 6H20M4 12H20M4 18H20"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+  </svg>
+</button>
+
+
+      <!-- Logo -->
+      <div class="logo">
+        <img
+          class="logo-img"
+          src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be"
+          alt="Simuladores Inercia"
+        >
+      </div>
+
+
+      <!-- Profile / Login -->
+      <button class="auth-btn" id="authBtn" type="button" aria-label="Iniciar sesión">
+    <img
+        src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2FDefault_pfp__1_-removebg-preview.png?alt=media&token=cb4d4f86-712f-4ab9-b948-a30554913344"
+        alt="Perfil"
+        class="auth-pfp"
+        id="authPfp"
+    >
+</button>
+
+    </header>
+
+  </div>
+
+  <div class="menu-overlay" id="menuOverlay"></div>
+
+  <nav
+    class="side-menu"
+    id="sideMenu"
+    aria-hidden="true"
+  >
+
+    <div class="side-menu-header">
+
+      <span>MENÚ</span>
+
+      <button
+        class="menu-close"
+        id="menuClose"
+        type="button"
+        aria-label="Cerrar menú"
+      >
+        &times;
+      </button>
+
+    </div>
+
+    <div class="side-menu-links">
+
+      <a href="index.html" class="side-menu-link">
+        INICIO
+      </a>
+
+      <a href="standings.html" class="side-menu-link">
+        STANDINGS
+      </a>
+
+      <a href="contacto.html" class="side-menu-link">
+        CONTACTO
+      </a>
+
+    </div>
+
+    <div class="side-menu-footer">
+      SIMULADORES INERCIA
+    </div>
+
+  </nav>
+
+  <main class="standings">
+
+    <!-- Event heading -->
+
+    <section class="event-header">
+
+      <div class="event-info">
+
+        <p class="event-month" id="eventMonth">
+          AGOSTO 2026
+        </p>
+
+        <h1>
+          TABLA DE TIEMPOS
+        </h1>
+
+        <p class="event-detail">
+          CIRCUITO:
+          <strong id="circuitoName">Cargando...</strong>
+        </p>
+
+        <p class="event-detail">
+          AUTO:
+          <strong>F1 2025</strong>
+        </p>
+
+
+        <div class="record">
+
+          <p>
+            RECORD ACTUAL:
+            <strong id="recordTime">--:--.---</strong>
+          </p>
+
+          <p>
+            PILOTO:
+            <strong id="recordPiloto">-</strong>
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- Track -->
+
+      <div class="track-area">
+
+        <!-- Default/fallback image; swapped dynamically per month by standings.js -->
+        <img
+          id="trackMapImg"
+          src="https://racing.verstappen.com/wp-content/uploads/zandvoort.png"
+          alt="Circuito del mes"
+          class="track-map"
+        >
+
+        <div class="category-select-wrap">
+          <select
+            class="category-select"
+            id="categorySelect"
+            aria-label="Categoría"
+          >
+            <option value="todos">TODOS</option>
+            <option value="femenino">FEMENINO</option>
+            <option value="masculino">MASCULINO</option>
+            <option value="team">TEAM INERCIA</option>
+          </select>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- Orange separator -->
+
+    <div class="orange-line"></div>
+
+
+    <!-- Table -->
+
+    <section class="leaderboard">
+
+      <div class="leaderboard-head">
+
+        <span>POS</span>
+        <span>PILOTO</span>
+        <span>TIEMPO</span>
+        <span>DIFERENCIA</span>
+
+      </div>
+
+
+      <div class="leaderboard-body" id="leaderboard">
+        <p class="standings-loading">Cargando tabla de tiempos...</p>
+      </div>
+
+    </section>
+
+  </main>
+  <script src="js/menu.js" defer></script>
+  <script src="js/standings.js" defer></script>
+</body>
+</html>
