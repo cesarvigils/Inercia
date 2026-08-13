@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:reservas": "node scripts/seed-reservas.js"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "firebase": "^11.0.0",
-    "firebase-admin": "^13.10.0"
+    "firebase-admin": "^13.0.0"
   },
   "devDependencies": {
     "vite": "^6.0.0"
