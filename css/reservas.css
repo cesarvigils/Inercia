@@ -1397,3 +1397,9 @@ body {
 
     gap: 12px;
 }
+.menu-title-img {
+    display: block;
+    width: 90px;
+    height: auto;
+    object-fit: contain;
+}

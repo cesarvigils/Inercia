@@ -1329,3 +1329,9 @@ body.auth-modal-open {
     cursor: wait;
     opacity: 0.7;
 }
+.menu-title-img {
+    display: block;
+    width: 90px;
+    height: auto;
+    object-fit: contain;
+}
