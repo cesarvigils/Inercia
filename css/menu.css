@@ -287,3 +287,10 @@ body.menu-open {
     height: auto;
     object-fit: contain;
 }
+.menu-btn {
+    z-index: 20;
+}
+
+.logo {
+    z-index: 10;
+}
