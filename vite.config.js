@@ -8,7 +8,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         standings: resolve(__dirname, 'standings.html'),
-        contacto: resolve(__dirname, 'contacto.html')
+        contacto: resolve(__dirname, 'contacto.html'),
+        reservas: resolve(__dirname, 'reservas.html')
       }
     }
   }

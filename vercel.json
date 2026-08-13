@@ -7,6 +7,10 @@
     {
       "source": "/contacto",
       "destination": "/contacto.html"
+    },
+        {
+      "source": "/reservas",
+      "destination": "/reservas.html"
     }
   ]
 }
