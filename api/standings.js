@@ -8,8 +8,7 @@ const MONTHS_ES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
-module.exports = async function handler(req, res) {
-  try {
+export default async function handler(req, res) {  try {
     const { SPREADSHEET_ID, GOOGLE_SHEETS_API_KEY } = process.env;
 
     if (!SPREADSHEET_ID || !GOOGLE_SHEETS_API_KEY) {
