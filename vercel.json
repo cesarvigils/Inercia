@@ -1,4 +1,13 @@
 {
-  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/standings",
+      "destination": "/standings.html"
+    },
+    {
+      "source": "/contacto",
+      "destination": "/contacto.html"
+    }
+  ],
   "trailingSlash": false
 }
