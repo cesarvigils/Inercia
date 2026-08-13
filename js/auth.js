@@ -236,25 +236,22 @@ authSwitchButtons.forEach((button) => {
    MESSAGES
    ========================================================= */
 
-function showMessage(message) {
-
+function showMessage(message, type = 'error') {
     if (!authMessage) return;
 
     authMessage.textContent = message;
-    authMessage.classList.add('show');
 
+    authMessage.classList.remove('error', 'success');
+    authMessage.classList.add('show', type);
 }
 
 
 function hideMessage() {
-
     if (!authMessage) return;
 
     authMessage.textContent = '';
-    authMessage.classList.remove('show');
-
+    authMessage.classList.remove('show', 'error', 'success');
 }
-
 
 function friendlyAuthError(error) {
 
@@ -439,38 +436,28 @@ registerForm?.addEventListener('submit', async (event) => {
 
     hideMessage();
 
-    console.log('Register form submitted');
+    const name = document
+        .getElementById('registerName')
+        .value
+        .trim();
 
-    const nameInput = document.getElementById('registerName');
-    const emailInput = document.getElementById('registerEmail');
-    const phoneInput = document.getElementById('registerPhone');
-    const passwordInput = document.getElementById('registerPassword');
-    const passwordConfirmInput = document.getElementById('registerPasswordConfirm');
+    const email = document
+        .getElementById('registerEmail')
+        .value
+        .trim();
 
-    if (
-        !nameInput ||
-        !emailInput ||
-        !phoneInput ||
-        !passwordInput ||
-        !passwordConfirmInput
-    ) {
-        console.error('Faltan elementos del formulario:', {
-            nameInput,
-            emailInput,
-            phoneInput,
-            passwordInput,
-            passwordConfirmInput
-        });
+    const phone = document
+        .getElementById('registerPhone')
+        .value
+        .trim();
 
-        showMessage('Error interno del formulario.');
-        return;
-    }
+    const password = document
+        .getElementById('registerPassword')
+        .value;
 
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim();
-    const phone = phoneInput.value.trim();
-    const password = passwordInput.value;
-    const passwordConfirm = passwordConfirmInput.value;
+    const passwordConfirm = document
+        .getElementById('registerPasswordConfirm')
+        .value;
 
     if (!name || !email || !phone || !password || !passwordConfirm) {
         showMessage('Completa todos los campos.');
@@ -478,7 +465,9 @@ registerForm?.addEventListener('submit', async (event) => {
     }
 
     if (password.length < 6) {
-        showMessage('La contraseña debe tener al menos 6 caracteres.');
+        showMessage(
+            'La contraseña debe tener al menos 6 caracteres.'
+        );
         return;
     }
 
@@ -490,16 +479,23 @@ registerForm?.addEventListener('submit', async (event) => {
     const submitBtn =
         registerForm.querySelector('button[type="submit"]');
 
-    submitBtn?.setAttribute('disabled', 'true');
+    const originalButtonText =
+        submitBtn?.textContent || 'CREAR CUENTA';
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'CREANDO CUENTA...';
+    }
 
     try {
-        console.log('Creating Firebase user...');
 
+        /* Keep login saved */
         await setPersistence(
             auth,
             browserLocalPersistence
         );
 
+        /* Create Firebase Auth account */
         const result =
             await createUserWithEmailAndPassword(
                 auth,
@@ -507,39 +503,60 @@ registerForm?.addEventListener('submit', async (event) => {
                 password
             );
 
-        console.log('Firebase user created:', result.user.uid);
-
+        /* Save user's name in Firebase Auth */
         await updateProfile(result.user, {
             displayName: name
         });
 
-        console.log('Firebase profile updated');
-
+        /* Save extra information in Firestore */
         await setDoc(
             doc(db, 'users', result.user.uid),
             {
-                name: name,
-                email: email,
+                name,
+                email,
                 phoneNumber: phone,
                 provider: 'password',
                 createdAt: serverTimestamp()
             }
         );
 
-        console.log('Firestore profile saved');
+        /* Account was successfully created */
+        showMessage(
+            '¡CUENTA CREADA EXITOSAMENTE!',
+            'success'
+        );
 
         registerForm.reset();
-        closeAuthModal();
+
+        /*
+         * Firebase automatically signs in a newly-created
+         * email/password account.
+         *
+         * Leave the message visible briefly, then close.
+         */
+        setTimeout(() => {
+            closeAuthModal();
+        }, 1500);
 
     } catch (error) {
-        console.error('REGISTER ERROR:', error);
+
+        console.error(
+            'Error creando cuenta:',
+            error
+        );
 
         showMessage(
-            friendlyAuthError(error)
+            friendlyAuthError(error),
+            'error'
         );
 
     } finally {
-        submitBtn?.removeAttribute('disabled');
+
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalButtonText;
+        }
+
     }
 });
 
