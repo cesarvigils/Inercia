@@ -1,7 +1,7 @@
 
 
 const TRACKS_JSON_PATH = 'data/tracks.json';
-const DEFAULT_CATEGORY = 'masculino';
+const DEFAULT_CATEGORY = 'todos';
 
 let allDrivers = [];
 

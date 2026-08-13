@@ -260,11 +260,8 @@ body {
 
 .event-info h1 {
     margin: 0 0 3px;
-
     color: #fff;
-
     font-family: var(--font-display);
-
     font-size: 27px;
     font-weight: 400;
 
@@ -468,9 +465,8 @@ body {
 
     color: #fff;
 
-    font-family: var(--font-table);
-    font-weight: 700;
-    font-style: italic;
+    font-family: var(--font-display);
+    font-style: normal;
 
     font-size: 16px;
 
@@ -491,9 +487,7 @@ body {
 }
 
 
-/* =========================================================
-   ROWS
-========================================================= */
+
 
 .leaderboard-body {
     display: flex;
@@ -508,7 +502,7 @@ body {
 
     color: #fff;
 
-    font-family: var(--font-table);
+    font-family: var(--font-display);
     font-weight: 700;
     font-style: normal;
 
@@ -570,10 +564,6 @@ body {
     text-transform: uppercase;
 }
 
-
-/* =========================================================
-   PHONE: PAGE LOCKED TO VIEWPORT, ONLY THE TABLE SCROLLS
-========================================================= */
 
 @media (max-width: 859px) {
 
@@ -888,4 +878,89 @@ body {
     color: #fff;
     transform: none;
     box-shadow: none;
+}
+
+@media (min-width: 860px) {
+    .leaderboard-head,
+    .standing-row {
+        grid-template-columns:
+            70px
+            1.5fr
+            1fr
+            1fr;
+
+        column-gap: 24px;
+    }
+
+    .leaderboard-head span:nth-child(3),
+    .leaderboard-head span:nth-child(4),
+    .time,
+    .difference {
+        text-align: left;
+    }
+}
+@media (min-width: 860px) {
+
+    .orange-line {
+        width: 600px;
+        max-width: 100%;
+        margin-top: 24px;
+        margin-bottom: 12px;
+    }
+
+    /* DON'T STRETCH TABLE ACROSS PAGE */
+    .leaderboard {
+        width: 820px;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    /* BRING PILOTO + TIEMPO CLOSER */
+    .leaderboard-head,
+    .standing-row {
+        grid-template-columns:
+            70px
+            280px
+            130px
+            150px;
+
+        column-gap: 6px;
+    }
+
+    .leaderboard-head span,
+    .position,
+    .driver,
+    .time,
+    .difference {
+        text-align: left;
+    }
+}
+@media (min-width: 860px) {
+
+    .event-header {
+        grid-template-columns: 420px 230px;
+        gap: 20px;
+        justify-content: start;
+    }
+
+    .track-area {
+        width: 230px;
+        align-items: center;
+
+        /* move map + selector left */
+        transform: translateX(-30px);
+    }
+
+    .track-map {
+        width: 210px;
+        height: 140px;
+    }
+
+    .category-select-wrap {
+        align-self: center;
+    }
+
+    .orange-line {
+        width: 600px;
+    }
 }

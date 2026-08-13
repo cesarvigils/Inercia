@@ -56,7 +56,6 @@ body::before {
 
 img, svg { display: block; max-width: 100%; }
 
-/* ---------------- reveal / "pull up" animation ---------------- */
 
 .reveal,
 .reveal-up {
@@ -79,6 +78,7 @@ img, svg { display: block; max-width: 100%; }
 .hero.reveal { transition-delay: 0s; }
 .hero .reveal-up.d1 { transition-delay: 0.15s; }
 .hero .reveal-up.d2 { transition-delay: 0.32s; }
+
 
 .card .reveal-up:nth-child(1) { transition-delay: 0.05s; }
 .card .reveal-up:nth-child(2) { transition-delay: 0.15s; }
@@ -207,24 +207,42 @@ img, svg { display: block; max-width: 100%; }
 
 /* ---------------------- hero ---------------------- */
 .hero {
-    position: relative;
-    width: calc(100% - (var(--gutter) * 2));
-    max-width: calc(var(--max-width) - (var(--gutter) * 2));
-    margin: 14px auto 0;
-    overflow: hidden;
-    isolation: isolate;
-    border-radius: var(--radius);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  position: relative;
+  width: calc(100% - (var(--gutter) * 2));
+  max-width: calc(var(--max-width) - (var(--gutter) * 2));
+  margin: 14px auto 0;
+
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--radius);
+
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
 }
 
 .hero-art {
   position: relative;
-  aspect-ratio: 400 / 260;
   width: 100%;
+  aspect-ratio: 400 / 300;
 }
 
-.hero-img { width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 860px) {
+  .hero-art {
+    aspect-ratio: auto;
+    height: 420px;
+  }
+}
 
+.hero-img {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
 .hero-vignette {
   position: absolute;
   inset: 0;
@@ -232,15 +250,19 @@ img, svg { display: block; max-width: 100%; }
 }
 
 .hero-copy {
+  font-family: var(--font-body);
   position: relative;
   max-width: var(--max-width);
   margin-inline: auto;
-  margin-top: -70px;
   padding: 0 var(--gutter) 26px;
   text-align: center;
 }
 
 .hero-copy h1 {
+    margin: 0;
+  font-family: 'Alumni Sans', sans-serif;
+  font-weight: 600;
+  line-height: 0.98;
   margin: 0 0 8px;
   font-family: var(--font-display);
   font-weight: 700;
@@ -251,11 +273,15 @@ img, svg { display: block; max-width: 100%; }
 
 .hero-copy p {
   margin: 0;
-  font-size: 12px;
-  font-weight: 500;
   letter-spacing: 0.6px;
-  color: var(--ink-dim);
   text-transform: uppercase;
+    margin: 0;
+  font-family: 'Alumni Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: 0.1px;
+  color: #fff;
 }
 
 /* ---------------------- packages ---------------------- */
@@ -276,6 +302,7 @@ img, svg { display: block; max-width: 100%; }
   transition: transform 0.35s ease, box-shadow 0.35s ease, border-color .35s ease;
   border: 1px solid var(--line);
 }
+
 
 .card:hover {
   transform: translateY(-6px);
@@ -301,19 +328,26 @@ img, svg { display: block; max-width: 100%; }
   right: 0;
   bottom: 0;
   z-index: 2;
-  padding: 60px 20px 22px;
-  background: linear-gradient(to top,
-    rgba(0,0,0,0.92) 0%,
-    rgba(0,0,0,0.85) 35%,
-    rgba(0,0,0,0.45) 70%,
-    rgba(0,0,0,0) 100%);
+
+  padding: 32px 20px 20px;
+
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.96) 0%,
+    rgba(0, 0, 0, 0.94) 60%,
+    rgba(0, 0, 0, 0.75) 82%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
 .eyebrow {
-  margin: 0 0 2px;
-  font-size: 11px;
+  margin: 0;
+  font-family: 'Alumni Sans', sans-serif;
+  font-size: 20px;
   font-weight: 600;
-  letter-spacing: 3px;
+  line-height: 0.98;
+  color: #fff;
+  letter-spacing: 1px;
   color: var(--ink);
   text-transform: uppercase;
 }
@@ -329,9 +363,12 @@ img, svg { display: block; max-width: 100%; }
 
 .card-body .desc {
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--ink);
+  font-family: 'Alumni Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: 0.1px;
+  color: #fff;
 }
 .footer {
   padding: 26px var(--gutter) 40px;
@@ -364,10 +401,7 @@ img, svg { display: block; max-width: 100%; }
 
   .hero-art { aspect-ratio: 1080 / 420; }
 
-  .hero-copy {
-    margin-top: -110px;
-    padding-bottom: 40px;
-  }
+ 
 
   .hero-copy h1 { font-size: 42px; }
   .hero-copy p { font-size: 14px; }
@@ -386,7 +420,7 @@ img, svg { display: block; max-width: 100%; }
 
   .card:hover { transform: translateY(-10px); }
 
-  .card-body { padding: 90px 26px 30px; }
+  .card-body { padding: 60px 26px 30px; }
 
   .card-body h2 { font-size: 30px; }
 
@@ -459,4 +493,56 @@ img, svg { display: block; max-width: 100%; }
 .auth-btn:focus-visible {
     outline: 2px solid var(--orange);
     outline-offset: 3px;
+}
+@media (min-width: 860px) {
+  .card {
+    flex: 1 1 0;
+    aspect-ratio: 16 / 10;
+  }
+
+  .card-body {
+    padding: 26px 26px 24px;
+  }
+
+  .eyebrow {
+    font-size: 15px;
+  }
+
+  .card-body h2 {
+    font-size: 31px;
+    margin-bottom: 12px;
+  }
+
+  .card-body .desc {
+    font-family: 'Alumni Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+  .hero-copy p {
+  margin: 0;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+    margin: 0;
+  font-family: 'Alumni Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: 0.1px;
+  color: #fff;
+}
+}
+.hero-copy {
+  position: absolute;
+  z-index: 2;
+
+  left: 0;
+  right: 0;
+  bottom: 32px;
+
+  margin: 0;
+  padding: 0 20px;
+
+  text-align: center;
 }
