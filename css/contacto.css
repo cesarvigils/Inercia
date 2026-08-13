@@ -1160,3 +1160,73 @@ a.contact-item:hover {
     }
 
 }
+/* =========================================================
+   AUTH BUTTON HOVER FIX
+   ========================================================= */
+
+.auth-submit {
+    opacity: 1;
+    visibility: visible;
+    color: #111;
+    background: var(--orange);
+}
+
+.auth-submit:hover,
+.auth-submit:focus {
+    opacity: 1;
+    visibility: visible;
+    color: #111;
+    background: var(--orange-light);
+    transform: translateY(-1px);
+}
+
+
+/* GOOGLE BUTTON */
+
+.google-auth-btn {
+    opacity: 1;
+    visibility: visible;
+    color: #222;
+    background: #fff;
+}
+
+.google-auth-btn:hover,
+.google-auth-btn:focus {
+    opacity: 1;
+    visibility: visible;
+    color: #222;
+    background: #eeeeee;
+    transform: translateY(-1px);
+}
+
+
+/* LOGIN / REGISTER TABS */
+
+.auth-tab {
+    opacity: 1;
+    visibility: visible;
+}
+
+.auth-tab:hover {
+    opacity: 1;
+    visibility: visible;
+    color: #fff;
+    background: transparent;
+}
+
+
+/* REGISTER / LOGIN TEXT BUTTON */
+
+.auth-switch button {
+    opacity: 1;
+    visibility: visible;
+    color: var(--orange);
+    background: transparent;
+}
+
+.auth-switch button:hover {
+    opacity: 1;
+    visibility: visible;
+    color: var(--orange-light);
+    background: transparent;
+}

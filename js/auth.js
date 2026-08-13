@@ -435,103 +435,70 @@ loginForm?.addEventListener('submit', async (event) => {
    ========================================================= */
 
 registerForm?.addEventListener('submit', async (event) => {
-
     event.preventDefault();
 
     hideMessage();
 
+    console.log('Register form submitted');
 
-    const name =
-        document
-            .getElementById('registerName')
-            .value
-            .trim();
-
-
-    const email =
-        document
-            .getElementById('registerEmail')
-            .value
-            .trim();
-
-
-    const phone =
-        document
-            .getElementById('registerPhone')
-            .value
-            .trim();
-
-
-    const password =
-        document
-            .getElementById('registerPassword')
-            .value;
-
-
-    const passwordConfirm =
-        document
-            .getElementById('registerPasswordConfirm')
-            .value;
-
+    const nameInput = document.getElementById('registerName');
+    const emailInput = document.getElementById('registerEmail');
+    const phoneInput = document.getElementById('registerPhone');
+    const passwordInput = document.getElementById('registerPassword');
+    const passwordConfirmInput = document.getElementById('registerPasswordConfirm');
 
     if (
-        !name ||
-        !email ||
-        !phone ||
-        !password ||
-        !passwordConfirm
+        !nameInput ||
+        !emailInput ||
+        !phoneInput ||
+        !passwordInput ||
+        !passwordConfirmInput
     ) {
+        console.error('Faltan elementos del formulario:', {
+            nameInput,
+            emailInput,
+            phoneInput,
+            passwordInput,
+            passwordConfirmInput
+        });
 
-        showMessage(
-            'Completa todos los campos.'
-        );
-
+        showMessage('Error interno del formulario.');
         return;
-
     }
 
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const phone = phoneInput.value.trim();
+    const password = passwordInput.value;
+    const passwordConfirm = passwordConfirmInput.value;
+
+    if (!name || !email || !phone || !password || !passwordConfirm) {
+        showMessage('Completa todos los campos.');
+        return;
+    }
 
     if (password.length < 6) {
-
-        showMessage(
-            'La contraseña debe tener al menos 6 caracteres.'
-        );
-
+        showMessage('La contraseña debe tener al menos 6 caracteres.');
         return;
-
     }
-
 
     if (password !== passwordConfirm) {
-
-        showMessage(
-            'Las contraseñas no coinciden.'
-        );
-
+        showMessage('Las contraseñas no coinciden.');
         return;
-
     }
 
-
     const submitBtn =
-        registerForm.querySelector(
-            'button[type="submit"]'
-        );
+        registerForm.querySelector('button[type="submit"]');
 
-
-    submitBtn?.setAttribute(
-        'disabled',
-        'true'
-    );
-
+    submitBtn?.setAttribute('disabled', 'true');
 
     try {
+        console.log('Creating Firebase user...');
 
         await setPersistence(
             auth,
             browserLocalPersistence
         );
-
 
         const result =
             await createUserWithEmailAndPassword(
@@ -540,69 +507,40 @@ registerForm?.addEventListener('submit', async (event) => {
                 password
             );
 
+        console.log('Firebase user created:', result.user.uid);
 
-        /* Firebase Auth profile */
+        await updateProfile(result.user, {
+            displayName: name
+        });
 
-        await updateProfile(
-            result.user,
-            {
-                displayName: name
-            }
-        );
-
-
-        /*
-         * Extra account information.
-         *
-         * Document:
-         *
-         * users/
-         *    UID/
-         *       name
-         *       email
-         *       phoneNumber
-         *       createdAt
-         */
+        console.log('Firebase profile updated');
 
         await setDoc(
-            doc(
-                db,
-                'users',
-                result.user.uid
-            ),
+            doc(db, 'users', result.user.uid),
             {
-                name,
-                email,
+                name: name,
+                email: email,
                 phoneNumber: phone,
-
                 provider: 'password',
-
-                createdAt:
-                    serverTimestamp()
+                createdAt: serverTimestamp()
             }
         );
 
-
-        closeAuthModal();
+        console.log('Firestore profile saved');
 
         registerForm.reset();
-
+        closeAuthModal();
 
     } catch (error) {
+        console.error('REGISTER ERROR:', error);
 
         showMessage(
             friendlyAuthError(error)
         );
 
-
     } finally {
-
-        submitBtn?.removeAttribute(
-            'disabled'
-        );
-
+        submitBtn?.removeAttribute('disabled');
     }
-
 });
 
 
