@@ -8,6 +8,5 @@
       "source": "/contacto",
       "destination": "/contacto.html"
     }
-  ],
-  "trailingSlash": false
+  ]
 }

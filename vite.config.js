@@ -1,9 +1,15 @@
-import { defineConfig } from 'vite';
+
+import { defineConfig } from 'vite'
+import { resolve } from 'path'
 
 export default defineConfig({
-  // root defaults to the folder containing this config (your project root,
-  // where index.html lives) — no need to set it explicitly.
   build: {
-    outDir: 'dist'
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        standings: resolve(__dirname, 'standings.html'),
+        contacto: resolve(__dirname, 'contacto.html')
+      }
+    }
   }
-});
+})
