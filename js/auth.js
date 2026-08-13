@@ -583,9 +583,7 @@ registerForm?.addEventListener(
                CREATE AUTH USER
                ========================= */
 
-            console.log(
-                '[REGISTER] Creando usuario...'
-            );
+            
 
             const result =
                 await createUserWithEmailAndPassword(
@@ -595,11 +593,7 @@ registerForm?.addEventListener(
                 );
 
 
-            console.log(
-                '[REGISTER] Usuario creado:',
-                result.user.uid
-            );
-
+  
 
             /* =========================
                UPDATE AUTH PROFILE
@@ -607,9 +601,7 @@ registerForm?.addEventListener(
 
             try {
 
-                console.log(
-                    '[REGISTER] Guardando nombre...'
-                );
+
 
                 await updateProfile(
                     result.user,
@@ -618,10 +610,7 @@ registerForm?.addEventListener(
                     }
                 );
 
-                console.log(
-                    '[REGISTER] Nombre guardado.'
-                );
-
+   
             } catch (profileError) {
 
                 /*
@@ -630,10 +619,7 @@ registerForm?.addEventListener(
                  * pretend account creation failed.
                  */
 
-                console.error(
-                    '[REGISTER] Error guardando nombre:',
-                    profileError
-                );
+
             }
 
 
@@ -641,9 +627,7 @@ registerForm?.addEventListener(
                FIRESTORE USER PROFILE
                ========================= */
 
-            console.log(
-                '[REGISTER] Guardando datos en Firestore...'
-            );
+
 
             /*
              * IMPORTANT:
@@ -701,14 +685,11 @@ registerForm?.addEventListener(
                     'timeout'
                 ) {
 
-                    console.warn(
-                        '[REGISTER] Firestore tardó demasiado. La cuenta sí fue creada.'
-                    );
 
                 } else {
 
                     console.log(
-                        '[REGISTER] Datos guardados en Firestore.'
+                        'Saved.'
                     );
                 }
 
