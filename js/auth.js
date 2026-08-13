@@ -57,20 +57,12 @@ const DEFAULT_PFP =
    AUTH PERSISTENCE
    ========================================================= */
 
-/*
- * Keeps the Firebase login stored locally.
- *
- * Firebase restores the session when:
- * - page refreshes
- * - user changes pages
- * - browser closes/reopens
- *
- * The session remains until signOut() is called.
- */
-
 setPersistence(auth, browserLocalPersistence)
     .catch((error) => {
-        console.error('Error configurando persistencia:', error);
+        console.error(
+            'Error configurando persistencia:',
+            error
+        );
     });
 
 
@@ -98,6 +90,18 @@ function closeAuthModal() {
 }
 
 
+authModalClose?.addEventListener(
+    'click',
+    closeAuthModal
+);
+
+
+authModalBackdrop?.addEventListener(
+    'click',
+    closeAuthModal
+);
+
+
 /* =========================================================
    PROFILE MENU
    ========================================================= */
@@ -115,7 +119,6 @@ function closeProfileMenu() {
 
 
 function toggleProfileMenu() {
-
     if (!profileMenu) return;
 
     if (profileMenu.classList.contains('open')) {
@@ -131,33 +134,17 @@ function toggleProfileMenu() {
    ========================================================= */
 
 authBtn?.addEventListener('click', (event) => {
-
     event.stopPropagation();
-
-    /*
-     * If Firebase has a logged-in user:
-     * show account menu.
-     *
-     * Otherwise:
-     * show login/register modal.
-     */
 
     if (auth.currentUser) {
         toggleProfileMenu();
     } else {
         openAuthModal();
     }
-
 });
 
 
-authModalClose?.addEventListener('click', closeAuthModal);
-
-authModalBackdrop?.addEventListener('click', closeAuthModal);
-
-
 document.addEventListener('click', (event) => {
-
     if (
         profileMenu?.classList.contains('open') &&
         !profileMenu.contains(event.target) &&
@@ -165,12 +152,10 @@ document.addEventListener('click', (event) => {
     ) {
         closeProfileMenu();
     }
-
 });
 
 
 document.addEventListener('keydown', (event) => {
-
     if (event.key !== 'Escape') return;
 
     if (authModal?.classList.contains('open')) {
@@ -178,7 +163,6 @@ document.addEventListener('keydown', (event) => {
     }
 
     closeProfileMenu();
-
 });
 
 
@@ -187,48 +171,38 @@ document.addEventListener('keydown', (event) => {
    ========================================================= */
 
 function setAuthTab(tab) {
-
     authTabs.forEach((button) => {
-
         button.classList.toggle(
             'active',
             button.dataset.authTab === tab
         );
-
     });
-
 
     loginForm?.classList.toggle(
         'active',
         tab === 'login'
     );
 
-
     registerForm?.classList.toggle(
         'active',
         tab === 'register'
     );
-
 
     hideMessage();
 }
 
 
 authTabs.forEach((button) => {
-
     button.addEventListener('click', () => {
         setAuthTab(button.dataset.authTab);
     });
-
 });
 
 
 authSwitchButtons.forEach((button) => {
-
     button.addEventListener('click', () => {
         setAuthTab(button.dataset.switchAuth);
     });
-
 });
 
 
@@ -241,8 +215,15 @@ function showMessage(message, type = 'error') {
 
     authMessage.textContent = message;
 
-    authMessage.classList.remove('error', 'success');
-    authMessage.classList.add('show', type);
+    authMessage.classList.remove(
+        'error',
+        'success'
+    );
+
+    authMessage.classList.add(
+        'show',
+        type
+    );
 }
 
 
@@ -250,12 +231,21 @@ function hideMessage() {
     if (!authMessage) return;
 
     authMessage.textContent = '';
-    authMessage.classList.remove('show', 'error', 'success');
+
+    authMessage.classList.remove(
+        'show',
+        'error',
+        'success'
+    );
 }
 
-function friendlyAuthError(error) {
 
-    switch (error.code) {
+/* =========================================================
+   FRIENDLY FIREBASE ERRORS
+   ========================================================= */
+
+function friendlyAuthError(error) {
+    switch (error?.code) {
 
         case 'auth/email-already-in-use':
             return 'Ese correo ya está registrado.';
@@ -280,11 +270,17 @@ function friendlyAuthError(error) {
         case 'auth/popup-blocked':
             return 'El navegador bloqueó la ventana de Google.';
 
+        case 'auth/network-request-failed':
+            return 'Error de conexión. Revisa tu internet e intenta nuevamente.';
+
         default:
-            console.error(error);
+            console.error(
+                'Firebase Auth error:',
+                error
+            );
+
             return 'Ocurrió un error. Intenta de nuevo.';
     }
-
 }
 
 
@@ -293,10 +289,10 @@ function friendlyAuthError(error) {
    ========================================================= */
 
 onAuthStateChanged(auth, (user) => {
-
     if (user) {
 
-        const photo = user.photoURL || DEFAULT_PFP;
+        const photo =
+            user.photoURL || DEFAULT_PFP;
 
         if (authPfp) {
             authPfp.src = photo;
@@ -329,19 +325,19 @@ onAuthStateChanged(auth, (user) => {
         }
 
         if (profileMenuName) {
-            profileMenuName.textContent = 'USUARIO';
+            profileMenuName.textContent =
+                'USUARIO';
         }
 
         if (profileMenuEmail) {
-            profileMenuEmail.textContent = '';
+            profileMenuEmail.textContent =
+                '';
         }
 
         authBtn?.classList.remove('logged-in');
 
         closeProfileMenu();
-
     }
-
 });
 
 
@@ -349,226 +345,475 @@ onAuthStateChanged(auth, (user) => {
    LOGIN
    ========================================================= */
 
-loginForm?.addEventListener('submit', async (event) => {
+loginForm?.addEventListener(
+    'submit',
+    async (event) => {
 
-    event.preventDefault();
+        event.preventDefault();
 
-    hideMessage();
+        hideMessage();
 
+        const email =
+            document
+                .getElementById('loginEmail')
+                ?.value
+                .trim();
 
-    const email =
-        document
-            .getElementById('loginEmail')
-            .value
-            .trim();
+        const password =
+            document
+                .getElementById('loginPassword')
+                ?.value;
 
+        if (!email || !password) {
+            showMessage(
+                'Completa todos los campos.'
+            );
 
-    const password =
-        document
-            .getElementById('loginPassword')
-            .value;
+            return;
+        }
 
+        const submitBtn =
+            loginForm.querySelector(
+                'button[type="submit"]'
+            );
 
-    if (!email || !password) {
+        const originalText =
+            submitBtn?.textContent ||
+            'INICIAR SESIÓN';
 
-        showMessage('Completa todos los campos.');
-        return;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent =
+                'INICIANDO SESIÓN...';
+        }
 
+        try {
+
+            await setPersistence(
+                auth,
+                browserLocalPersistence
+            );
+
+            await signInWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+
+            loginForm.reset();
+
+            closeAuthModal();
+
+        } catch (error) {
+
+            console.error(
+                '[LOGIN]',
+                error
+            );
+
+            showMessage(
+                friendlyAuthError(error)
+            );
+
+        } finally {
+
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent =
+                    originalText;
+            }
+        }
     }
-
-
-    const submitBtn =
-        loginForm.querySelector(
-            'button[type="submit"]'
-        );
-
-
-    submitBtn?.setAttribute(
-        'disabled',
-        'true'
-    );
-
-
-    try {
-
-        await setPersistence(
-            auth,
-            browserLocalPersistence
-        );
-
-
-        await signInWithEmailAndPassword(
-            auth,
-            email,
-            password
-        );
-
-
-        closeAuthModal();
-
-        loginForm.reset();
-
-
-    } catch (error) {
-
-        showMessage(
-            friendlyAuthError(error)
-        );
-
-
-    } finally {
-
-        submitBtn?.removeAttribute(
-            'disabled'
-        );
-
-    }
-
-});
+);
 
 
 /* =========================================================
    REGISTER
    ========================================================= */
 
-registerForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
+registerForm?.addEventListener(
+    'submit',
+    async (event) => {
 
-    hideMessage();
+        event.preventDefault();
 
-    const name = document
-        .getElementById('registerName')
-        .value
-        .trim();
+        hideMessage();
 
-    const email = document
-        .getElementById('registerEmail')
-        .value
-        .trim();
 
-    const phone = document
-        .getElementById('registerPhone')
-        .value
-        .trim();
+        /* =========================
+           GET INPUTS
+           ========================= */
 
-    const password = document
-        .getElementById('registerPassword')
-        .value;
-
-    const passwordConfirm = document
-        .getElementById('registerPasswordConfirm')
-        .value;
-
-    if (!name || !email || !phone || !password || !passwordConfirm) {
-        showMessage('Completa todos los campos.');
-        return;
-    }
-
-    if (password.length < 6) {
-        showMessage(
-            'La contraseña debe tener al menos 6 caracteres.'
-        );
-        return;
-    }
-
-    if (password !== passwordConfirm) {
-        showMessage('Las contraseñas no coinciden.');
-        return;
-    }
-
-    const submitBtn =
-        registerForm.querySelector('button[type="submit"]');
-
-    const originalButtonText =
-        submitBtn?.textContent || 'CREAR CUENTA';
-
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'CREANDO CUENTA...';
-    }
-
-    try {
-
-        /* Keep login saved */
-        await setPersistence(
-            auth,
-            browserLocalPersistence
-        );
-
-        /* Create Firebase Auth account */
-        const result =
-            await createUserWithEmailAndPassword(
-                auth,
-                email,
-                password
+        const nameInput =
+            document.getElementById(
+                'registerName'
             );
 
-        /* Save user's name in Firebase Auth */
-        await updateProfile(result.user, {
-            displayName: name
-        });
+        const emailInput =
+            document.getElementById(
+                'registerEmail'
+            );
 
-        /* Save extra information in Firestore */
-        await setDoc(
-            doc(db, 'users', result.user.uid),
-            {
-                name,
-                email,
-                phoneNumber: phone,
-                provider: 'password',
-                createdAt: serverTimestamp()
-            }
-        );
+        const phoneInput =
+            document.getElementById(
+                'registerPhone'
+            );
 
-        /* Account was successfully created */
-        showMessage(
-            '¡CUENTA CREADA EXITOSAMENTE!',
-            'success'
-        );
+        const passwordInput =
+            document.getElementById(
+                'registerPassword'
+            );
 
-        registerForm.reset();
+        const passwordConfirmInput =
+            document.getElementById(
+                'registerPasswordConfirm'
+            );
 
-        /*
-         * Firebase automatically signs in a newly-created
-         * email/password account.
-         *
-         * Leave the message visible briefly, then close.
-         */
-        setTimeout(() => {
-            closeAuthModal();
-        }, 1500);
 
-    } catch (error) {
+        if (
+            !nameInput ||
+            !emailInput ||
+            !phoneInput ||
+            !passwordInput ||
+            !passwordConfirmInput
+        ) {
+            console.error(
+                '[REGISTER] Faltan inputs en el HTML.'
+            );
 
-        console.error(
-            'Error creando cuenta:',
-            error
-        );
+            showMessage(
+                'Error interno del formulario.'
+            );
 
-        showMessage(
-            friendlyAuthError(error),
-            'error'
-        );
-
-    } finally {
-
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalButtonText;
+            return;
         }
 
+
+        const name =
+            nameInput.value.trim();
+
+        const email =
+            emailInput.value.trim();
+
+        const phone =
+            phoneInput.value.trim();
+
+        const password =
+            passwordInput.value;
+
+        const passwordConfirm =
+            passwordConfirmInput.value;
+
+
+        /* =========================
+           VALIDATION
+           ========================= */
+
+        if (
+            !name ||
+            !email ||
+            !phone ||
+            !password ||
+            !passwordConfirm
+        ) {
+            showMessage(
+                'Completa todos los campos.'
+            );
+
+            return;
+        }
+
+
+        if (password.length < 6) {
+            showMessage(
+                'La contraseña debe tener al menos 6 caracteres.'
+            );
+
+            return;
+        }
+
+
+        if (password !== passwordConfirm) {
+            showMessage(
+                'Las contraseñas no coinciden.'
+            );
+
+            return;
+        }
+
+
+        /* =========================
+           BUTTON
+           ========================= */
+
+        const submitBtn =
+            registerForm.querySelector(
+                'button[type="submit"]'
+            );
+
+        const originalButtonText =
+            submitBtn?.textContent ||
+            'CREAR CUENTA';
+
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent =
+                'CREANDO CUENTA...';
+        }
+
+
+        try {
+
+            /* =========================
+               PERSISTENCE
+               ========================= */
+
+            console.log(
+                '[REGISTER] Configurando persistencia...'
+            );
+
+            await setPersistence(
+                auth,
+                browserLocalPersistence
+            );
+
+
+            /* =========================
+               CREATE AUTH USER
+               ========================= */
+
+            console.log(
+                '[REGISTER] Creando usuario...'
+            );
+
+            const result =
+                await createUserWithEmailAndPassword(
+                    auth,
+                    email,
+                    password
+                );
+
+
+            console.log(
+                '[REGISTER] Usuario creado:',
+                result.user.uid
+            );
+
+
+            /* =========================
+               UPDATE AUTH PROFILE
+               ========================= */
+
+            try {
+
+                console.log(
+                    '[REGISTER] Guardando nombre...'
+                );
+
+                await updateProfile(
+                    result.user,
+                    {
+                        displayName: name
+                    }
+                );
+
+                console.log(
+                    '[REGISTER] Nombre guardado.'
+                );
+
+            } catch (profileError) {
+
+                /*
+                 * The account already exists at this point.
+                 * A profile error should not make the UI
+                 * pretend account creation failed.
+                 */
+
+                console.error(
+                    '[REGISTER] Error guardando nombre:',
+                    profileError
+                );
+            }
+
+
+            /* =========================
+               FIRESTORE USER PROFILE
+               ========================= */
+
+            console.log(
+                '[REGISTER] Guardando datos en Firestore...'
+            );
+
+            /*
+             * IMPORTANT:
+             *
+             * We intentionally do NOT block successful
+             * account creation forever waiting for Firestore.
+             *
+             * If Firestore works, the profile is saved.
+             * If it errors, we log the error.
+             * If it hangs, the UI continues after timeout.
+             */
+
+            const firestoreSave =
+                setDoc(
+                    doc(
+                        db,
+                        'users',
+                        result.user.uid
+                    ),
+                    {
+                        name,
+                        email,
+                        phoneNumber: phone,
+                        provider: 'password',
+                        createdAt:
+                            serverTimestamp()
+                    },
+                    {
+                        merge: true
+                    }
+                );
+
+
+            const firestoreTimeout =
+                new Promise((resolve) => {
+
+                    setTimeout(() => {
+                        resolve('timeout');
+                    }, 5000);
+
+                });
+
+
+            try {
+
+                const firestoreResult =
+                    await Promise.race([
+                        firestoreSave,
+                        firestoreTimeout
+                    ]);
+
+
+                if (
+                    firestoreResult ===
+                    'timeout'
+                ) {
+
+                    console.warn(
+                        '[REGISTER] Firestore tardó demasiado. La cuenta sí fue creada.'
+                    );
+
+                } else {
+
+                    console.log(
+                        '[REGISTER] Datos guardados en Firestore.'
+                    );
+                }
+
+            } catch (firestoreError) {
+
+                /*
+                 * Don't tell the user account creation
+                 * failed — Firebase Auth already created it.
+                 */
+
+                console.error(
+                    '[REGISTER] Error de Firestore:',
+                    firestoreError
+                );
+            }
+
+
+            /* =========================
+               SUCCESS
+               ========================= */
+
+            console.log(
+                '[REGISTER] Registro completado.'
+            );
+
+            showMessage(
+                '¡CUENTA CREADA EXITOSAMENTE!',
+                'success'
+            );
+
+
+            registerForm.reset();
+
+
+            /*
+             * updateProfile() doesn't always cause another
+             * onAuthStateChanged event by itself, so update
+             * the visible account information immediately.
+             */
+
+            if (profileMenuName) {
+                profileMenuName.textContent =
+                    name;
+            }
+
+            if (profileMenuEmail) {
+                profileMenuEmail.textContent =
+                    email;
+            }
+
+            if (profileMenuPfp) {
+                profileMenuPfp.src =
+                    result.user.photoURL ||
+                    DEFAULT_PFP;
+            }
+
+            if (authPfp) {
+                authPfp.src =
+                    result.user.photoURL ||
+                    DEFAULT_PFP;
+            }
+
+
+            /*
+             * Leave success visible briefly.
+             */
+
+            setTimeout(() => {
+                closeAuthModal();
+            }, 1500);
+
+
+        } catch (error) {
+
+            console.error(
+                '[REGISTER] Error creando cuenta:',
+                error
+            );
+
+
+            showMessage(
+                friendlyAuthError(error),
+                'error'
+            );
+
+
+        } finally {
+
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent =
+                    originalButtonText;
+            }
+        }
     }
-});
+);
 
 
 /* =========================================================
-   GOOGLE
+   GOOGLE AUTH
    ========================================================= */
 
 async function continueWithGoogle() {
 
     hideMessage();
-
 
     const provider =
         new GoogleAuthProvider();
@@ -590,34 +835,48 @@ async function continueWithGoogle() {
 
 
         /*
-         * Save/update the Google account in Firestore.
+         * Google login itself succeeded at this point.
          *
-         * merge:true prevents us from deleting fields
-         * such as phoneNumber if they already exist.
+         * Firestore profile saving is secondary and should
+         * not prevent the user from being logged in.
          */
 
-        await setDoc(
-            doc(
-                db,
-                'users',
-                result.user.uid
-            ),
-            {
-                name:
-                    result.user.displayName || '',
+        try {
 
-                email:
-                    result.user.email || '',
+            await setDoc(
+                doc(
+                    db,
+                    'users',
+                    result.user.uid
+                ),
+                {
+                    name:
+                        result.user.displayName ||
+                        '',
 
-                photoURL:
-                    result.user.photoURL || '',
+                    email:
+                        result.user.email ||
+                        '',
 
-                provider: 'google'
-            },
-            {
-                merge: true
-            }
-        );
+                    photoURL:
+                        result.user.photoURL ||
+                        '',
+
+                    provider:
+                        'google'
+                },
+                {
+                    merge: true
+                }
+            );
+
+        } catch (firestoreError) {
+
+            console.error(
+                '[GOOGLE] Error guardando usuario en Firestore:',
+                firestoreError
+            );
+        }
 
 
         closeAuthModal();
@@ -625,12 +884,16 @@ async function continueWithGoogle() {
 
     } catch (error) {
 
+        console.error(
+            '[GOOGLE AUTH]',
+            error
+        );
+
+
         showMessage(
             friendlyAuthError(error)
         );
-
     }
-
 }
 
 
@@ -650,30 +913,40 @@ googleRegisterBtn?.addEventListener(
    LOGOUT
    ========================================================= */
 
-logoutBtn?.addEventListener('click', async () => {
+logoutBtn?.addEventListener(
+    'click',
+    async () => {
 
-    logoutBtn.disabled = true;
+        if (!logoutBtn) return;
 
+        const originalText =
+            logoutBtn.textContent;
 
-    try {
-
-        await signOut(auth);
-
-        closeProfileMenu();
-
-
-    } catch (error) {
-
-        console.error(
-            'Error cerrando sesión:',
-            error
-        );
+        logoutBtn.disabled = true;
+        logoutBtn.textContent =
+            'CERRANDO SESIÓN...';
 
 
-    } finally {
+        try {
 
-        logoutBtn.disabled = false;
+            await signOut(auth);
 
+            closeProfileMenu();
+
+
+        } catch (error) {
+
+            console.error(
+                'Error cerrando sesión:',
+                error
+            );
+
+
+        } finally {
+
+            logoutBtn.disabled = false;
+            logoutBtn.textContent =
+                originalText;
+        }
     }
-
-});
+);
