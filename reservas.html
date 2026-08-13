@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="/css/style.css">
 <link rel="stylesheet" href="/css/menu.css">
 <link rel="stylesheet" href="/css/reservas.css">
+<link rel="stylesheet" href="/css/reservas-backend.css">
 
 <script type="module" src="/js/auth.js"></script>
     <link rel="stylesheet" href="/css/menu.css">
@@ -287,22 +288,8 @@
                                 id="reservationTime"
                                 required
                             >
-                                <option value="">
-                                    Seleccioná una hora
-                                </option>
-
-                                <option value="10:00">10:00 AM</option>
-                                <option value="11:00">11:00 AM</option>
-                                <option value="12:00">12:00 PM</option>
-                                <option value="13:00">1:00 PM</option>
-                                <option value="14:00">2:00 PM</option>
-                                <option value="15:00">3:00 PM</option>
-                                <option value="16:00">4:00 PM</option>
-                                <option value="17:00">5:00 PM</option>
-                                <option value="18:00">6:00 PM</option>
-                                <option value="19:00">7:00 PM</option>
-                                <option value="20:00">8:00 PM</option>
-                            </select>
+<option value="">Seleccioná una hora</option>
+</select>
 
                         </div>
 
@@ -319,22 +306,8 @@
                                 id="reservationDuration"
                                 required
                             >
-                                <option value="1">
-                                    1 hora
-                                </option>
-
-                                <option value="2">
-                                    2 horas
-                                </option>
-
-                                <option value="3">
-                                    3 horas
-                                </option>
-
-                                <option value="4">
-                                    4 horas
-                                </option>
-                            </select>
+<option value="1">1 hora</option>
+</select>
 
                         </div>
 
@@ -396,9 +369,7 @@
                                 STANDARD
                             </span>
 
-                            <span class="simulator-price">
-                                L 200 / HORA
-                            </span>
+                            <span class="simulator-price" data-price="standard">L 200 / HORA</span>
 
                         </div>
 
@@ -432,9 +403,7 @@
                                 PREMIUM
                             </span>
 
-                            <span class="simulator-price">
-                                L 350 / HORA
-                            </span>
+                            <span class="simulator-price" data-price="premium">L 350 / HORA</span>
 
                         </div>
 
@@ -457,6 +426,16 @@
 
             </section>
 
+
+            <section class="reservation-section">
+                <div class="section-number">03</div>
+                <div class="section-title"><div><span>TUS DATOS</span><h2>¿QUIÉN RESERVA?</h2><p>Los cargamos desde tu cuenta; podés corregirlos para esta reserva.</p></div></div>
+                <div class="date-grid">
+                    <label class="reservation-field"><span>NOMBRE</span><input id="reservationName" type="text" required autocomplete="name"></label>
+                    <label class="reservation-field"><span>CORREO</span><input id="reservationEmail" type="email" required autocomplete="email"></label>
+                    <label class="reservation-field"><span>TELÉFONO</span><input id="reservationPhone" type="tel" required autocomplete="tel"></label>
+                </div>
+            </section>
 
             <!-- =============================================
                  PAYMENT
@@ -576,6 +555,11 @@
 
                 </div>
 
+                <div id="proofBlock" class="reservation-field" style="margin-top:18px">
+                    <span>COMPROBANTE BAC</span>
+                    <small style="display:block;margin-bottom:8px">BAC · HNL · 758-610-001 · Inercia S.A. — JPG, PNG o PDF, máximo 5 MB.</small>
+                    <input id="paymentProof" type="file" accept="image/jpeg,image/png,application/pdf">
+                </div>
             </section>
 
 
@@ -665,6 +649,8 @@
                     CONTINUAR RESERVA
                 </button>
 
+
+                <p id="reservationMessage" class="reservation-note" hidden></p>
 
                 <p class="reservation-note">
                     Revisá bien tu fecha, hora y simuladores
