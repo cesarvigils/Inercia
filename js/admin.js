@@ -24,88 +24,103 @@ import {
     writeBatch
 } from 'firebase/firestore';
 
-
+// DOM helpers
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
+// DOM references
 const loginScreen = $('#loginScreen');
 const adminShell = $('#adminShell');
 const loginForm = $('#loginForm');
 const loginMessage = $('#loginMessage');
 
+// State variables
 let currentUser = null;
 let reservations = [];
 let rigs = [];
-let manualSales = [];
-let salesRange = 'month';
+let sales = [];
+let range = 'month';
 let selectedReservation = null;
-const $ = (s) => document.querySelector(s),
-    $$ = (s) => [...document.querySelectorAll(s)];
-let user,
-    reservations = [],
-    rigs = [],
-    sales = [],
-    range = "month";
-const money = (v) => `L ${Number(v || 0).toLocaleString("es-HN")}`,
-    esc = (v) =>
-        String(v ?? "").replace(
-            /[&<>"']/g,
-            (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
-        ),
-    today = () => {
-        let d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    },
-    ftime = (v) => {
-        if (!v) return "N/D";
-        let [h, m] = v.split(":").map(Number);
-        return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-    },
-    fdate = (v) => (v ? String(v).split("-").reverse().join("/") : "N/D");
+
+// Utility functions
+const money = (v) => `L ${Number(v || 0).toLocaleString("es-HN")}`;
+
+const esc = (v) =>
+    String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
+    );
+
+const today = () => {
+    let d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+const ftime = (v) => {
+    if (!v) return "N/D";
+    let [h, m] = v.split(":").map(Number);
+    return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+};
+
+const fdate = (v) => (v ? String(v).split("-").reverse().join("/") : "N/D");
+
+const dt = (v) => (v?.toDate ? v.toDate() : v ? new Date(v) : null);
+
+// Authorization check
 async function authorized(u) {
     if (!u) return false;
     let s = await getDoc(doc(db, "adminUsers", u.uid));
     return s.exists() && s.data().enabled === true;
 }
+
+// Set persistence
 setPersistence(auth, browserLocalPersistence).catch(console.error);
-$("#loginForm").onsubmit = async (e) => {
+
+// Login handler
+loginForm.onsubmit = async (e) => {
     e.preventDefault();
     let b = e.currentTarget.querySelector("button");
     b.disabled = true;
     b.textContent = "VERIFICANDO...";
-    $("#loginMessage").hidden = true;
+    loginMessage.hidden = true;
     try {
-        let c = await signInWithEmailAndPassword(auth, $("#loginEmail").value.trim(), $("#loginPassword").value);
+        let c = await signInWithEmailAndPassword(auth, $('#loginEmail').value.trim(), $('#loginPassword').value);
         if (!(await authorized(c.user))) {
             await signOut(auth);
             throw Error("unauthorized");
         }
     } catch (x) {
-        $("#loginMessage").textContent =
+        loginMessage.textContent =
             x.message === "unauthorized" ? "Esta cuenta no tiene acceso al panel." : "Correo o contraseña incorrectos.";
-        $("#loginMessage").hidden = false;
+        loginMessage.hidden = false;
     } finally {
         b.disabled = false;
         b.textContent = "INICIAR SESIÓN";
     }
 };
-$("#logoutBtn").onclick = () => signOut(auth);
+
+// Logout handler
+$('#logoutBtn').onclick = () => signOut(auth);
+
+// Auth state listener
 onAuthStateChanged(auth, async (u) => {
     if (!u) {
-        $("#adminShell").hidden = true;
-        $("#loginScreen").hidden = false;
+        adminShell.hidden = true;
+        loginScreen.hidden = false;
         return;
     }
     if (!(await authorized(u))) {
         await signOut(auth);
         return;
     }
-    user = u;
-    $("#adminEmail").textContent = u.email || u.uid;
-    $("#loginScreen").hidden = true;
-    $("#adminShell").hidden = false;
+    currentUser = u;
+    $('#adminEmail').textContent = u.email || u.uid;
+    loginScreen.hidden = true;
+    adminShell.hidden = false;
     listen();
 });
+
+// Navigation
 $$(".nav").forEach(
     (b) =>
         (b.onclick = () => {
@@ -116,16 +131,22 @@ $$(".nav").forEach(
             $("#viewTitle").textContent = b.textContent;
         })
 );
+
+// Calendar navigation
 $("#calendarDate").value = today();
 $("#calendarDate").onchange = renderCalendar;
+
 function shift(n) {
     let d = new Date($("#calendarDate").value + "T12:00");
     d.setDate(d.getDate() + n);
     $("#calendarDate").value = d.toISOString().slice(0, 10);
     renderCalendar();
 }
+
 $("#prevDay").onclick = () => shift(-1);
 $("#nextDay").onclick = () => shift(1);
+
+// Listen to Firestore changes
 function listen() {
     onSnapshot(collection(db, "reservations"), (s) => {
         reservations = s.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -143,20 +164,24 @@ function listen() {
     });
     loadSettings();
 }
+
+// Active rigs helper
 function activeRigs() {
     return rigs.length
         ? rigs.filter((r) => r.status !== "disabled")
         : Array.from({ length: 10 }, (_, i) => ({
-              id: `fallback-${i}`,
-              name: i < 8 ? `Standard ${i + 1}` : `Premium ${i - 7}`,
-              type: i < 8 ? "standard" : "premium",
-              order: i + 1,
-              status: "active",
-          }));
+            id: `fallback-${i}`,
+            name: i < 8 ? `Standard ${i + 1}` : `Premium ${i - 7}`,
+            type: i < 8 ? "standard" : "premium",
+            order: i + 1,
+            status: "active",
+        }));
 }
+
 function rr(r) {
     return r.rigs || r.simulators || [];
 }
+
 function hasRig(r, g) {
     return rr(r).some((x) => {
         let id = typeof x === "string" ? x : x.id || x.rigId || x.name;
@@ -168,6 +193,8 @@ function hasRig(r, g) {
         );
     });
 }
+
+// Render calendar
 function renderCalendar() {
     let date = $("#calendarDate").value,
         rs = activeRigs(),
@@ -187,6 +214,8 @@ function renderCalendar() {
     el.innerHTML = h;
     $$("[data-r]").forEach((b) => (b.onclick = () => openReservation(b.dataset.r)));
 }
+
+// Payment method formatter
 function pay(p) {
     let v = typeof p === "string" ? p : p?.method;
     return (
@@ -194,9 +223,12 @@ function pay(p) {
         String(v || "N/D").toUpperCase()
     );
 }
+
 function receipt(r) {
     return r.payment?.receiptUrl || r.payment?.proofUrl || r.confirmation?.receiptUrl || r.receiptUrl || "";
 }
+
+// Open reservation detail
 function openReservation(id) {
     let r = reservations.find((x) => x.id === id),
         c = r.customer || {},
@@ -225,22 +257,29 @@ function openReservation(id) {
     $("#approve")?.addEventListener("click", () => approve(r));
     $("#reject")?.addEventListener("click", () => reject(r));
 }
+
+// Close drawer
 function closeDrawer() {
     $("#drawer").classList.remove("open");
     $("#drawerBackdrop").hidden = true;
 }
+
 $("#drawerClose").onclick = closeDrawer;
 $("#drawerBackdrop").onclick = closeDrawer;
+
+// Approve reservation
 async function approve(r) {
     await updateDoc(doc(db, "reservations", r.id), {
         status: "approved",
         "confirmation.status": "approved",
         "confirmation.approvedAt": serverTimestamp(),
-        "confirmation.approvedBy": user.uid,
+        "confirmation.approvedBy": currentUser.uid,
         updatedAt: serverTimestamp(),
     });
     closeDrawer();
 }
+
+// Reject reservation
 async function reject(r) {
     let q = await getDocs(query(collection(db, "reservationLocks"), where("reservationId", "==", r.id))),
         b = writeBatch(db);
@@ -248,16 +287,20 @@ async function reject(r) {
         status: "rejected",
         "confirmation.status": "rejected",
         "confirmation.rejectedAt": serverTimestamp(),
-        "confirmation.rejectedBy": user.uid,
+        "confirmation.rejectedBy": currentUser.uid,
         updatedAt: serverTimestamp(),
     });
     q.forEach((x) => b.delete(x.ref));
     await b.commit();
     closeDrawer();
 }
+
+// Status formatter
 function status(s) {
     return { active: "DISPONIBLE", maintenance: "MANTENIMIENTO", disabled: "DESACTIVADO" }[s] || "DISPONIBLE";
 }
+
+// Render rigs
 function renderRigs() {
     let c = {
         total: rigs.length,
@@ -281,7 +324,10 @@ function renderRigs() {
         .join("");
     $$("[data-edit]").forEach((b) => (b.onclick = () => rigModal(rigs.find((x) => x.id === b.dataset.edit))));
 }
+
 $("#newRigBtn").onclick = () => rigModal();
+
+// Rig modal
 function rigModal(r) {
     modal(
         `<span class="eyebrow">${r ? "MODIFICAR" : "NUEVO"} RIG</span><h2>${r ? "EDITAR" : "CREAR"} SIMULADOR</h2><form id="rigForm"><label>NOMBRE<input id="rn" value="${esc(r?.name || "")}" required></label><label>ORDEN<input id="ro" type="number" value="${r?.order ?? ""}" required></label><label>TIPO<select id="rt"><option value="standard">STANDARD</option><option value="premium" ${r?.type === "premium" ? "selected" : ""}>PREMIUM</option></select></label><label>PRECIO/H<input id="rp" type="number" value="${r?.pricePerHour ?? (r?.type === "premium" ? 350 : 200)}"></label><label>ESTADO<select id="rs"><option value="active">DISPONIBLE</option><option value="maintenance" ${r?.status === "maintenance" ? "selected" : ""}>MANTENIMIENTO</option><option value="disabled" ${r?.status === "disabled" ? "selected" : ""}>DESACTIVADO</option></select></label><button class="primary">GUARDAR</button>${r ? '<button type="button" id="delRig" class="danger">ELIMINAR</button>' : ""}</form>`
@@ -308,6 +354,8 @@ function rigModal(r) {
         }
     });
 }
+
+// Sales filters
 $$(".filter").forEach(
     (b) =>
         (b.onclick = () => {
@@ -317,7 +365,8 @@ $$(".filter").forEach(
             renderSales();
         })
 );
-const dt = (v) => (v?.toDate ? v.toDate() : v ? new Date(v) : null);
+
+// Check if date is within range
 function inside(d) {
     if (!d) return false;
     let n = new Date();
@@ -330,16 +379,18 @@ function inside(d) {
     e.setDate(s.getDate() + 7);
     return d >= s && d < e;
 }
+
+// Render sales
 function renderSales() {
     let a = reservations
-            .filter((r) => r.status === "approved")
-            .map((r) => ({
-                type: "reservation",
-                description: `Reserva ${r.code || r.id}`,
-                total: +(r.pricing?.total || 0),
-                paymentMethod: typeof r.payment === "string" ? r.payment : r.payment?.method,
-                date: dt(r.confirmation?.approvedAt) || dt(r.updatedAt) || dt(r.createdAt),
-            })),
+        .filter((r) => r.status === "approved")
+        .map((r) => ({
+            type: "reservation",
+            description: `Reserva ${r.code || r.id}`,
+            total: +(r.pricing?.total || 0),
+            paymentMethod: typeof r.payment === "string" ? r.payment : r.payment?.method,
+            date: dt(r.confirmation?.approvedAt) || dt(r.updatedAt) || dt(r.createdAt),
+        })),
         b = sales.map((s) => ({ ...s, type: s.type || "manual", date: dt(s.createdAt), total: +s.total || 0 })),
         rows = [...a, ...b].filter((x) => inside(x.date)).sort((a, b) => b.date - a.date),
         total = rows.reduce((a, b) => a + b.total, 0);
@@ -353,13 +404,15 @@ function renderSales() {
         .join("");
     $("#salesTable").innerHTML = rows.length
         ? rows
-              .map(
-                  (s) =>
-                      `<tr><td>${s.date ? s.date.toLocaleDateString("es-HN") : "N/D"}</td><td>${esc(s.description || "Venta")}</td><td>${pay(s.paymentMethod)}</td><td>${s.type === "reservation" ? "RESERVA" : "MANUAL"}</td><td>${money(s.total)}</td></tr>`
-              )
-              .join("")
+            .map(
+                (s) =>
+                    `<tr><td>${s.date ? s.date.toLocaleDateString("es-HN") : "N/D"}</td><td>${esc(s.description || "Venta")}</td><td>${pay(s.paymentMethod)}</td><td>${s.type === "reservation" ? "RESERVA" : "MANUAL"}</td><td>${money(s.total)}</td></tr>`
+            )
+            .join("")
         : '<tr><td colspan="5">No hay ventas en este período.</td></tr>';
 }
+
+// New sale modal
 $("#newSaleBtn").onclick = () => {
     modal(
         `<span class="eyebrow">VENTA ADMINISTRATIVA</span><h2>NUEVA VENTA</h2><form id="saleForm"><label>PRODUCTO / CONCEPTO<input id="sd" required></label><label>CANTIDAD<input id="sq" type="number" min="1" value="1"></label><label>PRECIO UNITARIO<input id="sp" type="number" min="0" required></label><label>MÉTODO<select id="sm"><option value="efectivo">EFECTIVO</option><option value="transferencia">TRANSFERENCIA</option><option value="tarjeta">TARJETA</option></select></label><button class="primary">REGISTRAR VENTA</button></form>`
@@ -375,24 +428,30 @@ $("#newSaleBtn").onclick = () => {
             unitPrice: p,
             total: q * p,
             paymentMethod: $("#sm").value,
-            createdBy: user.uid,
+            createdBy: currentUser.uid,
             createdAt: serverTimestamp(),
         });
         closeModal();
     };
 };
+
+// Modal functions
 function modal(h) {
     $("#modalContent").innerHTML = h;
     $("#modalBackdrop").hidden = false;
 }
+
 function closeModal() {
     $("#modalBackdrop").hidden = true;
     $("#modalContent").innerHTML = "";
 }
+
 $("#modalClose").onclick = closeModal;
 $("#modalBackdrop").onclick = (e) => {
     if (e.target === $("#modalBackdrop")) closeModal();
 };
+
+// Load settings
 async function loadSettings() {
     let s = await getDoc(doc(db, "settings", "reservations"));
     if (s.exists()) {
@@ -403,6 +462,8 @@ async function loadSettings() {
         $("#weekdayStart").value = d.schedule?.weekdayStart ?? "14:00";
     }
 }
+
+// Pricing form
 $("#pricingForm").onsubmit = async (e) => {
     e.preventDefault();
     await setDoc(
@@ -414,6 +475,8 @@ $("#pricingForm").onsubmit = async (e) => {
         { merge: true }
     );
 };
+
+// Schedule form
 $("#scheduleForm").onsubmit = async (e) => {
     e.preventDefault();
     await setDoc(
