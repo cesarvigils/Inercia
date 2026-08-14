@@ -276,15 +276,148 @@ function rr(r) {
     return r.rigs || r.simulators || [];
 }
 
-function hasRig(r, g) {
-    return rr(r).some((x) => {
-        let id = typeof x === "string" ? x : x.id || x.rigId || x.name;
-        return (
-            id === g.id ||
-            id === g.name ||
-            x?.name === g.name ||
-            Number(x?.order ?? x?.number) === Number(g.order ?? g.number)
+function hasRig(reservation, rig) {
+    const reservedRigs = rr(reservation);
+
+    return reservedRigs.some((reserved) => {
+        /* ==========================================
+           FORMATO STRING
+           ========================================== */
+
+        if (typeof reserved === "string") {
+            const value = reserved
+                .trim()
+                .toLowerCase();
+
+            const rigId = String(rig.id || "")
+                .trim()
+                .toLowerCase();
+
+            const rigName = String(rig.name || "")
+                .trim()
+                .toLowerCase();
+
+            // Match exacto únicamente
+            return value === rigId || value === rigName;
+        }
+
+
+        /* ==========================================
+           FORMATO OBJECT
+           ========================================== */
+
+        const reservedId = String(
+            reserved.id ||
+            reserved.rigId ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+
+        const rigId = String(rig.id || "")
+            .trim()
+            .toLowerCase();
+
+
+        // 1. ID exacto tiene prioridad
+        if (
+            reservedId &&
+            rigId &&
+            reservedId === rigId
+        ) {
+            return true;
+        }
+
+
+        /* ==========================================
+           TYPE
+           ========================================== */
+
+        const reservedType = String(
+            reserved.type ||
+            reserved.category ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+
+        const rigType = String(
+            rig.type || ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+        /* ==========================================
+           NUMBER
+           ========================================== */
+
+        const reservedNumber = Number(
+            reserved.number ??
+            reserved.order ??
+            reserved.rigNumber ??
+            0
         );
+
+        let rigNumber = Number(
+            rig.number ??
+            rig.rigNumber ??
+            0
+        );
+
+        // Los defaults del calendario tienen:
+        // Standard: order 1-8
+        // Premium:  order 9-10
+        //
+        // Convertimos Premium 9/10 -> Premium 1/2.
+        if (!rigNumber && rig.order) {
+            rigNumber =
+                rigType === "premium"
+                    ? Number(rig.order) - 8
+                    : Number(rig.order);
+        }
+
+
+        // Para hacer match por número,
+        // TAMBIÉN tiene que coincidir el tipo.
+        if (
+            reservedType &&
+            rigType &&
+            reservedType === rigType &&
+            reservedNumber &&
+            rigNumber &&
+            reservedNumber === rigNumber
+        ) {
+            return true;
+        }
+
+
+        /* ==========================================
+           NAME EXACTO
+           ========================================== */
+
+        const reservedName = String(
+            reserved.name || ""
+        )
+            .trim()
+            .toLowerCase();
+
+        const rigName = String(
+            rig.name || ""
+        )
+            .trim()
+            .toLowerCase();
+
+        if (
+            reservedName &&
+            rigName &&
+            reservedName === rigName
+        ) {
+            return true;
+        }
+
+
+        return false;
     });
 }
 
