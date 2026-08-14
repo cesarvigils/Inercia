@@ -1495,3 +1495,116 @@ td:last-child {
         grid-template-columns: 1fr;
     }
 }
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.admin-rig-select {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px;
+    margin-top: 6px;
+}
+
+.admin-rig-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--l);
+    background: #101010;
+    padding: 12px;
+    cursor: pointer;
+}
+
+.admin-rig-option:has(input:checked) {
+    border-color: var(--o);
+    background: rgba(255, 139, 0, .06);
+}
+
+.admin-rig-option input {
+    width: auto;
+    margin: 0;
+    accent-color: var(--o);
+}
+
+.admin-rig-option span {
+    font: 600 15px var(--display);
+    color: #bbb;
+}
+
+.manual-total {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-top: 1px solid var(--l);
+    padding-top: 15px;
+}
+
+.manual-total span {
+    font: 600 13px var(--display);
+    color: #777;
+}
+
+.manual-total strong {
+    font: 700 30px var(--display);
+    color: var(--o);
+}
+
+.sales-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.product-admin-list {
+    display: grid;
+    gap: 7px;
+    margin-top: 25px;
+    max-height: 330px;
+    overflow-y: auto;
+}
+
+.product-admin-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 13px;
+    border: 1px solid var(--l);
+    background: #101010;
+}
+
+.product-admin-item strong,
+.product-admin-item small {
+    display: block;
+}
+
+.product-admin-item strong {
+    font: 600 17px var(--display);
+}
+
+.product-admin-item small {
+    color: #777;
+    margin-top: 3px;
+}
+
+.product-admin-item .danger {
+    padding: 8px 10px;
+    font-size: 12px;
+}
+
+.empty-admin {
+    padding: 25px;
+    border: 1px dashed #333;
+    text-align: center;
+    color: #666;
+    font: 600 14px var(--display);
+}
+
+@media (max-width: 650px) {
+    .form-row,
+    .admin-rig-select {
+        grid-template-columns: 1fr;
+    }
+}

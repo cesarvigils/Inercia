@@ -46,6 +46,7 @@ let rigs = [];
 let sales = [];
 let range = 'month';
 let selectedReservation = null;
+let products = [];
 
 // Utility functions
 const money = (v) => `L ${Number(v || 0).toLocaleString("es-HN")}`;
@@ -167,6 +168,18 @@ function listen() {
         sales = s.docs.map((d) => ({ id: d.id, ...d.data() }));
         renderSales();
     });
+    onSnapshot(collection(db, "products"), (snapshot) => {
+    products = snapshot.docs
+        .map(d => ({
+            id: d.id,
+            ...d.data()
+        }))
+        .sort((a, b) =>
+            String(a.name || "").localeCompare(
+                String(b.name || "")
+            )
+        );
+});
     loadSettings();
 }
 function normalizeRigType(value) {
@@ -653,27 +666,187 @@ function renderSales() {
 
 // New sale modal
 $("#newSaleBtn").onclick = () => {
-    modal(
-        `<span class="eyebrow">VENTA ADMINISTRATIVA</span><h2>NUEVA VENTA</h2><form id="saleForm"><label>PRODUCTO / CONCEPTO<input id="sd" required></label><label>CANTIDAD<input id="sq" type="number" min="1" value="1"></label><label>PRECIO UNITARIO<input id="sp" type="number" min="0" required></label><label>MÉTODO<select id="sm"><option value="efectivo">EFECTIVO</option><option value="transferencia">TRANSFERENCIA</option><option value="tarjeta">TARJETA</option></select></label><button class="primary">REGISTRAR VENTA</button></form>`
-    );
-    $("#saleForm").onsubmit = async (e) => {
-        e.preventDefault();
-        let q = +$("#sq").value,
-            p = +$("#sp").value;
-        await addDoc(collection(db, "sales"), {
-            type: "manual",
-            description: $("#sd").value.trim(),
-            quantity: q,
-            unitPrice: p,
-            total: q * p,
-            paymentMethod: $("#sm").value,
-            createdBy: currentUser.uid,
-            createdAt: serverTimestamp(),
-        });
-        closeModal();
-    };
-};
+    const activeProducts =
+        products.filter(
+            product =>
+                product.active !== false
+        );
 
+    modal(`
+        <span class="eyebrow">
+            VENTA ADMINISTRATIVA
+        </span>
+
+        <h2>NUEVA VENTA</h2>
+
+        <form id="saleForm">
+
+            <label>
+                PRODUCTO
+
+                <select id="saleProduct">
+                    <option value="">
+                        OTRO / MANUAL
+                    </option>
+
+                    ${activeProducts.map(product => `
+                        <option
+                            value="${product.id}"
+                        >
+                            ${esc(product.name)}
+                            — ${money(product.price)}
+                        </option>
+                    `).join("")}
+                </select>
+            </label>
+
+            <label>
+                PRODUCTO / CONCEPTO
+                <input
+                    id="sd"
+                    required
+                >
+            </label>
+
+            <label>
+                CANTIDAD
+                <input
+                    id="sq"
+                    type="number"
+                    min="1"
+                    value="1"
+                    required
+                >
+            </label>
+
+            <label>
+                PRECIO UNITARIO
+                <input
+                    id="sp"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+            </label>
+
+            <label>
+                MÉTODO
+                <select id="sm">
+
+                    <option value="efectivo">
+                        EFECTIVO
+                    </option>
+
+                    <option value="transferencia">
+                        TRANSFERENCIA
+                    </option>
+
+                    <option value="tarjeta">
+                        TARJETA
+                    </option>
+
+                </select>
+            </label>
+
+            <div class="manual-total">
+                <span>TOTAL</span>
+                <strong id="saleTotal">
+                    L 0
+                </strong>
+            </div>
+
+            <button class="primary">
+                REGISTRAR VENTA
+            </button>
+
+        </form>
+    `);
+
+    const calculate = () => {
+        const quantity =
+            Number($("#sq").value) || 0;
+
+        const price =
+            Number($("#sp").value) || 0;
+
+        $("#saleTotal").textContent =
+            money(quantity * price);
+    };
+
+    $("#saleProduct").onchange = e => {
+        const product =
+            products.find(
+                p => p.id === e.target.value
+            );
+
+        if (!product) {
+            $("#sd").value = "";
+            $("#sp").value = "";
+            calculate();
+            return;
+        }
+
+        $("#sd").value =
+            product.name;
+
+        $("#sp").value =
+            Number(product.price || 0);
+
+        calculate();
+    };
+
+    $("#sq").oninput = calculate;
+    $("#sp").oninput = calculate;
+
+    $("#saleForm").onsubmit =
+        async e => {
+            e.preventDefault();
+
+            const quantity =
+                Number($("#sq").value);
+
+            const unitPrice =
+                Number($("#sp").value);
+
+            const productId =
+                $("#saleProduct").value ||
+                null;
+
+            await addDoc(
+                collection(db, "sales"),
+                {
+                    type: "manual",
+
+                    productId,
+
+                    description:
+                        $("#sd")
+                            .value
+                            .trim(),
+
+                    quantity,
+
+                    unitPrice,
+
+                    total:
+                        quantity *
+                        unitPrice,
+
+                    paymentMethod:
+                        $("#sm").value,
+
+                    createdBy:
+                        user.uid,
+
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
+
+            closeModal();
+        };
+};
 // Modal functions
 function modal(h) {
     $("#modalContent").innerHTML = h;
@@ -727,3 +900,298 @@ $("#scheduleForm").onsubmit = async (e) => {
         { merge: true }
     );
 };
+$("#manageProductsBtn").onclick = () => {
+    renderProductsModal();
+};
+
+function renderProductsModal() {
+    modal(`
+        <span class="eyebrow">
+            CATÁLOGO INTERNO
+        </span>
+
+        <h2>PRODUCTOS</h2>
+
+        <form id="productForm">
+
+            <label>
+                NOMBRE
+                <input
+                    id="productName"
+                    required
+                >
+            </label>
+
+            <label>
+                PRECIO
+                <input
+                    id="productPrice"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+            </label>
+
+            <button class="primary">
+                AGREGAR PRODUCTO
+            </button>
+
+        </form>
+
+        <div class="product-admin-list">
+
+            ${products.length
+                ? products.map(product => `
+                    <div class="product-admin-item">
+
+                        <div>
+                            <strong>
+                                ${esc(product.name)}
+                            </strong>
+
+                            <small>
+                                ${money(product.price)}
+                            </small>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="danger product-delete"
+                            data-product="${product.id}"
+                        >
+                            ELIMINAR
+                        </button>
+
+                    </div>
+                `).join("")
+                : `
+                    <div class="empty-admin">
+                        NO HAY PRODUCTOS CREADOS
+                    </div>
+                `
+            }
+
+        </div>
+    `);
+
+    $("#productForm").onsubmit =
+        async e => {
+            e.preventDefault();
+
+            await addDoc(
+                collection(db, "products"),
+                {
+                    name:
+                        $("#productName")
+                            .value
+                            .trim(),
+
+                    price:
+                        Number(
+                            $("#productPrice").value
+                        ),
+
+                    active: true,
+
+                    createdBy:
+                        user.uid,
+
+                    createdAt:
+                        serverTimestamp(),
+
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+
+            closeModal();
+        };
+
+    $$(".product-delete").forEach(button => {
+        button.onclick = async () => {
+            if (
+                !confirm(
+                    "¿Eliminar este producto?"
+                )
+            ) {
+                return;
+            }
+
+            await deleteDoc(
+                doc(
+                    db,
+                    "products",
+                    button.dataset.product
+                )
+            );
+
+            closeModal();
+        };
+    });
+}
+$("#manageProductsBtn").onclick = renderProductsModal;
+
+function renderProductsModal() {
+    const productRows = products.length
+        ? products
+              .map((product) => {
+                  return `
+                    <div class="product-admin-item">
+                        <div>
+                            <strong>${esc(product.name)}</strong>
+                            <small>${money(product.price)}</small>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="danger product-delete"
+                            data-product="${esc(product.id)}"
+                        >
+                            ELIMINAR
+                        </button>
+                    </div>
+                  `;
+              })
+              .join("")
+        : `
+            <div class="empty-admin">
+                NO HAY PRODUCTOS CREADOS
+            </div>
+          `;
+
+    const html = `
+        <span class="eyebrow">CATÁLOGO INTERNO</span>
+        <h2>PRODUCTOS</h2>
+
+        <form id="productForm">
+            <label>
+                NOMBRE
+                <input
+                    id="productName"
+                    type="text"
+                    autocomplete="off"
+                    required
+                >
+            </label>
+
+            <label>
+                PRECIO
+                <input
+                    id="productPrice"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+            </label>
+
+            <button
+                type="submit"
+                class="primary"
+            >
+                AGREGAR PRODUCTO
+            </button>
+        </form>
+
+        <div class="product-admin-list">
+            ${productRows}
+        </div>
+    `;
+
+    modal(html);
+
+    const productForm = $("#productForm");
+
+    productForm.onsubmit = async (event) => {
+        event.preventDefault();
+
+        const name = $("#productName").value.trim();
+        const price = Number($("#productPrice").value);
+
+        if (!name) {
+            alert("Ingresá un nombre para el producto.");
+            return;
+        }
+
+        if (!Number.isFinite(price) || price < 0) {
+            alert("Ingresá un precio válido.");
+            return;
+        }
+
+        const submitButton =
+            productForm.querySelector('button[type="submit"]');
+
+        submitButton.disabled = true;
+        submitButton.textContent = "GUARDANDO...";
+
+        try {
+            await addDoc(
+                collection(db, "products"),
+                {
+                    name,
+                    price,
+                    active: true,
+                    createdBy: user.uid,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
+            );
+
+            closeModal();
+        } catch (error) {
+            console.error(
+                "[ADMIN] Error creando producto:",
+                error
+            );
+
+            alert("No se pudo crear el producto.");
+
+            submitButton.disabled = false;
+            submitButton.textContent = "AGREGAR PRODUCTO";
+        }
+    };
+
+    $$(".product-delete").forEach((button) => {
+        button.onclick = async () => {
+            const productId = button.dataset.product;
+
+            if (!productId) {
+                return;
+            }
+
+            const confirmed = confirm(
+                "¿Eliminar este producto?"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "ELIMINANDO...";
+
+            try {
+                await deleteDoc(
+                    doc(
+                        db,
+                        "products",
+                        productId
+                    )
+                );
+
+                closeModal();
+            } catch (error) {
+                console.error(
+                    "[ADMIN] Error eliminando producto:",
+                    error
+                );
+
+                alert("No se pudo eliminar el producto.");
+
+                button.disabled = false;
+                button.textContent = "ELIMINAR";
+            }
+        };
+    });
+}
