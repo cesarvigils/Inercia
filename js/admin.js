@@ -1,4 +1,32 @@
-import { auth, db } from "../firebase-config.js";
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut,
+    setPersistence,
+    browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+import {
+    getFirestore,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    setDoc,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    onSnapshot,
+    query,
+    where,
+    serverTimestamp,
+    writeBatch
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import {
     signInWithEmailAndPassword,
     onAuthStateChanged,
