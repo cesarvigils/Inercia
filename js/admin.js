@@ -27,28 +27,6 @@ import {
     serverTimestamp,
     writeBatch
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-import {
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut,
-    setPersistence,
-    browserLocalPersistence,
-} from "firebase/auth";
-import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    onSnapshot,
-    query,
-    where,
-    serverTimestamp,
-    writeBatch,
-} from "firebase/firestore";
 const $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
 let user,
