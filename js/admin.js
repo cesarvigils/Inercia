@@ -172,17 +172,106 @@ function listen() {
 
 // Active rigs helper
 function activeRigs() {
-    return rigs.length
-        ? rigs.filter((r) => r.status !== "disabled")
-        : Array.from({ length: 10 }, (_, i) => ({
-            id: `fallback-${i}`,
-            name: i < 8 ? `Standard ${i + 1}` : `Premium ${i - 7}`,
-            type: i < 8 ? "standard" : "premium",
+    const defaults = Array.from(
+        { length: 10 },
+        (_, i) => ({
+            id: i < 8
+                ? `standard-${i + 1}`
+                : `premium-${i - 7}`,
+
+            name: i < 8
+                ? `Standard ${i + 1}`
+                : `Premium ${i - 7}`,
+
+            type: i < 8
+                ? "standard"
+                : "premium",
+
             order: i + 1,
             status: "active",
-        }));
-}
+        })
+    );
 
+    // Si Firebase todavía no tiene rigs,
+    // usamos los 10 predeterminados.
+    if (!rigs.length) {
+        return defaults;
+    }
+
+    // Combinar defaults + datos reales de Firebase.
+    const merged = defaults.map((fallback) => {
+        const real = rigs.find((rig) => {
+            // Match por ID
+            if (rig.id === fallback.id) {
+                return true;
+            }
+
+            // Match por nombre
+            if (
+                String(rig.name || "").toLowerCase() ===
+                fallback.name.toLowerCase()
+            ) {
+                return true;
+            }
+
+            // Match por tipo + número
+            const sameType =
+                String(rig.type || "").toLowerCase() ===
+                fallback.type;
+
+            const realNumber =
+                Number(
+                    rig.number ??
+                    rig.order ??
+                    0
+                );
+
+            const fallbackNumber =
+                fallback.type === "standard"
+                    ? fallback.order
+                    : fallback.order - 8;
+
+            return (
+                sameType &&
+                realNumber === fallbackNumber
+            );
+        });
+
+        return real
+            ? {
+                  ...fallback,
+                  ...real,
+
+                  // Conservamos ID real de Firestore
+                  id: real.id,
+
+                  // El order del calendario debe seguir
+                  // siendo 1-10.
+                  order: fallback.order,
+              }
+            : fallback;
+    });
+
+    // También incluir rigs adicionales creados
+    // desde el admin.
+    const extras = rigs.filter((rig) => {
+        return !merged.some(
+            (existing) =>
+                existing.id === rig.id
+        );
+    });
+
+    return [...merged, ...extras]
+        .filter(
+            (rig) =>
+                rig.status !== "disabled"
+        )
+        .sort(
+            (a, b) =>
+                Number(a.order || 999) -
+                Number(b.order || 999)
+        );
+}
 function rr(r) {
     return r.rigs || r.simulators || [];
 }
