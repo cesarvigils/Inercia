@@ -3,116 +3,122 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
 /* =========================================================
-   ENV
+   FIREBASE SERVICE ACCOUNT
    ========================================================= */
 
-const projectId =
-    process.env.FIREBASE_PROJECT_ID ||
-    process.env.VITE_FIREBASE_PROJECT_ID;
+const rawServiceAccount =
+    process.env.FIREBASE_SERVICE_ACCOUNT;
 
-const clientEmail =
-    process.env.FIREBASE_CLIENT_EMAIL;
-
-const rawPrivateKey =
-    process.env.FIREBASE_PRIVATE_KEY;
-
-const storageBucket =
-    process.env.FIREBASE_STORAGE_BUCKET;
-
-const databaseURL =
-    process.env.FIREBASE_DATABASE_URL;
-
-
-/* =========================================================
-   CHECK ENV
-   ========================================================= */
-
-console.log('[FIREBASE ADMIN] Environment:', {
-    projectId: projectId ? 'OK' : 'MISSING',
-    clientEmail: clientEmail ? 'OK' : 'MISSING',
-    privateKey: rawPrivateKey ? 'OK' : 'MISSING',
-    storageBucket: storageBucket ? 'OK' : 'MISSING',
-    databaseURL: databaseURL ? 'OK' : 'MISSING'
-});
-
-if (!projectId) {
+if (!rawServiceAccount) {
     throw new Error(
-        'FIREBASE_PROJECT_ID no está configurado en Vercel.'
+        'Falta FIREBASE_SERVICE_ACCOUNT en las variables de entorno.'
     );
 }
 
-if (!clientEmail) {
-    throw new Error(
-        'FIREBASE_CLIENT_EMAIL no está configurado en Vercel.'
-    );
-}
+let serviceAccount;
 
-if (!rawPrivateKey) {
+try {
+    serviceAccount =
+        JSON.parse(rawServiceAccount);
+} catch (error) {
+    console.error(
+        '[FIREBASE ADMIN] FIREBASE_SERVICE_ACCOUNT no contiene JSON válido.'
+    );
+
     throw new Error(
-        'FIREBASE_PRIVATE_KEY no está configurado en Vercel.'
+        'FIREBASE_SERVICE_ACCOUNT contiene JSON inválido.'
     );
 }
 
 
 /* =========================================================
-   PRIVATE KEY
+   VALIDATION
    ========================================================= */
 
-const privateKey = rawPrivateKey
-    .trim()
-    .replace(/^"(.*)"$/s, '$1')
-    .replace(/\\n/g, '\n');
+if (
+    !serviceAccount.project_id ||
+    typeof serviceAccount.project_id !== 'string'
+) {
+    throw new Error(
+        'FIREBASE_SERVICE_ACCOUNT no contiene project_id.'
+    );
+}
 
+if (
+    !serviceAccount.client_email ||
+    typeof serviceAccount.client_email !== 'string'
+) {
+    throw new Error(
+        'FIREBASE_SERVICE_ACCOUNT no contiene client_email.'
+    );
+}
 
-/* =========================================================
-   SERVICE ACCOUNT
-   ========================================================= */
+if (
+    !serviceAccount.private_key ||
+    typeof serviceAccount.private_key !== 'string'
+) {
+    throw new Error(
+        'FIREBASE_SERVICE_ACCOUNT no contiene private_key.'
+    );
+}
+
 
 /*
- * Firebase Admin acepta camelCase en cert():
- * projectId
- * clientEmail
- * privateKey
- *
- * Esto evita el problema que estabas teniendo
- * construyendo manualmente project_id.
+ * Por si Vercel terminó guardando los \n literalmente.
  */
+serviceAccount.private_key =
+    serviceAccount.private_key.replace(
+        /\\n/g,
+        '\n'
+    );
 
-const serviceAccount = {
-    projectId,
-    clientEmail,
-    privateKey
-};
+
+console.log(
+    '[FIREBASE ADMIN] Service Account:',
+    {
+        project_id:
+            serviceAccount.project_id,
+
+        client_email:
+            serviceAccount.client_email,
+
+        private_key:
+            serviceAccount.private_key
+                ? 'OK'
+                : 'MISSING'
+    }
+);
 
 
 /* =========================================================
-   INITIALIZE
+   INITIALIZE FIREBASE ADMIN
    ========================================================= */
 
-const app =
-    getApps().length > 0
+const firebaseApp =
+    getApps().length
         ? getApps()[0]
         : initializeApp({
-            credential: cert(serviceAccount),
+            credential:
+                cert(serviceAccount),
 
-            ...(storageBucket
-                ? { storageBucket }
-                : {}),
+            storageBucket:
+                process.env.FIREBASE_STORAGE_BUCKET,
 
-            ...(databaseURL
-                ? { databaseURL }
-                : {})
+            databaseURL:
+                process.env.FIREBASE_DATABASE_URL
         });
 
 
 /* =========================================================
-   EXPORTS
+   SERVICES
    ========================================================= */
 
-export const firebaseApp = app;
-
 export const adminDb =
-    getFirestore(app);
+    getFirestore(firebaseApp);
 
 export const adminStorage =
-    getStorage(app);
+    getStorage(firebaseApp);
+
+export {
+    firebaseApp
+};
