@@ -485,18 +485,13 @@ function makeDurations() {
 
 async function loadConfig() {
 
-    const queryDate =
-        dateSelect?.value || '';
+    const queryDate = dateSelect?.value;
 
-    console.log(
-        '[RESERVAS] Cargando configuración...',
-        queryDate
-    );
+const endpoint = queryDate
+    ? `/api/reservations/config?date=${encodeURIComponent(queryDate)}`
+    : '/api/reservations/config';
 
-    const data =
-        await api(
-            `/api/reservations/config?date=${encodeURIComponent(queryDate)}`
-        );
+const data = await api(endpoint);
 
     if (!data?.config) {
         throw new Error(
