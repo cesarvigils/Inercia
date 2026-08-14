@@ -94,6 +94,7 @@ const selected = new Map();
 let appConfig = null;
 let rigs = [];
 let currentUser = null;
+let currentProfile = null;
 let promos = [];
 let loadingAvailability = false;
 
@@ -1002,74 +1003,61 @@ function summary() {
    ========================================================= */
 
 async function profile(user) {
-
-    if (!user) return;
-
-    let profileData = {};
-
-    try {
-
-        const snapshot =
-            await getDoc(
-                doc(
-                    db,
-                    'users',
-                    user.uid
-                )
-            );
-
-        if (snapshot.exists()) {
-
-            profileData =
-                snapshot.data() || {};
-        }
-
-    } catch (error) {
-
-        /*
-         * Esto puede pasar si tus Firestore Rules
-         * todavía no permiten users/{uid}.
-         *
-         * NO dejamos que esto rompa toda
-         * la página de reservas.
-         */
-        console.error(
-            '[RESERVAS] No se pudo leer el perfil:',
-            error
-        );
+    if (!user) {
+        currentProfile = null;
+        return;
     }
 
-    /*
-     * IMPORTANTE:
-     * setValue verifica primero que el input exista.
-     *
-     * Esto arregla:
-     *
-     * Cannot set properties of null (setting 'value')
-     */
+    try {
+        const snapshot = await getDoc(
+            doc(db, 'users', user.uid)
+        );
 
-    setValue(
-        'reservationName',
-        profileData.name ||
-        user.displayName ||
-        ''
-    );
+        const firestoreProfile = snapshot.exists()
+            ? snapshot.data()
+            : {};
 
-    setValue(
-        'reservationEmail',
-        profileData.email ||
-        user.email ||
-        ''
-    );
+        currentProfile = {
+            name:
+                firestoreProfile.name ||
+                user.displayName ||
+                '',
 
-    setValue(
-        'reservationPhone',
-        profileData.phoneNumber ||
-        ''
-    );
+            email:
+                firestoreProfile.email ||
+                user.email ||
+                '',
+
+            phoneNumber:
+                firestoreProfile.phoneNumber ||
+                ''
+        };
+
+        console.log('[RESERVAS] Perfil cargado:', {
+            name: currentProfile.name,
+            email: currentProfile.email,
+            phoneNumber: currentProfile.phoneNumber
+                ? 'CARGADO'
+                : 'NO DISPONIBLE'
+        });
+
+    } catch (error) {
+        console.error(
+            '[RESERVAS] No se pudo cargar el perfil:',
+            error
+        );
+
+        /*
+         * Podemos recuperar nombre/correo desde Auth,
+         * pero teléfono normalmente está en Firestore.
+         */
+        currentProfile = {
+            name: user.displayName || '',
+            email: user.email || '',
+            phoneNumber: ''
+        };
+    }
 }
-
-
 /* =========================================================
    AUTH
    ========================================================= */
@@ -1402,36 +1390,35 @@ form?.addEventListener(
                CUSTOMER DATA
                ============================================= */
 
-            const nameInput =
-                $('reservationName');
+           if (!currentProfile) {
+    throw new Error(
+        'No se pudieron cargar los datos de tu cuenta.'
+    );
+}
 
-            const emailInput =
-                $('reservationEmail');
+if (!currentProfile.name) {
+    throw new Error(
+        'Tu cuenta no tiene un nombre registrado.'
+    );
+}
 
-            const phoneInput =
-                $('reservationPhone');
+if (!currentProfile.email) {
+    throw new Error(
+        'Tu cuenta no tiene un correo registrado.'
+    );
+}
 
-            /*
-             * Si todavía no pusiste esos inputs
-             * en el HTML, usamos los datos de Auth
-             * en vez de hacer crash.
-             */
-            const customer = {
+if (!currentProfile.phoneNumber) {
+    throw new Error(
+        'Tu cuenta no tiene un número de teléfono registrado.'
+    );
+}
 
-                name:
-                    nameInput?.value?.trim() ||
-                    currentUser.displayName ||
-                    '',
-
-                email:
-                    emailInput?.value?.trim() ||
-                    currentUser.email ||
-                    '',
-
-                phoneNumber:
-                    phoneInput?.value?.trim() ||
-                    ''
-            };
+const customer = {
+    name: currentProfile.name,
+    email: currentProfile.email,
+    phoneNumber: currentProfile.phoneNumber
+};
 
 
             /* =============================================
