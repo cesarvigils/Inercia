@@ -9,7 +9,8 @@ import {
 
 import {
     adminDb,
-    adminStorage
+    adminStorage,
+    adminRtdb
 } from '../_lib/firebase-admin.js';
 
 import {
@@ -70,7 +71,7 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           AUTHENTICATION
+           AUTH
            ================================================= */
 
         const user =
@@ -84,25 +85,16 @@ export default async function handler(req, res) {
         }
 
 
-        /* =================================================
-           BODY
-           ================================================= */
-
         const body =
             req.body || {};
 
 
         /* =================================================
-           CONFIG
+           CONFIG + DATE/TIME
            ================================================= */
 
         const config =
             await getConfig();
-
-
-        /* =================================================
-           DATE / TIME / DURATION
-           ================================================= */
 
         const when =
             validateWhen(
@@ -122,16 +114,11 @@ export default async function handler(req, res) {
             body.rigIds.length === 0 ||
             body.rigIds.length > MAX_RIGS
         ) {
-
             throw bad(
                 'Seleccioná al menos un simulador válido.'
             );
         }
 
-
-        /*
-         * Eliminamos IDs repetidos.
-         */
 
         const uniqueRigIds =
             [
@@ -148,7 +135,6 @@ export default async function handler(req, res) {
             uniqueRigIds.length === 0 ||
             uniqueRigIds.length > MAX_RIGS
         ) {
-
             throw bad(
                 'La selección de simuladores es inválida.'
             );
@@ -165,10 +151,7 @@ export default async function handler(req, res) {
             ).trim();
 
 
-        if (
-            !METHODS.has(payment)
-        ) {
-
+        if (!METHODS.has(payment)) {
             throw bad(
                 'Método de pago inválido.'
             );
@@ -176,60 +159,102 @@ export default async function handler(req, res) {
 
 
         /*
-         * Tarjeta / PayPal todavía NO está implementado.
+         * Todavía no habilitamos tarjeta/PayPal.
          */
 
-        if (
-            payment === 'tarjeta'
-        ) {
-
+        if (payment === 'tarjeta') {
             throw bad(
-                'El pago con tarjeta todavía no está disponible.',
-                400
+                'El pago con tarjeta todavía no está disponible.'
             );
         }
 
 
         /* =================================================
-           CUSTOMER
+           CUSTOMER DATA
 
-           IMPORTANTE:
+           NAME / EMAIL:
+           Firestore + Firebase Auth fallback
 
-           NO usamos body.customer.
-
-           El cliente puede modificar cualquier request
-           desde DevTools.
-
-           Los datos oficiales salen del usuario
-           autenticado + Firestore.
+           PHONE:
+           Realtime Database:
+           users/{uid}/phone
            ================================================= */
 
-        const profileRef =
-            adminDb.doc(
-                `users/${user.uid}`
-            );
+
+        /*
+         * Firestore profile.
+         */
 
         const profileDoc =
-            await profileRef.get();
+            await adminDb
+                .doc(`users/${user.uid}`)
+                .get();
 
         const profile =
             profileDoc.exists
-                ? profileDoc.data()
+                ? profileDoc.data() || {}
                 : {};
 
+
+        /*
+         * Realtime Database phone.
+         *
+         * Exact path:
+         *
+         * users
+         *   └── UID
+         *       └── phone
+         */
+
+        let phone = '';
+
+        try {
+
+            const phoneSnapshot =
+                await adminRtdb
+                    .ref(
+                        `users/${user.uid}/phone`
+                    )
+                    .get();
+
+            if (phoneSnapshot.exists()) {
+                phone =
+                    String(
+                        phoneSnapshot.val() ?? ''
+                    ).trim();
+            }
+
+        } catch (error) {
+
+            console.error(
+                '[RESERVAS] Error leyendo teléfono de RTDB:',
+                error
+            );
+
+            throw bad(
+                'No pudimos cargar el teléfono de tu cuenta.'
+            );
+        }
+
+
+        /*
+         * Datos oficiales.
+         *
+         * NO usamos body.customer.
+         */
 
         const customer = {
 
             name:
                 String(
-                    profile?.name ||
+                    profile.name ||
                     user.name ||
                     ''
                 ).trim(),
 
             email:
                 String(
-                    profile?.email ||
+                    profile.email ||
                     user.email ||
                     ''
                 )
@@ -237,20 +262,35 @@ export default async function handler(req, res) {
                     .toLowerCase(),
 
             phoneNumber:
-                String(
-                    profile?.phoneNumber ||
-                    ''
-                ).trim()
+                phone
         };
 
 
-        /*
-         * No permitimos crear una reserva
-         * sin los datos necesarios.
-         */
+        console.log(
+            '[RESERVAS] Datos de usuario cargados:',
+            {
+                uid:
+                    user.uid,
+
+                name:
+                    customer.name
+                        ? 'OK'
+                        : 'FALTANTE',
+
+                email:
+                    customer.email
+                        ? 'OK'
+                        : 'FALTANTE',
+
+                phone:
+                    customer.phoneNumber
+                        ? 'OK'
+                        : 'FALTANTE'
+            }
+        );
+
 
         if (!customer.name) {
-
             throw bad(
                 'Tu cuenta no tiene un nombre registrado.'
             );
@@ -258,7 +298,6 @@ export default async function handler(req, res) {
 
 
         if (!customer.email) {
-
             throw bad(
                 'Tu cuenta no tiene un correo registrado.'
             );
@@ -266,7 +305,6 @@ export default async function handler(req, res) {
 
 
         if (!customer.phoneNumber) {
-
             throw bad(
                 'Tu cuenta no tiene un número de teléfono registrado.'
             );
@@ -274,13 +312,7 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           LOAD RIGS FROM FIRESTORE
-
-           Nunca confiamos en:
-           - precio enviado por navegador
-           - tipo enviado por navegador
-           - nombre enviado por navegador
-           - disponibilidad enviada por navegador
+           LOAD RIGS
            ================================================= */
 
         const rigRefs =
@@ -298,27 +330,17 @@ export default async function handler(req, res) {
             );
 
 
-        /*
-         * Todos tienen que existir.
-         */
-
         if (
             rigDocs.some(
                 (snapshot) =>
                     !snapshot.exists
             )
         ) {
-
             throw bad(
                 'Uno de los simuladores seleccionados no existe.'
             );
         }
 
-
-        /*
-         * Construimos los rigs usando solamente
-         * datos de Firestore.
-         */
 
         const rigs =
             rigDocs.map(
@@ -328,20 +350,17 @@ export default async function handler(req, res) {
                         snapshot.data() || {};
 
                     return {
-
                         id:
                             snapshot.id,
 
                         name:
                             String(
-                                data.name ||
-                                ''
+                                data.name || ''
                             ).trim(),
 
                         type:
                             String(
-                                data.type ||
-                                ''
+                                data.type || ''
                             )
                                 .trim()
                                 .toLowerCase(),
@@ -362,7 +381,7 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           VALIDATE RIG STATE
+           VALIDATE RIGS
            ================================================= */
 
         if (
@@ -371,7 +390,6 @@ export default async function handler(req, res) {
                     !rig.active
             )
         ) {
-
             throw bad(
                 'Uno de los simuladores seleccionados ya no está activo.'
             );
@@ -384,16 +402,11 @@ export default async function handler(req, res) {
                     rig.maintenance
             )
         ) {
-
             throw bad(
                 'Uno de los simuladores seleccionados está en mantenimiento.'
             );
         }
 
-
-        /*
-         * Solo aceptamos tipos conocidos.
-         */
 
         if (
             rigs.some(
@@ -406,7 +419,6 @@ export default async function handler(req, res) {
                     )
             )
         ) {
-
             throw bad(
                 'Uno de los simuladores tiene una configuración inválida.'
             );
@@ -428,12 +440,7 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           PRICE
-
-           EL SERVIDOR calcula todo.
-
-           No existe body.total.
-           No existe body.price.
+           SERVER-SIDE PRICE
            ================================================= */
 
         const pricing =
@@ -449,7 +456,7 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           TRANSFER PROOF
+           PAYMENT PROOF
            ================================================= */
 
         let proof =
@@ -463,23 +470,16 @@ export default async function handler(req, res) {
 
             const proofPath =
                 String(
-                    body.proofPath ||
-                    ''
+                    body.proofPath || ''
                 ).trim();
 
 
             if (!proofPath) {
-
                 throw bad(
                     'Subí el comprobante de transferencia.'
                 );
             }
 
-
-            /*
-             * El comprobante DEBE pertenecer
-             * al UID autenticado.
-             */
 
             const expectedPrefix =
                 `reservation-proofs/${user.uid}/`;
@@ -490,36 +490,28 @@ export default async function handler(req, res) {
                     expectedPrefix
                 )
             ) {
-
                 throw bad(
                     'Comprobante inválido.'
                 );
             }
 
-
-            /*
-             * Evitamos paths sospechosos.
-             */
 
             if (
                 proofPath.includes('../') ||
                 proofPath.includes('..\\')
             ) {
-
                 throw bad(
                     'Comprobante inválido.'
                 );
             }
 
 
-            const bucket =
-                adminStorage.bucket();
-
-
             const file =
-                bucket.file(
-                    proofPath
-                );
+                adminStorage
+                    .bucket()
+                    .file(
+                        proofPath
+                    );
 
 
             const [exists] =
@@ -527,7 +519,6 @@ export default async function handler(req, res) {
 
 
             if (!exists) {
-
                 throw bad(
                     'No encontramos el comprobante subido.'
                 );
@@ -546,8 +537,7 @@ export default async function handler(req, res) {
 
             const contentType =
                 String(
-                    metadata.contentType ||
-                    ''
+                    metadata.contentType || ''
                 ).toLowerCase();
 
 
@@ -555,7 +545,6 @@ export default async function handler(req, res) {
                 !size ||
                 size > MAX_PROOF_SIZE
             ) {
-
                 throw bad(
                     'El comprobante no puede pesar más de 5 MB.'
                 );
@@ -567,7 +556,6 @@ export default async function handler(req, res) {
                     contentType
                 )
             ) {
-
                 throw bad(
                     'El comprobante debe ser JPG, PNG o PDF.'
                 );
@@ -575,7 +563,6 @@ export default async function handler(req, res) {
 
 
             proof = {
-
                 path:
                     proofPath,
 
@@ -587,7 +574,7 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           RESERVATION
+           RESERVATION REFERENCE
            ================================================= */
 
         const reservationRef =
@@ -619,6 +606,7 @@ export default async function handler(req, res) {
                             rig.id
                         );
 
+
                     return ids.map(
                         (id) =>
                             adminDb.doc(
@@ -631,13 +619,15 @@ export default async function handler(req, res) {
 
         /* =================================================
            TRANSACTION
-
-           Esta es la protección real contra dos personas
-           intentando reservar el mismo rig al mismo tiempo.
            ================================================= */
 
         await adminDb.runTransaction(
             async (transaction) => {
+
+                /*
+                 * Primero verificamos todos
+                 * los locks.
+                 */
 
                 const lockDocs =
                     lockRefs.length
@@ -647,18 +637,12 @@ export default async function handler(req, res) {
                         : [];
 
 
-                /*
-                 * Si existe UN solo lock,
-                 * rechazamos la reserva completa.
-                 */
-
                 if (
                     lockDocs.some(
                         (snapshot) =>
                             snapshot.exists
                     )
                 ) {
-
                     throw bad(
                         'Uno de esos simuladores acaba de ser reservado. Actualizá la disponibilidad.',
                         409
@@ -667,7 +651,7 @@ export default async function handler(req, res) {
 
 
                 /*
-                 * Creamos todos los locks.
+                 * Creamos locks.
                  */
 
                 for (
@@ -684,10 +668,6 @@ export default async function handler(req, res) {
                             uid:
                                 user.uid,
 
-                            /*
-                             * Se mantiene bloqueado
-                             * según la lógica configurada.
-                             */
                             expiresAt:
                                 expiresAt(
                                     body.date,
@@ -702,12 +682,7 @@ export default async function handler(req, res) {
 
 
                 /*
-                 * Creamos la reserva.
-                 *
-                 * status SIEMPRE pending.
-                 *
-                 * El navegador no tiene forma de
-                 * mandar status: approved.
+                 * Creamos reserva.
                  */
 
                 transaction.create(
@@ -720,7 +695,26 @@ export default async function handler(req, res) {
                         uid:
                             user.uid,
 
-                        customer,
+
+                        /* =============================
+                           SNAPSHOT DEL CLIENTE
+                           ============================= */
+
+                        customer: {
+                            name:
+                                customer.name,
+
+                            email:
+                                customer.email,
+
+                            phoneNumber:
+                                customer.phoneNumber
+                        },
+
+
+                        /* =============================
+                           RESERVA
+                           ============================= */
 
                         date:
                             body.date,
@@ -734,16 +728,13 @@ export default async function handler(req, res) {
                             ),
 
 
-                        /*
-                         * Snapshot de información del rig.
-                         *
-                         * Usamos order, NO number.
-                         */
+                        /* =============================
+                           RIGS
+                           ============================= */
 
                         rigs:
                             rigs.map(
                                 (rig) => ({
-
                                     id:
                                         rig.id,
 
@@ -759,16 +750,19 @@ export default async function handler(req, res) {
                             ),
 
 
+                        /* =============================
+                           PAYMENT
+                           ============================= */
+
                         payment,
 
                         paymentProof:
                             proof,
 
 
-                        /*
-                         * Calculado exclusivamente
-                         * por backend.
-                         */
+                        /* =============================
+                           SERVER PRICE
+                           ============================= */
 
                         pricing,
 
@@ -780,13 +774,17 @@ export default async function handler(req, res) {
                             ),
 
 
-                        /*
-                         * Manual approval.
-                         */
+                        /* =============================
+                           STATUS
+                           ============================= */
 
                         status:
                             'pending',
 
+
+                        /* =============================
+                           TIMESTAMPS
+                           ============================= */
 
                         createdAt:
                             FieldValue.serverTimestamp(),
@@ -807,7 +805,6 @@ export default async function handler(req, res) {
             res,
             201,
             {
-
                 id:
                     reservationRef.id,
 
