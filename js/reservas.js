@@ -1,4 +1,14 @@
-import { auth } from '../firebase-config.js';
+import { auth, db } from '../firebase-config.js';
+
+import {
+    doc,
+    getDoc,
+    collection,
+    getDocs,
+    query,
+    where,
+    orderBy
+} from 'firebase/firestore';
 
 import {
     getStorage,
@@ -12,23 +22,23 @@ import {
 
 
 /* =========================================================
-   FIREBASE STORAGE
+   FIREBASE
    ========================================================= */
 
 const storage = getStorage(auth.app);
 
 
 /* =========================================================
-   HELPERS / ELEMENTS
+   DOM
    ========================================================= */
 
 const $ = (id) => document.getElementById(id);
 
 const form = $('reservationForm');
 
-const dateSelect = $('reservationDate');
-const timeSelect = $('reservationTime');
-const durationSelect = $('reservationDuration');
+const date = $('reservationDate');
+const time = $('reservationTime');
+const duration = $('reservationDuration');
 
 const grids = {
     standard: $('standardGrid'),
@@ -49,10 +59,10 @@ const selected = new Map();
 
 let appConfig = null;
 let rigs = [];
-let promotions = [];
-
 let currentUser = null;
-let loadingAvailability = false;
+let promos = [];
+
+let availabilityRequestId = 0;
 
 
 /* =========================================================
@@ -67,9 +77,8 @@ const wheel =
    MONEY
    ========================================================= */
 
-function money(value) {
-
-    return `L ${Number(value || 0).toLocaleString(
+function money(n) {
+    return `L ${Number(n || 0).toLocaleString(
         'es-HN',
         {
             maximumFractionDigits: 2
@@ -84,15 +93,13 @@ function money(value) {
 
 function message(text, type = 'info') {
 
-    const element = $('reservationMessage');
+    const el = $('reservationMessage');
 
-    if (!element) {
-        return;
-    }
+    if (!el) return;
 
-    element.textContent = text || '';
-    element.dataset.type = type;
-    element.hidden = !text;
+    el.textContent = text || '';
+    el.dataset.type = type;
+    el.hidden = !text;
 }
 
 
@@ -108,8 +115,8 @@ async function api(path, options = {}) {
 
 
     /*
-     * Si existe usuario autenticado, enviamos
-     * su Firebase ID Token al backend.
+     * Si hay usuario autenticado mandamos
+     * el Firebase ID Token.
      */
 
     if (currentUser) {
@@ -121,10 +128,6 @@ async function api(path, options = {}) {
             `Bearer ${token}`;
     }
 
-
-    /*
-     * JSON solamente cuando no mandamos FormData.
-     */
 
     if (
         options.body &&
@@ -173,14 +176,12 @@ async function api(path, options = {}) {
    DATES
    ========================================================= */
 
-function createDates() {
+function dates() {
 
-    if (!dateSelect) {
-        return;
-    }
+    if (!date) return;
 
 
-    dateSelect.innerHTML = '';
+    date.innerHTML = '';
 
 
     const displayFormatter =
@@ -208,7 +209,7 @@ function createDates() {
 
 
     /*
-     * Máximo 7 días.
+     * Hoy + próximos 6 días = 7 días.
      */
 
     for (
@@ -217,7 +218,7 @@ function createDates() {
         i++
     ) {
 
-        const currentDate =
+        const d =
             new Date(
                 Date.now() +
                 i * 86400000
@@ -225,9 +226,7 @@ function createDates() {
 
 
         const value =
-            valueFormatter.format(
-                currentDate
-            );
+            valueFormatter.format(d);
 
 
         let prefix = '';
@@ -242,11 +241,11 @@ function createDates() {
 
 
         const label =
-            `${prefix}${displayFormatter.format(currentDate)}`
+            `${prefix}${displayFormatter.format(d)}`
                 .toUpperCase();
 
 
-        dateSelect.add(
+        date.add(
             new Option(
                 label,
                 value
@@ -260,19 +259,14 @@ function createDates() {
    TIME HELPERS
    ========================================================= */
 
-function timeToMinutes(value) {
+function toMinutes(value) {
 
-    const [
-        hours,
-        minutes
-    ] = value
-        .split(':')
-        .map(Number);
+    const [h, m] =
+        String(value)
+            .split(':')
+            .map(Number);
 
-    return (
-        hours * 60 +
-        minutes
-    );
+    return h * 60 + m;
 }
 
 
@@ -282,17 +276,15 @@ function timeToMinutes(value) {
 
 function makeTimes() {
 
-    if (!timeSelect) {
-        return;
-    }
+    if (!time) return;
 
 
-    timeSelect.innerHTML =
+    time.innerHTML =
         '<option value="">Seleccioná una hora</option>';
 
 
     if (
-        !dateSelect?.value ||
+        !date?.value ||
         !appConfig
     ) {
         return;
@@ -300,13 +292,15 @@ function makeTimes() {
 
 
     /*
-     * Usamos mediodía UTC para evitar que el timezone
-     * nos cambie accidentalmente el día.
+     * 0 = Domingo
+     * 1 = Lunes
+     * ...
+     * 6 = Sábado
      */
 
     const day =
         new Date(
-            `${dateSelect.value}T12:00:00Z`
+            `${date.value}T12:00:00Z`
         ).getUTCDay();
 
 
@@ -318,52 +312,56 @@ function makeTimes() {
      * Día cerrado.
      */
 
-    if (!businessHours) {
+    if (
+        !businessHours ||
+        !Array.isArray(businessHours)
+    ) {
 
-        timeSelect.innerHTML =
-            '<option value="">Cerrado</option>';
+        time.innerHTML =
+            '<option value="">CERRADO</option>';
 
         return;
     }
 
 
     const start =
-        timeToMinutes(
+        toMinutes(
             businessHours[0]
         );
 
+
     const end =
-        timeToMinutes(
+        toMinutes(
             businessHours[1]
         );
 
 
     /*
-     * Horas exactas.
+     * SOLO horas exactas.
      *
      * 14:00
      * 15:00
-     * 16:00
-     * etc.
+     * 16:00...
      */
 
     for (
-        let minutes = start;
-        minutes < end;
-        minutes += 60
+        let m = start;
+        m < end;
+        m += 60
     ) {
 
-        const hour =
+        const hh =
             Math.floor(
-                minutes / 60
+                m / 60
             );
 
-        const minute =
-            minutes % 60;
+
+        const mm =
+            m % 60;
 
 
         const value =
-            `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+            `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 
 
         const label =
@@ -378,13 +376,13 @@ function makeTimes() {
                     2000,
                     0,
                     1,
-                    hour,
-                    minute
+                    hh,
+                    mm
                 )
             );
 
 
-        timeSelect.add(
+        time.add(
             new Option(
                 label,
                 value
@@ -401,14 +399,18 @@ function makeTimes() {
 function makeDurations() {
 
     if (
-        !durationSelect ||
+        !duration ||
         !appConfig
     ) {
         return;
     }
 
 
-    durationSelect.innerHTML = '';
+    const oldValue =
+        duration.value;
+
+
+    duration.innerHTML = '';
 
 
     const min =
@@ -426,35 +428,63 @@ function makeDurations() {
 
 
     for (
-        let hours = min;
-        hours <= max;
-        hours++
+        let i = min;
+        i <= max;
+        i++
     ) {
 
-        durationSelect.add(
+        duration.add(
             new Option(
-                `${hours} ${hours === 1 ? 'hora' : 'horas'}`,
-                String(hours)
+                `${i} ${i === 1 ? 'hora' : 'horas'}`,
+                String(i)
             )
         );
+    }
+
+
+    /*
+     * Conservamos duración si todavía es válida.
+     */
+
+    if (
+        oldValue &&
+        [...duration.options]
+            .some(
+                option =>
+                    option.value ===
+                    oldValue
+            )
+    ) {
+        duration.value =
+            oldValue;
     }
 }
 
 
 /* =========================================================
-   CONFIG
+   LOAD CONFIG
+
+   /api/reservations/config obtiene:
+   - settings
+   - rigs
+   - promotions
+   desde el backend / Firestore.
+
+   NO estamos quitando Firestore.
    ========================================================= */
 
 async function loadConfig() {
 
-    const queryDate =
-        dateSelect?.value;
-
-
     const endpoint =
-        queryDate
-            ? `/api/reservations/config?date=${encodeURIComponent(queryDate)}`
+        date?.value
+            ? `/api/reservations/config?date=${encodeURIComponent(date.value)}`
             : '/api/reservations/config';
+
+
+    console.log(
+        '[RESERVAS] Cargando configuración:',
+        endpoint
+    );
 
 
     const data =
@@ -471,10 +501,20 @@ async function loadConfig() {
             : [];
 
 
-    promotions =
+    promos =
         Array.isArray(data.promotions)
             ? data.promotions
             : [];
+
+
+    console.log(
+        '[RESERVAS] Configuración cargada:',
+        {
+            rigs: rigs.length,
+            promotions: promos.length,
+            prices: appConfig.prices
+        }
+    );
 
 
     makeDurations();
@@ -482,10 +522,15 @@ async function loadConfig() {
     updatePrices();
 
 
+    /*
+     * Antes de escoger horario mostramos
+     * todos los rigs activos.
+     */
+
     render(
         rigs.map(
-            (rig) => ({
-                ...rig,
+            r => ({
+                ...r,
                 available: true
             })
         )
@@ -498,11 +543,6 @@ async function loadConfig() {
    ========================================================= */
 
 function updatePrices() {
-
-    if (!appConfig) {
-        return;
-    }
-
 
     const standard =
         document.querySelector(
@@ -519,15 +559,54 @@ function updatePrices() {
     if (standard) {
 
         standard.textContent =
-            `${money(appConfig.prices?.standard)} / HORA`;
+            `${money(
+                appConfig?.prices?.standard
+            )} / HORA`;
     }
 
 
     if (premium) {
 
         premium.textContent =
-            `${money(appConfig.prices?.premium)} / HORA`;
+            `${money(
+                appConfig?.prices?.premium
+            )} / HORA`;
     }
+}
+
+
+/* =========================================================
+   RIG NUMBER / NAME
+   ========================================================= */
+
+function rigDisplayName(rig) {
+
+    /*
+     * Soportamos ambos formatos por si tus
+     * documentos viejos usan number y los
+     * nuevos order.
+     */
+
+    const number =
+        rig.number ??
+        rig.order;
+
+
+    if (
+        number !== undefined &&
+        number !== null &&
+        number !== ''
+    ) {
+        return `SIMULADOR ${number}`;
+    }
+
+
+    if (rig.name) {
+        return String(rig.name).toUpperCase();
+    }
+
+
+    return 'SIMULADOR';
 }
 
 
@@ -535,7 +614,7 @@ function updatePrices() {
    RIG CARD
    ========================================================= */
 
-function createRigCard(rig) {
+function card(r) {
 
     const button =
         document.createElement(
@@ -551,38 +630,28 @@ function createRigCard(rig) {
         'simulator-card';
 
 
-    button.dataset.id =
-        rig.id;
-
-
-    /*
-     * No disponible =
-     * no se puede seleccionar.
-     */
-
     button.disabled =
-        !rig.available;
+        !r.available;
 
 
-    /*
-     * Tus rigs usan "order".
-     *
-     * Si por alguna razón falta, usamos name.
-     */
+    button.dataset.id =
+        r.id;
 
-    const rigLabel =
-        Number.isFinite(
-            Number(rig.order)
-        )
-            ? `SIMULADOR ${rig.order}`
-            : (
-                rig.name ||
-                'SIMULADOR'
-            );
+
+    const type =
+        String(
+            r.type || ''
+        ).toUpperCase();
+
+
+    const name =
+        rigDisplayName(r);
 
 
     button.innerHTML = `
-        <span class="simulator-check">✓</span>
+        <span class="simulator-check">
+            ✓
+        </span>
 
         <img
             class="simulator-wheel"
@@ -593,11 +662,11 @@ function createRigCard(rig) {
         <span class="simulator-card-info">
 
             <small>
-                ${String(rig.type || '').toUpperCase()}
+                ${type}
             </small>
 
             <strong>
-                ${rigLabel}
+                ${name}
             </strong>
 
         </span>
@@ -605,52 +674,49 @@ function createRigCard(rig) {
 
 
     if (
-        selected.has(rig.id) &&
-        rig.available
+        selected.has(r.id) &&
+        r.available
     ) {
+
         button.classList.add(
             'selected'
         );
     }
 
 
-    button.addEventListener(
-        'click',
+    button.onclick =
         () => {
 
-            if (!rig.available) {
+            if (!r.available) {
                 return;
             }
 
 
             if (
-                selected.has(
-                    rig.id
-                )
+                selected.has(r.id)
             ) {
 
                 selected.delete(
-                    rig.id
+                    r.id
                 );
 
             } else {
 
                 selected.set(
-                    rig.id,
-                    rig
+                    r.id,
+                    r
                 );
             }
 
 
             button.classList.toggle(
                 'selected',
-                selected.has(rig.id)
+                selected.has(r.id)
             );
 
 
-            updateSummary();
-        }
-    );
+            summary();
+        };
 
 
     return button;
@@ -658,10 +724,16 @@ function createRigCard(rig) {
 
 
 /* =========================================================
-   RENDER RIGS
+   RENDER
    ========================================================= */
 
 function render(list) {
+
+    const safeList =
+        Array.isArray(list)
+            ? list
+            : [];
+
 
     for (
         const type
@@ -684,26 +756,25 @@ function render(list) {
 
 
         const typeRigs =
-            list.filter(
-                (rig) =>
-                    rig.type === type
+            safeList.filter(
+                r =>
+                    r.type ===
+                    type
             );
 
 
         typeRigs.forEach(
-            (rig) => {
-
-                grid.appendChild(
-                    createRigCard(rig)
-                );
-            }
+            r =>
+                grid.append(
+                    card(r)
+                )
         );
 
 
         const available =
             typeRigs.filter(
-                (rig) =>
-                    rig.available
+                r =>
+                    r.available
             ).length;
 
 
@@ -723,15 +794,15 @@ function render(list) {
 
         availableCount.textContent =
             String(
-                list.filter(
-                    (rig) =>
-                        rig.available
+                safeList.filter(
+                    r =>
+                        r.available
                 ).length
             );
     }
 
 
-    updateSummary();
+    summary();
 }
 
 
@@ -739,30 +810,25 @@ function render(list) {
    AVAILABILITY
    ========================================================= */
 
-async function loadAvailability() {
+async function availability() {
 
-    if (loadingAvailability) {
-        return;
-    }
+    const requestId =
+        ++availabilityRequestId;
 
 
     selected.clear();
 
 
-    /*
-     * Todavía no tenemos horario completo.
-     */
-
     if (
-        !dateSelect?.value ||
-        !timeSelect?.value ||
-        !durationSelect?.value
+        !date?.value ||
+        !time?.value ||
+        !duration?.value
     ) {
 
         render(
             rigs.map(
-                (rig) => ({
-                    ...rig,
+                r => ({
+                    ...r,
                     available: true
                 })
             )
@@ -772,22 +838,18 @@ async function loadAvailability() {
     }
 
 
-    loadingAvailability =
-        true;
-
-
     try {
 
         const params =
             new URLSearchParams({
                 date:
-                    dateSelect.value,
+                    date.value,
 
                 time:
-                    timeSelect.value,
+                    time.value,
 
                 duration:
-                    durationSelect.value
+                    duration.value
             });
 
 
@@ -797,10 +859,28 @@ async function loadAvailability() {
             );
 
 
-        render(
+        /*
+         * Si mientras esperábamos el usuario cambió
+         * otra vez fecha/hora/duración, ignoramos
+         * la respuesta vieja.
+         */
+
+        if (
+            requestId !==
+            availabilityRequestId
+        ) {
+            return;
+        }
+
+
+        const availableRigs =
             Array.isArray(data.rigs)
                 ? data.rigs
-                : []
+                : [];
+
+
+        render(
+            availableRigs
         );
 
 
@@ -809,9 +889,34 @@ async function loadAvailability() {
 
     } catch (error) {
 
+        if (
+            requestId !==
+            availabilityRequestId
+        ) {
+            return;
+        }
+
+
         console.error(
             '[RESERVAS] Error cargando disponibilidad:',
             error
+        );
+
+
+        /*
+         * Fail closed:
+         *
+         * si no pudimos verificar disponibilidad,
+         * NO dejamos reservar.
+         */
+
+        render(
+            rigs.map(
+                r => ({
+                    ...r,
+                    available: false
+                })
+            )
         );
 
 
@@ -819,27 +924,6 @@ async function loadAvailability() {
             error.message,
             'error'
         );
-
-
-        /*
-         * Si el servidor no pudo comprobar
-         * disponibilidad, NO dejamos seleccionar.
-         */
-
-        render(
-            rigs.map(
-                (rig) => ({
-                    ...rig,
-                    available: false
-                })
-            )
-        );
-
-
-    } finally {
-
-        loadingAvailability =
-            false;
     }
 }
 
@@ -847,17 +931,23 @@ async function loadAvailability() {
 /* =========================================================
    LOCAL DISPLAY PRICE
 
-   Esto es SOLO visual.
+   ESTO ES SOLO PARA MOSTRAR EL TOTAL.
 
-   El precio definitivo SIEMPRE lo vuelve
-   a calcular el backend.
+   El backend vuelve a calcular TODO:
+   - precio
+   - promociones
+   - penalidad
+   - duración
+   - rigs
+
+   El cliente NO decide el precio final.
    ========================================================= */
 
-function calculateDisplayPrice() {
+function localPrice() {
 
     const hours =
         Number(
-            durationSelect?.value ||
+            duration?.value ||
             1
         );
 
@@ -866,21 +956,21 @@ function calculateDisplayPrice() {
 
 
     for (
-        const rig
+        const r
         of selected.values()
     ) {
 
-        const hourlyPrice =
+        const hourly =
             Number(
-                appConfig?.prices?.[
-                    rig.type
-                ] ||
+                appConfig
+                    ?.prices
+                    ?.[r.type] ||
                 0
             );
 
 
         base +=
-            hourlyPrice *
+            hourly *
             hours;
     }
 
@@ -890,7 +980,7 @@ function calculateDisplayPrice() {
 
     for (
         const promotion
-        of promotions
+        of promos
     ) {
 
         if (
@@ -922,16 +1012,13 @@ function calculateDisplayPrice() {
     }
 
 
-    discount =
+    return Math.max(
+        0,
+        base -
         Math.min(
             base,
             discount
-        );
-
-
-    return Math.max(
-        0,
-        base - discount
+        )
     );
 }
 
@@ -940,24 +1027,24 @@ function calculateDisplayPrice() {
    SUMMARY
    ========================================================= */
 
-function updateSummary() {
+function summary() {
 
-    const standardCount =
+    const standard =
         [
             ...selected.values()
         ].filter(
-            (rig) =>
-                rig.type ===
+            x =>
+                x.type ===
                 'standard'
         ).length;
 
 
-    const premiumCount =
+    const premium =
         [
             ...selected.values()
         ].filter(
-            (rig) =>
-                rig.type ===
+            x =>
+                x.type ===
                 'premium'
         ).length;
 
@@ -965,40 +1052,40 @@ function updateSummary() {
     const summaryStandard =
         $('summaryStandard');
 
+
     const summaryPremium =
         $('summaryPremium');
+
 
     const summaryDuration =
         $('summaryDuration');
 
-    const total =
+
+    const reservationTotal =
         $('reservationTotal');
 
-    const submit =
+
+    const reservationSubmit =
         $('reservationSubmit');
 
 
     if (summaryStandard) {
 
         summaryStandard.textContent =
-            String(
-                standardCount
-            );
+            String(standard);
     }
 
 
     if (summaryPremium) {
 
         summaryPremium.textContent =
-            String(
-                premiumCount
-            );
+            String(premium);
     }
 
 
     const hours =
         Number(
-            durationSelect?.value ||
+            duration?.value ||
             1
         );
 
@@ -1006,26 +1093,30 @@ function updateSummary() {
     if (summaryDuration) {
 
         summaryDuration.textContent =
-            `${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+            `${hours} ${
+                hours === 1
+                    ? 'hora'
+                    : 'horas'
+            }`;
     }
 
 
-    if (total) {
+    if (reservationTotal) {
 
-        total.textContent =
+        reservationTotal.textContent =
             money(
-                calculateDisplayPrice()
+                localPrice()
             );
     }
 
 
-    if (submit) {
+    if (reservationSubmit) {
 
-        submit.disabled =
+        reservationSubmit.disabled =
             !currentUser ||
-            !dateSelect?.value ||
-            !timeSelect?.value ||
-            !durationSelect?.value ||
+            !date?.value ||
+            !time?.value ||
+            !duration?.value ||
             selected.size === 0;
     }
 }
@@ -1034,17 +1125,22 @@ function updateSummary() {
 /* =========================================================
    AUTH
 
-   NO cargamos:
-   - name
-   - email
-   - phone
+   IMPORTANTE:
 
-   El backend los obtiene usando el UID.
+   YA NO LEEMOS EL PERFIL DESDE FIRESTORE AQUÍ.
+
+   No buscamos:
+   users/{uid}.name
+   users/{uid}.email
+   users/{uid}.phoneNumber
+
+   El backend identifica al usuario por su token y
+   obtiene los datos personales desde Firebase.
    ========================================================= */
 
 onAuthStateChanged(
     auth,
-    (user) => {
+    user => {
 
         currentUser =
             user;
@@ -1074,7 +1170,7 @@ onAuthStateChanged(
         }
 
 
-        updateSummary();
+        summary();
     }
 );
 
@@ -1083,18 +1179,26 @@ onAuthStateChanged(
    DATE CHANGE
    ========================================================= */
 
-dateSelect?.addEventListener(
+date?.addEventListener(
     'change',
     async () => {
 
+        selected.clear();
+
+
+        /*
+         * Invalidamos cualquier request anterior.
+         */
+
+        availabilityRequestId++;
+
+
         try {
 
-            selected.clear();
-
-
             /*
-             * Cargamos promociones/configuración
-             * correspondientes a esa fecha.
+             * Volvemos a cargar config porque
+             * las promociones pueden depender
+             * de la fecha.
              */
 
             await loadConfig();
@@ -1103,17 +1207,12 @@ dateSelect?.addEventListener(
             makeTimes();
 
 
-            /*
-             * Después de cambiar fecha obligamos
-             * a seleccionar hora otra vez.
-             */
-
-            if (timeSelect) {
-                timeSelect.value = '';
+            if (time) {
+                time.value = '';
             }
 
 
-            updateSummary();
+            summary();
 
 
         } catch (error) {
@@ -1137,12 +1236,9 @@ dateSelect?.addEventListener(
    TIME CHANGE
    ========================================================= */
 
-timeSelect?.addEventListener(
+time?.addEventListener(
     'change',
-    () => {
-
-        loadAvailability();
-    }
+    availability
 );
 
 
@@ -1150,17 +1246,14 @@ timeSelect?.addEventListener(
    DURATION CHANGE
    ========================================================= */
 
-durationSelect?.addEventListener(
+duration?.addEventListener(
     'change',
-    () => {
-
-        loadAvailability();
-    }
+    availability
 );
 
 
 /* =========================================================
-   PAYMENT METHOD
+   PAYMENT
    ========================================================= */
 
 document
@@ -1168,13 +1261,13 @@ document
         'input[name="payment"]'
     )
     .forEach(
-        (input) => {
+        input => {
 
             input.addEventListener(
                 'change',
                 () => {
 
-                    const payment =
+                    const selectedPayment =
                         document.querySelector(
                             'input[name="payment"]:checked'
                         )?.value;
@@ -1187,7 +1280,7 @@ document
                     if (proofBlock) {
 
                         proofBlock.hidden =
-                            payment !==
+                            selectedPayment !==
                             'transferencia';
                     }
                 }
@@ -1202,7 +1295,7 @@ document
 
 form?.addEventListener(
     'submit',
-    async (event) => {
+    async event => {
 
         event.preventDefault();
 
@@ -1223,10 +1316,10 @@ form?.addEventListener(
 
 
         /* =================================================
-           VALIDATION
+           FORM VALIDATION
            ================================================= */
 
-        if (!dateSelect?.value) {
+        if (!date?.value) {
 
             message(
                 'Seleccioná una fecha.',
@@ -1237,7 +1330,7 @@ form?.addEventListener(
         }
 
 
-        if (!timeSelect?.value) {
+        if (!time?.value) {
 
             message(
                 'Seleccioná una hora.',
@@ -1248,7 +1341,7 @@ form?.addEventListener(
         }
 
 
-        if (!durationSelect?.value) {
+        if (!duration?.value) {
 
             message(
                 'Seleccioná la duración.',
@@ -1259,9 +1352,7 @@ form?.addEventListener(
         }
 
 
-        if (
-            selected.size === 0
-        ) {
+        if (!selected.size) {
 
             message(
                 'Seleccioná al menos un simulador.',
@@ -1290,7 +1381,7 @@ form?.addEventListener(
 
 
         /*
-         * Tarjeta todavía no disponible.
+         * PayPal / tarjeta todavía NO disponible.
          */
 
         if (
@@ -1307,31 +1398,24 @@ form?.addEventListener(
         }
 
 
-        /* =================================================
-           BUTTON
-           ================================================= */
-
-        const submitButton =
+        const btn =
             $('reservationSubmit');
 
 
-        if (submitButton) {
-
-            submitButton.disabled =
-                true;
+        if (btn) {
+            btn.disabled = true;
         }
 
 
         message(
-            'Procesando reserva…',
-            'info'
+            'Procesando reserva…'
         );
 
 
         try {
 
             /* =================================================
-               PAYMENT PROOF
+               TRANSFER PROOF
                ================================================= */
 
             let proofPath =
@@ -1343,12 +1427,12 @@ form?.addEventListener(
                 'transferencia'
             ) {
 
-                const fileInput =
+                const input =
                     $('paymentProof');
 
 
                 const file =
-                    fileInput?.files?.[0];
+                    input?.files?.[0];
 
 
                 if (!file) {
@@ -1360,7 +1444,7 @@ form?.addEventListener(
 
 
                 /*
-                 * 5 MB máximo.
+                 * Máximo 5 MB.
                  */
 
                 if (
@@ -1375,10 +1459,10 @@ form?.addEventListener(
 
 
                 /*
-                 * Solamente JPG, PNG o PDF.
+                 * JPG / PNG / PDF
                  */
 
-                const allowedTypes =
+                const allowed =
                     [
                         'image/jpeg',
                         'image/png',
@@ -1387,7 +1471,7 @@ form?.addEventListener(
 
 
                 if (
-                    !allowedTypes.includes(
+                    !allowed.includes(
                         file.type
                     )
                 ) {
@@ -1398,11 +1482,7 @@ form?.addEventListener(
                 }
 
 
-                /*
-                 * Sanitizamos filename.
-                 */
-
-                const safeFileName =
+                const safeName =
                     file.name.replace(
                         /[^a-zA-Z0-9._-]/g,
                         '_'
@@ -1410,59 +1490,60 @@ form?.addEventListener(
 
 
                 proofPath =
-                    `reservation-proofs/${currentUser.uid}/${crypto.randomUUID()}-${safeFileName}`;
+                    `reservation-proofs/${currentUser.uid}/${crypto.randomUUID()}-${safeName}`;
 
 
-                /*
-                 * Upload directo a Firebase Storage.
-                 */
-
-                const storageRef =
-                    ref(
-                        storage,
-                        proofPath
-                    );
+                console.log(
+                    '[RESERVAS] Subiendo comprobante...'
+                );
 
 
                 await uploadBytes(
-                    storageRef,
+                    ref(
+                        storage,
+                        proofPath
+                    ),
                     file,
                     {
                         contentType:
                             file.type
                     }
                 );
+
+
+                console.log(
+                    '[RESERVAS] Comprobante subido.'
+                );
             }
 
 
             /* =================================================
-               REQUEST BODY
+               CREATE REQUEST
 
-               IMPORTANTE:
+               NO mandamos datos personales.
 
-               NO mandamos:
-               - customer
-               - name
-               - email
-               - phone
-               - price
-               - total
+               Tampoco mandamos:
+               - precio
                - status
+               - promociones
+               - penalidad
+               - nombre del rig
+               - tipo del rig
 
-               Todo eso lo decide el backend.
+               El backend determina todo eso.
                ================================================= */
 
             const body = {
 
                 date:
-                    dateSelect.value,
+                    date.value,
 
                 time:
-                    timeSelect.value,
+                    time.value,
 
                 duration:
                     Number(
-                        durationSelect.value
+                        duration.value
                     ),
 
                 rigIds:
@@ -1477,7 +1558,7 @@ form?.addEventListener(
 
 
             console.log(
-                '[RESERVAS] Solicitando reserva:',
+                '[RESERVAS] Creando reserva:',
                 {
                     date:
                         body.date,
@@ -1488,7 +1569,7 @@ form?.addEventListener(
                     duration:
                         body.duration,
 
-                    rigs:
+                    rigCount:
                         body.rigIds.length,
 
                     payment:
@@ -1496,10 +1577,6 @@ form?.addEventListener(
                 }
             );
 
-
-            /* =================================================
-               CREATE
-               ================================================= */
 
             const result =
                 await api(
@@ -1528,22 +1605,9 @@ form?.addEventListener(
 
             console.log(
                 '[RESERVAS] Reserva creada:',
-                {
-                    id:
-                        result.id,
-
-                    code:
-                        result.code,
-
-                    status:
-                        result.status
-                }
+                result
             );
 
-
-            /*
-             * Limpiamos selección.
-             */
 
             selected.clear();
 
@@ -1552,22 +1616,24 @@ form?.addEventListener(
              * Limpiamos comprobante.
              */
 
-            const fileInput =
+            const proofInput =
                 $('paymentProof');
 
 
-            if (fileInput) {
-                fileInput.value = '';
+            if (proofInput) {
+                proofInput.value = '';
             }
 
 
             /*
-             * Volvemos a consultar disponibilidad
-             * porque los rigs reservados ahora
-             * deben estar bloqueados.
+             * Consultamos otra vez disponibilidad.
+             *
+             * Los reservationLocks creados por el
+             * backend deben hacer que esos rigs
+             * ahora aparezcan ocupados.
              */
 
-            await loadAvailability();
+            await availability();
 
 
         } catch (error) {
@@ -1587,26 +1653,26 @@ form?.addEventListener(
 
         } finally {
 
-            updateSummary();
+            summary();
         }
     }
 );
 
 
 /* =========================================================
-   INITIALIZE
+   INITIALIZATION
    ========================================================= */
 
 async function init() {
 
     try {
 
-        createDates();
+        dates();
 
 
         /*
-         * Cargamos config usando la primera fecha,
-         * que createDates() ya seleccionó.
+         * date ya tiene seleccionada la primera opción
+         * después de dates().
          */
 
         await loadConfig();
@@ -1616,15 +1682,15 @@ async function init() {
 
 
         /*
-         * Dejamos que el usuario elija hora.
+         * El usuario debe seleccionar una hora.
          */
 
-        if (timeSelect) {
-            timeSelect.value = '';
+        if (time) {
+            time.value = '';
         }
 
 
-        updateSummary();
+        summary();
 
 
         console.log(
