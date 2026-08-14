@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Simuladores Inercia</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Alumni+Sans:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="css/admin.css" />
+    </head>
+    <body>
+        <section id="loginScreen" class="login-screen">
+            <div class="login-panel">
+                <span class="eyebrow">SIMULADORES INERCIA</span>
+                <h1>PANEL <b>ADMIN</b></h1>
+                <form id="loginForm">
+                    <label>Correo electrónico<input id="loginEmail" type="email" required /></label
+                    ><label>Contraseña<input id="loginPassword" type="password" required /></label>
+                    <p id="loginMessage" class="error" hidden></p>
+                    <button class="primary" type="submit">INICIAR SESIÓN</button>
+                </form>
+            </div>
+        </section>
+        <div id="adminShell" class="shell" hidden>
+            <aside class="sidebar">
+                <div class="brand"><span>SIMULADORES</span><strong>INERCIA</strong><small>ADMINISTRACIÓN</small></div>
+                <nav>
+                    <button class="nav active" data-view="reservas">RESERVAS</button
+                    ><button class="nav" data-view="rigs">RIGS</button
+                    ><button class="nav" data-view="ventas">VENTAS</button
+                    ><button class="nav" data-view="configuracion">CONFIGURACIÓN</button>
+                </nav>
+                <div class="user"><span id="adminEmail"></span><button id="logoutBtn">CERRAR SESIÓN</button></div>
+            </aside>
+            <main>
+                <header class="top">
+                    <div>
+                        <span class="eyebrow">PANEL DE CONTROL</span>
+                        <h1 id="viewTitle">RESERVAS</h1>
+                    </div>
+                    <span class="online">FIREBASE CONECTADO</span>
+                </header>
+                <section id="view-reservas" class="view active">
+                    <div class="toolbar">
+                        <div>
+                            <button id="prevDay" class="ghost">ANTERIOR</button
+                            ><input id="calendarDate" type="date" /><button id="nextDay" class="ghost">
+                                SIGUIENTE
+                            </button>
+                        </div>
+                        <div class="legend">
+                            <span><i class="pending"></i>PENDIENTE</span><span><i class="approved"></i>APROBADA</span>
+                        </div>
+                    </div>
+                    <div class="calendar" id="reservationCalendar"></div>
+                </section>
+                <section id="view-rigs" class="view">
+                    <div class="heading">
+                        <div>
+                            <span class="eyebrow">INVENTARIO OPERATIVO</span>
+                            <h2>SIMULADORES</h2>
+                        </div>
+                        <button id="newRigBtn" class="primary">NUEVO RIG</button>
+                    </div>
+                    <div id="rigMetrics" class="metrics"></div>
+                    <div id="rigList" class="rig-list"></div>
+                </section>
+                <section id="view-ventas" class="view">
+                    <div class="heading">
+                        <div>
+                            <span class="eyebrow">INGRESOS</span>
+                            <h2>VENTAS</h2>
+                        </div>
+                        <button id="newSaleBtn" class="primary">NUEVA VENTA</button>
+                    </div>
+                    <div class="filters">
+                        <button class="filter active" data-range="month">ESTE MES</button
+                        ><button class="filter" data-range="week">ESTA SEMANA</button
+                        ><button class="filter" data-range="year">ESTE AÑO</button>
+                    </div>
+                    <div id="salesMetrics" class="metrics"></div>
+                    <div class="table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>FECHA</th>
+                                    <th>CONCEPTO</th>
+                                    <th>MÉTODO</th>
+                                    <th>ORIGEN</th>
+                                    <th>TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section id="view-configuracion" class="view">
+                    <div class="heading">
+                        <div>
+                            <span class="eyebrow">SISTEMA</span>
+                            <h2>CONFIGURACIÓN</h2>
+                        </div>
+                    </div>
+                    <div class="settings">
+                        <form id="pricingForm" class="card">
+                            <span class="eyebrow">PRECIOS</span>
+                            <h3>TARIFAS POR HORA</h3>
+                            <label>Standard<input id="standardPrice" type="number" value="200" /></label
+                            ><label>Premium<input id="premiumPrice" type="number" value="350" /></label
+                            ><button class="primary">GUARDAR PRECIOS</button>
+                        </form>
+                        <form id="scheduleForm" class="card">
+                            <span class="eyebrow">HORARIOS</span>
+                            <h3>RESTRICCIONES</h3>
+                            <label class="check"><input id="mondayClosed" type="checkbox" checked />Lunes cerrado</label
+                            ><label
+                                >Martes a viernes disponible desde<input
+                                    id="weekdayStart"
+                                    type="time"
+                                    value="14:00" /></label
+                            ><button class="primary">GUARDAR HORARIO</button>
+                        </form>
+                    </div>
+                </section>
+            </main>
+        </div>
+        <div id="drawerBackdrop" class="backdrop" hidden></div>
+        <aside id="drawer" class="drawer">
+            <button id="drawerClose" class="close">×</button>
+            <div id="reservationDetail"></div>
+        </aside>
+        <div id="modalBackdrop" class="modal-bg" hidden>
+            <div class="modal">
+                <button id="modalClose" class="close">×</button>
+                <div id="modalContent"></div>
+            </div>
+        </div>
+        <script type="module" src="/admin/js/admin.js"></script>
+    </body>
+</html>
