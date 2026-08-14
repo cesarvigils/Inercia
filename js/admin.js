@@ -837,8 +837,7 @@ $("#newSaleBtn").onclick = () => {
                         $("#sm").value,
 
                     createdBy:
-                        user.uid,
-
+auth.currentUser.uid,
                     createdAt:
                         serverTimestamp()
                 }
@@ -995,8 +994,7 @@ function renderProductsModal() {
                     active: true,
 
                     createdBy:
-                        user.uid,
-
+                        auth.currentUser.uid,
                     createdAt:
                         serverTimestamp(),
 
@@ -1471,12 +1469,11 @@ $("#newReservationBtn").onclick = () => {
                             approvedBy:
                                 status ===
                                 "approved"
-                                    ? user.uid
+        ? auth.currentUser.uid
                                     : null
                         },
 
-                        createdBy:
-                            user.uid,
+                        createdBy: auth.currentUser.uid,
 
                         createdAt:
                             serverTimestamp(),
