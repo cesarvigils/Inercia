@@ -1403,3 +1403,386 @@ body {
     height: auto;
     object-fit: contain;
 }
+/* =========================================================
+   PAYMENT - TRANSFER RECEIPT
+   ========================================================= */
+
+.payment-proof {
+    margin-top: 18px;
+}
+
+.payment-proof-label {
+    display: block;
+    margin-bottom: 8px;
+
+    font-family: 'Kenyan Coffee', 'Arial Narrow', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    text-transform: uppercase;
+
+    color: #8d8d8d;
+}
+
+.payment-proof-info {
+    margin: 0 0 14px;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+
+    color: #e7e7e7;
+}
+
+.payment-proof-info strong {
+    color: #fff;
+}
+
+
+/* =========================================================
+   CUSTOM FILE UPLOAD
+   ========================================================= */
+
+.receipt-upload {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    width: 100%;
+    min-height: 86px;
+
+    padding: 18px 22px;
+
+    border: 1px solid #333;
+    border-radius: 5px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 139, 0, 0.04),
+            transparent 45%
+        ),
+        #151515;
+
+    cursor: pointer;
+
+    transition:
+        border-color .2s ease,
+        background .2s ease;
+}
+
+.receipt-upload:hover {
+    border-color: #ff8b00;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 139, 0, 0.08),
+            transparent 45%
+        ),
+        #171717;
+}
+
+
+/* Hide ugly native input */
+
+.receipt-upload input[type="file"] {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    opacity: 0;
+    cursor: pointer;
+}
+
+
+/* LEFT */
+
+.receipt-upload-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    min-width: 0;
+}
+
+.receipt-upload-icon {
+    width: 44px;
+    height: 44px;
+
+    flex: 0 0 44px;
+
+    display: grid;
+    place-items: center;
+
+    border: 1px solid rgba(255, 139, 0, 0.35);
+
+    background: rgba(255, 139, 0, 0.07);
+
+    color: #ff8b00;
+}
+
+.receipt-upload-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.receipt-upload-text {
+    min-width: 0;
+}
+
+.receipt-upload-title {
+    display: block;
+
+    margin-bottom: 3px;
+
+    font-family: 'Kenyan Coffee', 'Arial Narrow', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1;
+
+    text-transform: uppercase;
+
+    color: #f5f5f5;
+}
+
+.receipt-upload-subtitle {
+    display: block;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+
+    color: #777;
+}
+
+
+/* RIGHT BUTTON */
+
+.receipt-upload-button {
+    flex-shrink: 0;
+
+    padding: 11px 18px;
+
+    border: 1px solid #ff8b00;
+
+    font-family: 'Kenyan Coffee', 'Arial Narrow', sans-serif;
+    font-size: 16px;
+    line-height: 1;
+    text-transform: uppercase;
+
+    color: #ff8b00;
+    background: transparent;
+
+    transition:
+        color .2s ease,
+        background .2s ease;
+}
+
+.receipt-upload:hover .receipt-upload-button {
+    color: #111;
+    background: #ff8b00;
+}
+
+
+/* =========================================================
+   SELECTED FILE
+   ========================================================= */
+
+.receipt-upload.has-file {
+    border-color: #ff8b00;
+}
+
+.receipt-upload.has-file .receipt-upload-title {
+    color: #ff8b00;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .receipt-upload {
+        min-height: 105px;
+        padding: 16px;
+
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .receipt-upload-button {
+        width: 100%;
+        text-align: center;
+    }
+
+    .payment-proof-info {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+}
+.payment-method-content {
+    margin-top: 22px;
+}
+
+.payment-panel[hidden] {
+    display: none !important;
+}
+
+.payment-panel {
+    animation: payment-panel-in 0.18s ease;
+}
+
+@keyframes payment-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* ===============================
+   BANK DETAILS
+   =============================== */
+
+.transfer-details {
+    padding-top: 4px;
+}
+
+.transfer-heading {
+    margin-bottom: 18px;
+}
+
+.transfer-heading p {
+    margin: 5px 0 0;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #888;
+}
+
+.bank-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+
+    border: 1px solid #2c2c2c;
+    background: #121212;
+}
+
+.bank-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    padding: 16px 18px;
+
+    border-bottom: 1px solid #252525;
+}
+
+.bank-detail:nth-child(odd) {
+    border-right: 1px solid #252525;
+}
+
+.bank-detail:nth-last-child(-n + 2) {
+    border-bottom: 0;
+}
+
+.bank-detail span {
+    font-family: 'Kenyan Coffee', 'Arial Narrow', sans-serif;
+    font-size: 14px;
+
+    color: #777;
+}
+
+.bank-detail strong {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+
+    color: #f2f2f2;
+}
+
+.bank-detail .bank-account-number {
+    color: #ff8b00;
+    font-weight: 600;
+}
+
+.transfer-note {
+    margin: 10px 0 24px;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+
+    color: #666;
+}
+
+
+/* ===============================
+   CARD
+   =============================== */
+
+.card-payment-placeholder {
+    padding: 28px;
+
+    border: 1px solid #2c2c2c;
+    background: #121212;
+}
+
+.card-payment-placeholder h3 {
+    margin: 7px 0 5px;
+
+    font-family: 'Kenyan Coffee', 'Arial Narrow', sans-serif;
+    font-size: 30px;
+
+    color: #ff8b00;
+}
+
+.card-payment-placeholder p {
+    max-width: 520px;
+    margin: 0;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+
+    color: #888;
+}
+
+
+/* ===============================
+   MOBILE
+   =============================== */
+
+@media (max-width: 600px) {
+
+    .bank-details {
+        grid-template-columns: 1fr;
+    }
+
+    .bank-detail,
+    .bank-detail:nth-child(odd),
+    .bank-detail:nth-last-child(-n + 2) {
+        border-right: 0;
+        border-bottom: 1px solid #252525;
+    }
+
+    .bank-detail:last-child {
+        border-bottom: 0;
+    }
+
+}

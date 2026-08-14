@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Simuladores Inercia</title>
+    <title>Reservas | Simuladores Inercia</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,23 +14,22 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Alumni+Sans:wght@500;600;700&display=swap"
         rel="stylesheet"
     >
+
     <link rel="icon" type="image/png" href="/favicon.png">
 
-<link rel="stylesheet" href="/css/style.css">
-<link rel="stylesheet" href="/css/menu.css">
-<link rel="stylesheet" href="/css/reservas.css">
-<link rel="stylesheet" href="/css/reservas-backend.css">
-
-<script type="module" src="/js/auth.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/menu.css">
     <link rel="stylesheet" href="/css/reservas.css">
+    <link rel="stylesheet" href="/css/reservas-backend.css">
 
     <script type="module" src="/js/auth.js"></script>
 </head>
 
 <body>
 
-    <!-- BACKGROUND VIDEO -->
+    <!-- =====================================================
+         BACKGROUND
+         ===================================================== -->
 
     <video
         class="page-bg-video"
@@ -121,7 +120,13 @@
 
         <div class="side-menu-header">
 
-<img src="/assets/menu.png" alt="Menú" class="menu-title-img" href="/inicio">
+            <a href="/inicio">
+                <img
+                    src="/assets/menu.png"
+                    alt="Menú"
+                    class="menu-title-img"
+                >
+            </a>
 
             <button
                 class="menu-close"
@@ -135,20 +140,25 @@
         </div>
 
 
-         <div class="side-menu-links">
-        <a href="/inicio" class="side-menu-link">
-      INICIO
-    </a>
-    <a href="/reservas" class="side-menu-link">
-      RESERVAR
-    </a>
-    <a href="/standings" class="side-menu-link">
-      RESULTADOS
-    </a>
-    <a href="/contacto" class="side-menu-link">
-      CONTACTO
-    </a>
-  </div>
+        <div class="side-menu-links">
+
+            <a href="/inicio" class="side-menu-link">
+                INICIO
+            </a>
+
+            <a href="/reservas" class="side-menu-link">
+                RESERVAR
+            </a>
+
+            <a href="/standings" class="side-menu-link">
+                RESULTADOS
+            </a>
+
+            <a href="/contacto" class="side-menu-link">
+                CONTACTO
+            </a>
+
+        </div>
 
 
         <div class="side-menu-footer">
@@ -228,9 +238,10 @@
             id="reservationForm"
         >
 
-            <!-- =============================================
-                 DATE / TIME
-                 ============================================= -->
+
+            <!-- =================================================
+                 01 — DATE / TIME
+                 ================================================= -->
 
             <section class="reservation-section">
 
@@ -242,7 +253,10 @@
 
                     <div>
                         <span>PRIMERO</span>
-                        <h2>¿CUÁNDO VENÍS?</h2>
+
+                        <h2>
+                            ¿CUÁNDO VENÍS?
+                        </h2>
                     </div>
 
                 </div>
@@ -280,8 +294,10 @@
                                 id="reservationTime"
                                 required
                             >
-<option value="">Seleccioná una hora</option>
-</select>
+                                <option value="">
+                                    Seleccioná una hora
+                                </option>
+                            </select>
 
                         </div>
 
@@ -298,8 +314,10 @@
                                 id="reservationDuration"
                                 required
                             >
-<option value="1">1 hora</option>
-</select>
+                                <option value="1">
+                                    1 hora
+                                </option>
+                            </select>
 
                         </div>
 
@@ -310,9 +328,9 @@
             </section>
 
 
-            <!-- =============================================
-                 SIMULATORS
-                 ============================================= -->
+            <!-- =================================================
+                 02 — SIMULATORS
+                 ================================================= -->
 
             <section class="reservation-section">
 
@@ -323,6 +341,7 @@
                 <div class="section-title">
 
                     <div>
+
                         <span>AHORA</span>
 
                         <h2>
@@ -332,7 +351,9 @@
                         <p>
                             Tocá cada simulador que querás reservar.
                         </p>
+
                     </div>
+
 
                     <div class="simulator-availability">
 
@@ -361,9 +382,15 @@
                                 STANDARD
                             </span>
 
-                            <span class="simulator-price" data-price="standard">L 200 / HORA</span>
+                            <span
+                                class="simulator-price"
+                                data-price="standard"
+                            >
+                                L 200 / HORA
+                            </span>
 
                         </div>
+
 
                         <span
                             class="simulator-count"
@@ -395,9 +422,15 @@
                                 PREMIUM
                             </span>
 
-                            <span class="simulator-price" data-price="premium">L 350 / HORA</span>
+                            <span
+                                class="simulator-price"
+                                data-price="premium"
+                            >
+                                L 350 / HORA
+                            </span>
 
                         </div>
+
 
                         <span
                             class="simulator-count"
@@ -419,19 +452,9 @@
             </section>
 
 
-           <!-- <section class="reservation-section">
-                <div class="section-number">03</div>
-                <div class="section-title"><div><span>TUS DATOS</span><h2>¿QUIÉN RESERVA?</h2><p>Los cargamos desde tu cuenta; podés corregirlos para esta reserva.</p></div></div>
-                <div class="date-grid">
-                    <label class="reservation-field"><span>NOMBRE</span><input id="reservationName" type="text" required autocomplete="name"></label>
-                    <label class="reservation-field"><span>CORREO</span><input id="reservationEmail" type="email" required autocomplete="email"></label>
-                    <label class="reservation-field"><span>TELÉFONO</span><input id="reservationPhone" type="tel" required autocomplete="tel"></label>
-                </div>
-            </section> -->
-
-            <!-- =============================================
-                 PAYMENT
-                 ============================================= -->
+            <!-- =================================================
+                 03 — PAYMENT
+                 ================================================= -->
 
             <section class="reservation-section">
 
@@ -439,28 +462,43 @@
                     03
                 </div>
 
+
                 <div class="section-title">
 
                     <div>
-                        <span>CASI LISTO</span>
+
+                        <span>
+                            CASI LISTO
+                        </span>
 
                         <h2>
                             MÉTODO DE PAGO
                         </h2>
+
+                        <p>
+                            Elegí cómo querés pagar tu reserva.
+                        </p>
+
                     </div>
 
                 </div>
 
 
+                <!-- PAYMENT OPTIONS -->
+
                 <div class="payment-options">
 
-                    <label class="payment-option">
+                    <!-- TRANSFER -->
+
+                    <label
+                        class="payment-option"
+                        data-payment-method="transferencia"
+                    >
 
                         <input
                             type="radio"
                             name="payment"
                             value="transferencia"
-                            checked
                         >
 
                         <span class="payment-card">
@@ -481,14 +519,17 @@
 
                             </span>
 
+
                             <span>
+
                                 <strong>
                                     TRANSFERENCIA
                                 </strong>
 
                                 <small>
-                                    Transferencia bancaria
+                                    Transferencia bancaria BAC
                                 </small>
+
                             </span>
 
                         </span>
@@ -496,7 +537,12 @@
                     </label>
 
 
-                    <label class="payment-option">
+                    <!-- CARD -->
+
+                    <label
+                        class="payment-option"
+                        data-payment-method="tarjeta"
+                    >
 
                         <input
                             type="radio"
@@ -531,7 +577,9 @@
 
                             </span>
 
+
                             <span>
+
                                 <strong>
                                     TARJETA
                                 </strong>
@@ -539,6 +587,7 @@
                                 <small>
                                     Pago con tarjeta
                                 </small>
+
                             </span>
 
                         </span>
@@ -547,23 +596,229 @@
 
                 </div>
 
-                <div id="proofBlock" class="reservation-field" style="margin-top:18px">
-                    <span>COMPROBANTE BAC</span>
-                    <small style="display:block;margin-bottom:8px">BAC · HNL · 758-610-001 · Inercia S.A. — JPG, PNG o PDF, máximo 5 MB.</small>
-                    <input id="paymentProof" type="file" accept="image/jpeg,image/png,application/pdf">
+
+                <!-- =================================================
+                     PAYMENT DYNAMIC CONTENT
+                     ================================================= -->
+
+                <div class="payment-method-content">
+
+
+                    <!-- =============================================
+                         BANK TRANSFER
+                         ============================================= -->
+
+                    <div
+                        class="payment-panel"
+                        id="transferPanel"
+                        hidden
+                    >
+
+                        <div class="transfer-details">
+
+                            <div class="transfer-heading">
+
+                                <div>
+
+                                    <span class="payment-proof-label">
+                                        DATOS PARA TRANSFERENCIA
+                                    </span>
+
+                                    <p>
+                                        Realizá la transferencia a esta cuenta
+                                        y luego adjuntá el comprobante.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- BANK INFORMATION -->
+
+                            <div class="bank-details">
+
+                                <div class="bank-detail">
+
+                                    <span>
+                                        BANCO
+                                    </span>
+
+                                    <strong>
+                                        BAC Credomatic
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="bank-detail">
+
+                                    <span>
+                                        MONEDA
+                                    </span>
+
+                                    <strong>
+                                        Lempiras (HNL)
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="bank-detail">
+
+                                    <span>
+                                        NÚMERO DE CUENTA
+                                    </span>
+
+                                    <strong class="bank-account-number">
+                                        758-610-001
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="bank-detail">
+
+                                    <span>
+                                        TITULAR
+                                    </span>
+
+                                    <strong>
+                                        Inercia S.A.
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <p class="transfer-note">
+                                Verificá que los datos sean correctos antes
+                                de realizar la transferencia.
+                            </p>
+
+
+                            <!-- RECEIPT -->
+
+                            <div class="payment-proof">
+
+                                <span class="payment-proof-label">
+                                    COMPROBANTE DE PAGO
+                                </span>
+
+                                <p class="payment-proof-info">
+                                    Adjuntá el comprobante de la transferencia.
+                                    Aceptamos JPG, PNG o PDF de hasta 5 MB.
+                                </p>
+
+
+                                <label
+                                    class="receipt-upload"
+                                    id="receiptUpload"
+                                >
+
+                                    <input
+                                        type="file"
+                                        id="paymentReceipt"
+                                        accept=".jpg,.jpeg,.png,.pdf"
+                                    >
+
+
+                                    <div class="receipt-upload-content">
+
+                                        <div class="receipt-upload-icon">
+
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="1.8"
+                                            >
+                                                <path d="M12 16V4"/>
+                                                <path d="M7 9l5-5 5 5"/>
+                                                <path d="M5 14v5h14v-5"/>
+                                            </svg>
+
+                                        </div>
+
+
+                                        <div class="receipt-upload-text">
+
+                                            <span
+                                                class="receipt-upload-title"
+                                                id="receiptFileName"
+                                            >
+                                                SUBÍ TU COMPROBANTE
+                                            </span>
+
+                                            <span class="receipt-upload-subtitle">
+                                                JPG, PNG o PDF · Máximo 5 MB
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <span class="receipt-upload-button">
+                                        SELECCIONAR ARCHIVO
+                                    </span>
+
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =============================================
+                         CARD
+                         ============================================= -->
+
+                    <div
+                        class="payment-panel"
+                        id="cardPanel"
+                        hidden
+                    >
+
+                        <div class="card-payment-placeholder">
+
+                            <span class="payment-proof-label">
+                                PAGO CON TARJETA
+                            </span>
+
+                            <h3>
+                                PRÓXIMAMENTE
+                            </h3>
+
+                            <p>
+                                Estamos preparando el pago con tarjeta.
+                                Por ahora, usá transferencia bancaria
+                                para completar tu reserva.
+                            </p>
+
+                        </div>
+
+                    </div>
+
                 </div>
+
             </section>
 
 
-            <!-- =============================================
+            <!-- =================================================
                  SUMMARY
-                 ============================================= -->
+                 ================================================= -->
 
             <section class="reservation-summary">
 
                 <div class="summary-heading">
 
-                    <span>TU RESERVA</span>
+                    <span>
+                        TU RESERVA
+                    </span>
 
                     <h2>
                         RESUMEN
@@ -618,12 +873,17 @@
                 <div class="summary-total">
 
                     <div>
-                        <span>TOTAL</span>
+
+                        <span>
+                            TOTAL
+                        </span>
 
                         <small>
                             Precio de tu sesión
                         </small>
+
                     </div>
+
 
                     <strong id="reservationTotal">
                         L 0
@@ -642,7 +902,12 @@
                 </button>
 
 
-                <p id="reservationMessage" class="reservation-note" hidden></p>
+                <p
+                    id="reservationMessage"
+                    class="reservation-note"
+                    hidden
+                ></p>
+
 
                 <p class="reservation-note">
                     Revisá bien tu fecha, hora y simuladores
@@ -656,6 +921,10 @@
     </main>
 
 
+    <!-- =====================================================
+         SCRIPTS
+         ===================================================== -->
+
     <script
         type="module"
         src="/js/menu.js"
@@ -664,6 +933,11 @@
     <script
         type="module"
         src="/js/reservas.js"
+    ></script>
+
+    <script
+        type="module"
+        src="/js/paymodal.js"
     ></script>
 
 </body>
