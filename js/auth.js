@@ -57,17 +57,6 @@ const DEFAULT_PFP =
    AUTH PERSISTENCE
    ========================================================= */
 
-/*
- * Keeps the Firebase login stored locally.
- *
- * Firebase restores the session when:
- * - page refreshes
- * - user changes pages
- * - browser closes/reopens
- *
- * The session remains until signOut() is called.
- */
-
 setPersistence(auth, browserLocalPersistence)
     .catch((error) => {
         console.error('Error configurando persistencia:', error);
@@ -133,14 +122,6 @@ function toggleProfileMenu() {
 authBtn?.addEventListener('click', (event) => {
 
     event.stopPropagation();
-
-    /*
-     * If Firebase has a logged-in user:
-     * show account menu.
-     *
-     * Otherwise:
-     * show login/register modal.
-     */
 
     if (auth.currentUser) {
         toggleProfileMenu();
@@ -237,21 +218,36 @@ authSwitchButtons.forEach((button) => {
    ========================================================= */
 
 function showMessage(message, type = 'error') {
+
     if (!authMessage) return;
 
     authMessage.textContent = message;
 
-    authMessage.classList.remove('error', 'success');
-    authMessage.classList.add('show', type);
+    authMessage.classList.remove(
+        'error',
+        'success'
+    );
+
+    authMessage.classList.add(
+        'show',
+        type
+    );
 }
 
 
 function hideMessage() {
+
     if (!authMessage) return;
 
     authMessage.textContent = '';
-    authMessage.classList.remove('show', 'error', 'success');
+
+    authMessage.classList.remove(
+        'show',
+        'error',
+        'success'
+    );
 }
+
 
 function friendlyAuthError(error) {
 
@@ -280,8 +276,16 @@ function friendlyAuthError(error) {
         case 'auth/popup-blocked':
             return 'El navegador bloqueó la ventana de Google.';
 
+        case 'permission-denied':
+            return 'No hay permisos para guardar los datos de la cuenta.';
+
         default:
-            console.error(error);
+
+            console.error(
+                '[AUTH] Error:',
+                error
+            );
+
             return 'Ocurrió un error. Intenta de nuevo.';
     }
 
@@ -296,27 +300,41 @@ onAuthStateChanged(auth, (user) => {
 
     if (user) {
 
-        const photo = user.photoURL || DEFAULT_PFP;
+        const photo =
+            user.photoURL ||
+            DEFAULT_PFP;
+
 
         if (authPfp) {
             authPfp.src = photo;
         }
 
+
         if (profileMenuPfp) {
             profileMenuPfp.src = photo;
         }
 
+
         if (profileMenuName) {
+
             profileMenuName.textContent =
-                user.displayName || 'USUARIO';
+                user.displayName ||
+                'USUARIO';
         }
+
 
         if (profileMenuEmail) {
+
             profileMenuEmail.textContent =
-                user.email || '';
+                user.email ||
+                '';
         }
 
-        authBtn?.classList.add('logged-in');
+
+        authBtn?.classList.add(
+            'logged-in'
+        );
+
 
     } else {
 
@@ -324,19 +342,26 @@ onAuthStateChanged(auth, (user) => {
             authPfp.src = DEFAULT_PFP;
         }
 
+
         if (profileMenuPfp) {
             profileMenuPfp.src = DEFAULT_PFP;
         }
+
 
         if (profileMenuName) {
             profileMenuName.textContent = 'USUARIO';
         }
 
+
         if (profileMenuEmail) {
             profileMenuEmail.textContent = '';
         }
 
-        authBtn?.classList.remove('logged-in');
+
+        authBtn?.classList.remove(
+            'logged-in'
+        );
+
 
         closeProfileMenu();
 
@@ -371,9 +396,11 @@ loginForm?.addEventListener('submit', async (event) => {
 
     if (!email || !password) {
 
-        showMessage('Completa todos los campos.');
-        return;
+        showMessage(
+            'Completa todos los campos.'
+        );
 
+        return;
     }
 
 
@@ -411,6 +438,12 @@ loginForm?.addEventListener('submit', async (event) => {
 
     } catch (error) {
 
+        console.error(
+            '[LOGIN] Error:',
+            error
+        );
+
+
         showMessage(
             friendlyAuthError(error)
         );
@@ -432,70 +465,138 @@ loginForm?.addEventListener('submit', async (event) => {
    ========================================================= */
 
 registerForm?.addEventListener('submit', async (event) => {
+
     event.preventDefault();
 
     hideMessage();
 
-    const name = document
-        .getElementById('registerName')
-        .value
-        .trim();
 
-    const email = document
-        .getElementById('registerEmail')
-        .value
-        .trim();
+    /* ---------------------------------------------------------
+       READ FORM
+       --------------------------------------------------------- */
 
-    const phone = document
-        .getElementById('registerPhone')
-        .value
-        .trim();
+    const name =
+        document
+            .getElementById('registerName')
+            .value
+            .trim();
 
-    const password = document
-        .getElementById('registerPassword')
-        .value;
 
-    const passwordConfirm = document
-        .getElementById('registerPasswordConfirm')
-        .value;
+    const email =
+        document
+            .getElementById('registerEmail')
+            .value
+            .trim();
 
-    if (!name || !email || !phone || !password || !passwordConfirm) {
-        showMessage('Completa todos los campos.');
+
+    const phone =
+        document
+            .getElementById('registerPhone')
+            .value
+            .trim();
+
+
+    const password =
+        document
+            .getElementById('registerPassword')
+            .value;
+
+
+    const passwordConfirm =
+        document
+            .getElementById('registerPasswordConfirm')
+            .value;
+
+
+    /* ---------------------------------------------------------
+       VALIDATION
+       --------------------------------------------------------- */
+
+    if (
+        !name ||
+        !email ||
+        !phone ||
+        !password ||
+        !passwordConfirm
+    ) {
+
+        showMessage(
+            'Completa todos los campos.'
+        );
+
         return;
     }
 
+
     if (password.length < 6) {
+
         showMessage(
             'La contraseña debe tener al menos 6 caracteres.'
         );
+
         return;
     }
 
-    if (password !== passwordConfirm) {
-        showMessage('Las contraseñas no coinciden.');
+
+    if (
+        password !==
+        passwordConfirm
+    ) {
+
+        showMessage(
+            'Las contraseñas no coinciden.'
+        );
+
         return;
     }
+
+
+    /* ---------------------------------------------------------
+       BUTTON
+       --------------------------------------------------------- */
 
     const submitBtn =
-        registerForm.querySelector('button[type="submit"]');
+        registerForm.querySelector(
+            'button[type="submit"]'
+        );
+
 
     const originalButtonText =
-        submitBtn?.textContent || 'CREAR CUENTA';
+        submitBtn?.textContent ||
+        'CREAR CUENTA';
+
 
     if (submitBtn) {
+
         submitBtn.disabled = true;
-        submitBtn.textContent = 'CREANDO CUENTA...';
+
+        submitBtn.textContent =
+            'CREANDO CUENTA...';
     }
+
 
     try {
 
-        /* Keep login saved */
+        console.log(
+            '[REGISTER] Configurando persistencia...'
+        );
+
+
         await setPersistence(
             auth,
             browserLocalPersistence
         );
 
-        /* Create Firebase Auth account */
+
+        /* -----------------------------------------------------
+           CREATE AUTH ACCOUNT
+           ----------------------------------------------------- */
+
+        console.log(
+            '[REGISTER] Creando usuario...'
+        );
+
+
         const result =
             await createUserWithEmailAndPassword(
                 auth,
@@ -503,66 +604,161 @@ registerForm?.addEventListener('submit', async (event) => {
                 password
             );
 
-        /* Save user's name in Firebase Auth */
-        await updateProfile(result.user, {
-            displayName: name
-        });
 
-        /* Save extra information in Firestore */
-        await setDoc(
-            doc(db, 'users', result.user.uid),
+        console.log(
+            '[REGISTER] Usuario creado:',
+            result.user.uid
+        );
+
+
+        /* -----------------------------------------------------
+           FIREBASE AUTH PROFILE
+           ----------------------------------------------------- */
+
+        console.log(
+            '[REGISTER] Guardando nombre...'
+        );
+
+
+        await updateProfile(
+            result.user,
             {
-                name,
-                email,
-                phoneNumber: phone,
-                provider: 'password',
-                createdAt: serverTimestamp()
+                displayName: name
             }
         );
 
-        /* Account was successfully created */
+
+        console.log(
+            '[REGISTER] Nombre guardado.'
+        );
+
+
+        /* -----------------------------------------------------
+           FIRESTORE PROFILE
+
+           IMPORTANTE:
+           phone + phoneNumber se guardan ambos.
+           ----------------------------------------------------- */
+
+        console.log(
+            '[REGISTER] Guardando datos en Firestore...'
+        );
+
+
+        await setDoc(
+            doc(
+                db,
+                'users',
+                result.user.uid
+            ),
+            {
+                name: name,
+
+                email: email,
+
+                /*
+                 * Campo principal que usaremos
+                 * para reservas.
+                 */
+                phone: phone,
+
+                /*
+                 * Compatibilidad con código viejo.
+                 */
+                phoneNumber: phone,
+
+                provider: 'password',
+
+                createdAt:
+                    serverTimestamp(),
+
+                updatedAt:
+                    serverTimestamp()
+            },
+            {
+                /*
+                 * No destruimos otros campos si
+                 * el documento ya existe.
+                 */
+                merge: true
+            }
+        );
+
+
+        console.log(
+            '[REGISTER] Firestore guardado:',
+            {
+                uid:
+                    result.user.uid,
+
+                name,
+
+                email,
+
+                phone
+            }
+        );
+
+
+        /* -----------------------------------------------------
+           SUCCESS
+           ----------------------------------------------------- */
+
         showMessage(
             '¡CUENTA CREADA EXITOSAMENTE!',
             'success'
         );
 
+
         registerForm.reset();
 
+
         /*
-         * Firebase automatically signs in a newly-created
-         * email/password account.
-         *
-         * Leave the message visible briefly, then close.
+         * Firebase ya deja autenticado al usuario
+         * después de createUserWithEmailAndPassword().
          */
-        setTimeout(() => {
-            closeAuthModal();
-        }, 1500);
+
+        setTimeout(
+            () => {
+
+                closeAuthModal();
+
+            },
+            1500
+        );
+
 
     } catch (error) {
 
         console.error(
-            'Error creando cuenta:',
+            '[REGISTER] Error creando cuenta:',
             error
         );
+
 
         showMessage(
             friendlyAuthError(error),
             'error'
         );
 
+
     } finally {
 
         if (submitBtn) {
+
             submitBtn.disabled = false;
-            submitBtn.textContent = originalButtonText;
+
+            submitBtn.textContent =
+                originalButtonText;
         }
 
     }
+
 });
 
 
 /* =========================================================
-   GOOGLE
+   GOOGLE AUTH
    ========================================================= */
 
 async function continueWithGoogle() {
@@ -590,11 +786,19 @@ async function continueWithGoogle() {
 
 
         /*
-         * Save/update the Google account in Firestore.
+         * IMPORTANTE:
          *
-         * merge:true prevents us from deleting fields
-         * such as phoneNumber if they already exist.
+         * Google normalmente NO nos entrega el número.
+         *
+         * Por eso NO ponemos:
+         *
+         * phone: ''
+         * phoneNumber: ''
+         *
+         * porque podríamos borrar el teléfono de un
+         * usuario que ya lo tenga guardado.
          */
+
 
         await setDoc(
             doc(
@@ -604,15 +808,22 @@ async function continueWithGoogle() {
             ),
             {
                 name:
-                    result.user.displayName || '',
+                    result.user.displayName ||
+                    '',
 
                 email:
-                    result.user.email || '',
+                    result.user.email ||
+                    '',
 
                 photoURL:
-                    result.user.photoURL || '',
+                    result.user.photoURL ||
+                    '',
 
-                provider: 'google'
+                provider:
+                    'google',
+
+                updatedAt:
+                    serverTimestamp()
             },
             {
                 merge: true
@@ -620,10 +831,22 @@ async function continueWithGoogle() {
         );
 
 
+        console.log(
+            '[GOOGLE AUTH] Usuario sincronizado con Firestore:',
+            result.user.uid
+        );
+
+
         closeAuthModal();
 
 
     } catch (error) {
+
+        console.error(
+            '[GOOGLE AUTH] Error:',
+            error
+        );
+
 
         showMessage(
             friendlyAuthError(error)
@@ -633,6 +856,10 @@ async function continueWithGoogle() {
 
 }
 
+
+/* =========================================================
+   GOOGLE BUTTONS
+   ========================================================= */
 
 googleLoginBtn?.addEventListener(
     'click',
