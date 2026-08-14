@@ -1,126 +1,91 @@
-import { auth } from '../firebase-config.js';
-import { getStorage, ref, uploadBytes } from 'firebase/storage';
-import { onAuthStateChanged } from 'firebase/auth';
-
-const storage = getStorage(auth.app);
-/* =========================================================
-   FIREBASE SERVICE ACCOUNT
-   ========================================================= */
-
-const rawServiceAccount =
-    process.env.FIREBASE_SERVICE_ACCOUNT;
-
-if (!rawServiceAccount) {
-    throw new Error(
-        'Falta FIREBASE_SERVICE_ACCOUNT en las variables de entorno.'
-    );
-}
-
-let serviceAccount;
-
-try {
-    serviceAccount =
-        JSON.parse(rawServiceAccount);
-} catch (error) {
-    console.error(
-        '[FIREBASE ADMIN] FIREBASE_SERVICE_ACCOUNT no contiene JSON válido.'
-    );
-
-    throw new Error(
-        'FIREBASE_SERVICE_ACCOUNT contiene JSON inválido.'
-    );
-}
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
+import { getDatabase } from 'firebase-admin/database';
 
 
 /* =========================================================
-   VALIDATION
+   ENVIRONMENT VARIABLES
    ========================================================= */
 
-if (
-    !serviceAccount.project_id ||
-    typeof serviceAccount.project_id !== 'string'
-) {
+const projectId = process.env.FIREBASE_PROJECT_ID;
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+const privateKey = process.env.FIREBASE_PRIVATE_KEY
+    ?.replace(/\\n/g, '\n')
+    .replace(/^"(.*)"$/s, '$1');
+
+const storageBucket =
+    process.env.FIREBASE_STORAGE_BUCKET;
+
+const databaseURL =
+    process.env.FIREBASE_DATABASE_URL;
+
+
+/* =========================================================
+   VALIDATE CONFIG
+   ========================================================= */
+
+if (!projectId) {
     throw new Error(
-        'FIREBASE_SERVICE_ACCOUNT no contiene project_id.'
+        'Missing FIREBASE_PROJECT_ID environment variable.'
     );
 }
 
-if (
-    !serviceAccount.client_email ||
-    typeof serviceAccount.client_email !== 'string'
-) {
+if (!clientEmail) {
     throw new Error(
-        'FIREBASE_SERVICE_ACCOUNT no contiene client_email.'
+        'Missing FIREBASE_CLIENT_EMAIL environment variable.'
     );
 }
 
-if (
-    !serviceAccount.private_key ||
-    typeof serviceAccount.private_key !== 'string'
-) {
+if (!privateKey) {
     throw new Error(
-        'FIREBASE_SERVICE_ACCOUNT no contiene private_key.'
+        'Missing FIREBASE_PRIVATE_KEY environment variable.'
     );
 }
-
-
-/*
- * Por si Vercel terminó guardando los \n literalmente.
- */
-serviceAccount.private_key =
-    serviceAccount.private_key.replace(
-        /\\n/g,
-        '\n'
-    );
-
-
-console.log(
-    '[FIREBASE ADMIN] Service Account:',
-    {
-        project_id:
-            serviceAccount.project_id,
-
-        client_email:
-            serviceAccount.client_email,
-
-        private_key:
-            serviceAccount.private_key
-                ? 'OK'
-                : 'MISSING'
-    }
-);
 
 
 /* =========================================================
    INITIALIZE FIREBASE ADMIN
    ========================================================= */
 
-const firebaseApp =
+const adminApp =
     getApps().length
         ? getApps()[0]
         : initializeApp({
-            credential:
-                cert(serviceAccount),
+            credential: cert({
+                projectId,
+                clientEmail,
+                privateKey
+            }),
 
-            storageBucket:
-                process.env.FIREBASE_STORAGE_BUCKET,
+            ...(storageBucket
+                ? { storageBucket }
+                : {}),
 
-            databaseURL:
-                process.env.FIREBASE_DATABASE_URL
+            ...(databaseURL
+                ? { databaseURL }
+                : {})
         });
 
 
 /* =========================================================
-   SERVICES
+   EXPORT SERVICES
    ========================================================= */
 
+export const adminAuth =
+    getAuth(adminApp);
+
 export const adminDb =
-    getFirestore(firebaseApp);
+    getFirestore(adminApp);
 
 export const adminStorage =
-    getStorage(firebaseApp);
-export const adminAuth =
-    getAuth(firebaseApp);
-export {
-    firebaseApp
-};
+    getStorage(adminApp);
+
+export const adminRtdb =
+    databaseURL
+        ? getDatabase(adminApp)
+        : null;
+
+export { adminApp };
