@@ -7,7 +7,11 @@ import {
     setPersistence,
     browserLocalPersistence
 } from 'firebase/auth';
-
+import {
+    getStorage,
+    ref,
+    getDownloadURL
+} from 'firebase/storage';
 import {
     collection,
     doc,
@@ -29,6 +33,7 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
 // DOM references
+const storage = getStorage(auth.app);
 const loginScreen = $('#loginScreen');
 const adminShell = $('#adminShell');
 const loginForm = $('#loginForm');
@@ -223,39 +228,175 @@ function pay(p) {
         String(v || "N/D").toUpperCase()
     );
 }
+async function receipt(r) {
+    // Formato actual
+    const path =
+        r.paymentProof?.path ||
+        r.proofPath ||
+        null;
 
-function receipt(r) {
-    return r.payment?.receiptUrl || r.payment?.proofUrl || r.confirmation?.receiptUrl || r.receiptUrl || "";
+    if (path) {
+        try {
+            return await getDownloadURL(
+                ref(storage, path)
+            );
+        } catch (error) {
+            console.error(
+                '[ADMIN] No se pudo cargar el comprobante:',
+                path,
+                error
+            );
+
+            return "";
+        }
+    }
+
+    // Compatibilidad con reservas viejas
+    return (
+        r.payment?.receiptUrl ||
+        r.payment?.proofUrl ||
+        r.confirmation?.receiptUrl ||
+        r.receiptUrl ||
+        ""
+    );
 }
 
 // Open reservation detail
-function openReservation(id) {
-    let r = reservations.find((x) => x.id === id),
-        c = r.customer || {},
-        url = receipt(r),
-        names =
-            rr(r)
-                .map((x) => (typeof x === "string" ? x : x.name || `${x.type || "Rig"} ${x.order ?? x.number ?? ""}`))
-                .join(", ") || "N/D";
-    $("#reservationDetail").innerHTML =
-        `<span class="eyebrow">${r.status === "pending" ? "PENDIENTE" : "APROBADA"}</span><h2>${esc(r.code || r.id)}</h2><div class="detail-grid">${[
-            ["CLIENTE", c.name],
-            ["TELÉFONO", c.phone],
-            ["FECHA", fdate(r.date)],
-            ["HORA", ftime(r.time)],
-            ["DURACIÓN", (r.duration || 1) + " H"],
-            ["TOTAL", money(r.pricing?.total)],
-            ["MÉTODO", pay(r.payment)],
-            ["RIGS", names],
-        ]
-            .map((x) => `<div class="detail"><span>${x[0]}</span><strong>${esc(x[1] || "N/D")}</strong></div>`)
-            .join(
-                ""
-            )}</div>${url ? `<div class="receipt">${/\.(png|jpe?g|webp)(\?|$)/i.test(url) ? `<img src="${esc(url)}">` : ""}<a href="${esc(url)}" target="_blank">VER COMPROBANTE COMPLETO</a></div>` : `<div class="receipt">SIN COMPROBANTE ADJUNTO</div>`}${r.status === "pending" ? '<div class="actions"><button id="reject" class="danger">RECHAZAR</button><button id="approve" class="primary">APROBAR</button></div>' : ""}`;
-    $("#drawerBackdrop").hidden = false;
-    $("#drawer").classList.add("open");
-    $("#approve")?.addEventListener("click", () => approve(r));
-    $("#reject")?.addEventListener("click", () => reject(r));
+async function openReservation(id) {
+    const r =
+        reservations.find(
+            x => x.id === id
+        );
+
+    if (!r) {
+        console.error(
+            '[ADMIN] Reserva no encontrada:',
+            id
+        );
+        return;
+    }
+
+    const c =
+        r.customer || {};
+
+    const url =
+        await receipt(r);
+
+    const names =
+        rr(r)
+            .map(x =>
+                typeof x === "string"
+                    ? x
+                    : x.name ||
+                      `${x.type || "Rig"} ${
+                          x.order ??
+                          x.number ??
+                          ""
+                      }`
+            )
+            .join(", ") ||
+        "N/D";
+
+    $("#reservationDetail").innerHTML = `
+        <div class="detail-grid">
+            ${[
+                ["CÓDIGO", r.code],
+                ["CLIENTE", c.name],
+                ["TELÉFONO", c.phone || c.phoneNumber],
+                ["CORREO", c.email],
+                ["FECHA", r.date],
+                ["HORA", ftime(r.time)],
+                ["DURACIÓN", `${r.duration || 1} H`],
+                ["TOTAL", money(r.pricing?.total ?? r.total)],
+                ["PAGO", pay(r.payment)],
+                ["RIGS", names]
+            ]
+                .map(
+                    x => `
+                        <div class="detail">
+                            <span>${x[0]}</span>
+                            <strong>
+                                ${esc(x[1] || "N/D")}
+                            </strong>
+                        </div>
+                    `
+                )
+                .join("")}
+        </div>
+
+        ${
+            url
+                ? `
+                    <div class="receipt">
+                        ${
+                            r.paymentProof?.contentType
+                                ?.startsWith("image/")
+                                ? `
+                                    <img
+                                        src="${esc(url)}"
+                                        alt="Comprobante de pago"
+                                    >
+                                `
+                                : ""
+                        }
+
+                        <a
+                            href="${esc(url)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            VER COMPROBANTE COMPLETO
+                        </a>
+                    </div>
+                `
+                : `
+                    <div class="receipt">
+                        SIN COMPROBANTE ADJUNTO
+                    </div>
+                `
+        }
+
+        ${
+            r.status === "pending"
+                ? `
+                    <div class="actions">
+                        <button
+                            id="reject"
+                            class="danger"
+                        >
+                            RECHAZAR
+                        </button>
+
+                        <button
+                            id="approve"
+                            class="primary"
+                        >
+                            APROBAR
+                        </button>
+                    </div>
+                `
+                : ""
+        }
+    `;
+
+    $("#drawerBackdrop").hidden =
+        false;
+
+    $("#drawer").classList.add(
+        "open"
+    );
+
+    $("#approve")
+        ?.addEventListener(
+            "click",
+            () => approve(r)
+        );
+
+    $("#reject")
+        ?.addEventListener(
+            "click",
+            () => reject(r)
+        );
 }
 
 // Close drawer
