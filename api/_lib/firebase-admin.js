@@ -1,7 +1,8 @@
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
-import { getAuth } from 'firebase-admin/auth';
+import { auth } from '../firebase-config.js';
+import { getStorage, ref, uploadBytes } from 'firebase/storage';
+import { onAuthStateChanged } from 'firebase/auth';
+
+const storage = getStorage(auth.app);
 /* =========================================================
    FIREBASE SERVICE ACCOUNT
    ========================================================= */

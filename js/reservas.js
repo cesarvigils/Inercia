@@ -1,9 +1,4 @@
-import { auth, db } from '../firebase-config.js';
-
-import {
-    doc,
-    getDoc
-} from 'firebase/firestore';
+import { auth } from '../firebase-config.js';
 
 import {
     getStorage,
@@ -24,47 +19,10 @@ const storage = getStorage(auth.app);
 
 
 /* =========================================================
-   HELPERS
+   HELPERS / ELEMENTS
    ========================================================= */
 
 const $ = (id) => document.getElementById(id);
-
-function money(value) {
-    return `L ${Number(value || 0).toLocaleString(
-        'es-HN',
-        {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        }
-    )}`;
-}
-
-function setValue(id, value = '') {
-    const element = $(id);
-
-    if (!element) {
-        console.warn(
-            `[RESERVAS] No existe el elemento #${id}`
-        );
-
-        return;
-    }
-
-    element.value = value ?? '';
-}
-
-function setText(id, value = '') {
-    const element = $(id);
-
-    if (!element) return;
-
-    element.textContent = value;
-}
-
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
 
 const form = $('reservationForm');
 
@@ -82,8 +40,6 @@ const counts = {
     premium: $('premiumCount')
 };
 
-const submitButton = $('reservationSubmit');
-
 
 /* =========================================================
    STATE
@@ -93,9 +49,9 @@ const selected = new Map();
 
 let appConfig = null;
 let rigs = [];
+let promotions = [];
+
 let currentUser = null;
-let currentProfile = null;
-let promos = [];
 let loadingAvailability = false;
 
 
@@ -108,6 +64,39 @@ const wheel =
 
 
 /* =========================================================
+   MONEY
+   ========================================================= */
+
+function money(value) {
+
+    return `L ${Number(value || 0).toLocaleString(
+        'es-HN',
+        {
+            maximumFractionDigits: 2
+        }
+    )}`;
+}
+
+
+/* =========================================================
+   MESSAGE
+   ========================================================= */
+
+function message(text, type = 'info') {
+
+    const element = $('reservationMessage');
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = text || '';
+    element.dataset.type = type;
+    element.hidden = !text;
+}
+
+
+/* =========================================================
    API
    ========================================================= */
 
@@ -117,9 +106,12 @@ async function api(path, options = {}) {
         ...(options.headers || {})
     };
 
+
     /*
-     * Mandamos el Firebase ID Token al backend.
+     * Si existe usuario autenticado, enviamos
+     * su Firebase ID Token al backend.
      */
+
     if (currentUser) {
 
         const token =
@@ -129,9 +121,11 @@ async function api(path, options = {}) {
             `Bearer ${token}`;
     }
 
+
     /*
-     * Solo JSON cuando no estamos mandando FormData.
+     * JSON solamente cuando no mandamos FormData.
      */
+
     if (
         options.body &&
         !(options.body instanceof FormData)
@@ -139,6 +133,7 @@ async function api(path, options = {}) {
         headers['Content-Type'] =
             'application/json';
     }
+
 
     const response =
         await fetch(
@@ -149,20 +144,17 @@ async function api(path, options = {}) {
             }
         );
 
-    let data = {};
 
-    try {
-        data = await response.json();
-    } catch {
-        data = {};
-    }
+    const data =
+        await response
+            .json()
+            .catch(() => ({}));
+
 
     if (!response.ok) {
 
         console.error(
-            '[RESERVAS API]',
-            response.status,
-            path,
+            `[RESERVAS API] ${response.status} ${path}`,
             data
         );
 
@@ -172,39 +164,8 @@ async function api(path, options = {}) {
         );
     }
 
+
     return data;
-}
-
-
-/* =========================================================
-   MESSAGE
-   ========================================================= */
-
-function message(text, type = 'info') {
-
-    const element =
-        $('reservationMessage');
-
-    if (!element) {
-
-        if (text) {
-            console.log(
-                `[RESERVAS:${type}]`,
-                text
-            );
-        }
-
-        return;
-    }
-
-    element.textContent =
-        text || '';
-
-    element.dataset.type =
-        type;
-
-    element.hidden =
-        !text;
 }
 
 
@@ -212,16 +173,15 @@ function message(text, type = 'info') {
    DATES
    ========================================================= */
 
-function dates() {
+function createDates() {
 
-    if (!dateSelect) return;
+    if (!dateSelect) {
+        return;
+    }
 
-    /*
-     * Evita duplicar fechas si la función
-     * se ejecuta más de una vez.
-     */
-    dateSelect.innerHTML =
-        '<option value="">Seleccioná una fecha</option>';
+
+    dateSelect.innerHTML = '';
+
 
     const displayFormatter =
         new Intl.DateTimeFormat(
@@ -230,10 +190,10 @@ function dates() {
                 weekday: 'short',
                 day: 'numeric',
                 month: 'short',
-                timeZone:
-                    'America/Tegucigalpa'
+                timeZone: 'America/Tegucigalpa'
             }
         );
+
 
     const valueFormatter =
         new Intl.DateTimeFormat(
@@ -242,25 +202,33 @@ function dates() {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
-                timeZone:
-                    'America/Tegucigalpa'
+                timeZone: 'America/Tegucigalpa'
             }
         );
 
-    /*
-     * Hoy + próximos 6 días.
-     * Total: 7 días.
-     */
-    for (let i = 0; i < 7; i++) {
 
-        const d =
+    /*
+     * Máximo 7 días.
+     */
+
+    for (
+        let i = 0;
+        i < 7;
+        i++
+    ) {
+
+        const currentDate =
             new Date(
                 Date.now() +
                 i * 86400000
             );
 
+
         const value =
-            valueFormatter.format(d);
+            valueFormatter.format(
+                currentDate
+            );
+
 
         let prefix = '';
 
@@ -272,11 +240,11 @@ function dates() {
             prefix = 'MAÑANA · ';
         }
 
+
         const label =
-            (
-                prefix +
-                displayFormatter.format(d)
-            ).toUpperCase();
+            `${prefix}${displayFormatter.format(currentDate)}`
+                .toUpperCase();
+
 
         dateSelect.add(
             new Option(
@@ -292,39 +260,19 @@ function dates() {
    TIME HELPERS
    ========================================================= */
 
-function toMinutes(value) {
+function timeToMinutes(value) {
 
-    if (!value) return 0;
-
-    const [hours, minutes] =
-        value
-            .split(':')
-            .map(Number);
+    const [
+        hours,
+        minutes
+    ] = value
+        .split(':')
+        .map(Number);
 
     return (
         hours * 60 +
         minutes
     );
-}
-
-function formatTime(hours, minutes = 0) {
-
-    const d =
-        new Date(
-            2000,
-            0,
-            1,
-            hours,
-            minutes
-        );
-
-    return new Intl.DateTimeFormat(
-        'en-US',
-        {
-            hour: 'numeric',
-            minute: '2-digit'
-        }
-    ).format(d);
 }
 
 
@@ -334,10 +282,14 @@ function formatTime(hours, minutes = 0) {
 
 function makeTimes() {
 
-    if (!timeSelect) return;
+    if (!timeSelect) {
+        return;
+    }
+
 
     timeSelect.innerHTML =
         '<option value="">Seleccioná una hora</option>';
+
 
     if (
         !dateSelect?.value ||
@@ -346,83 +298,91 @@ function makeTimes() {
         return;
     }
 
+
     /*
-     * Sacamos el día sin depender de timezone
-     * local del navegador.
-     *
-     * 0 domingo
-     * 1 lunes
-     * ...
-     * 6 sábado
+     * Usamos mediodía UTC para evitar que el timezone
+     * nos cambie accidentalmente el día.
      */
-    const [year, month, dayNumber] =
-        dateSelect.value
-            .split('-')
-            .map(Number);
 
     const day =
         new Date(
-            Date.UTC(
-                year,
-                month - 1,
-                dayNumber,
-                12
-            )
+            `${dateSelect.value}T12:00:00Z`
         ).getUTCDay();
 
-    const hoursConfig =
-        appConfig.hours?.[day] ??
-        appConfig.hours?.[String(day)];
+
+    const businessHours =
+        appConfig.hours?.[day];
+
 
     /*
      * Día cerrado.
      */
-    if (
-        !hoursConfig ||
-        !Array.isArray(hoursConfig)
-    ) {
+
+    if (!businessHours) {
+
         timeSelect.innerHTML =
-            '<option value="">Cerrado este día</option>';
+            '<option value="">Cerrado</option>';
 
         return;
     }
 
-    const open =
-        toMinutes(hoursConfig[0]);
 
-    const close =
-        toMinutes(hoursConfig[1]);
+    const start =
+        timeToMinutes(
+            businessHours[0]
+        );
+
+    const end =
+        timeToMinutes(
+            businessHours[1]
+        );
+
 
     /*
-     * IMPORTANTE:
-     * Las reservas son solamente en horas exactas.
+     * Horas exactas.
      *
-     * Antes estaba:
-     *
-     * m += 30
-     *
-     * Eso permitía 2:30, 3:30, etc.
+     * 14:00
+     * 15:00
+     * 16:00
+     * etc.
      */
+
     for (
-        let m = open;
-        m < close;
-        m += 60
+        let minutes = start;
+        minutes < end;
+        minutes += 60
     ) {
 
-        const hh =
-            Math.floor(m / 60);
+        const hour =
+            Math.floor(
+                minutes / 60
+            );
 
-        const mm =
-            m % 60;
+        const minute =
+            minutes % 60;
+
 
         const value =
-            `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+            `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+
 
         const label =
-            formatTime(
-                hh,
-                mm
+            new Intl.DateTimeFormat(
+                'en-US',
+                {
+                    hour: 'numeric',
+                    minute: '2-digit'
+                }
+            ).format(
+                new Date(
+                    2000,
+                    0,
+                    1,
+                    hour,
+                    minute
+                )
             );
+
 
         timeSelect.add(
             new Option(
@@ -447,32 +407,34 @@ function makeDurations() {
         return;
     }
 
+
     durationSelect.innerHTML = '';
+
 
     const min =
         Number(
-            appConfig.minDurationHours
-        ) || 1;
+            appConfig.minDurationHours ||
+            1
+        );
+
 
     const max =
         Number(
-            appConfig.maxDurationHours
-        ) || 8;
+            appConfig.maxDurationHours ||
+            8
+        );
+
 
     for (
-        let i = min;
-        i <= max;
-        i++
+        let hours = min;
+        hours <= max;
+        hours++
     ) {
 
         durationSelect.add(
             new Option(
-                `${i} ${
-                    i === 1
-                        ? 'hora'
-                        : 'horas'
-                }`,
-                String(i)
+                `${hours} ${hours === 1 ? 'hora' : 'horas'}`,
+                String(hours)
             )
         );
     }
@@ -485,41 +447,41 @@ function makeDurations() {
 
 async function loadConfig() {
 
-    const queryDate = dateSelect?.value;
+    const queryDate =
+        dateSelect?.value;
 
-const endpoint = queryDate
-    ? `/api/reservations/config?date=${encodeURIComponent(queryDate)}`
-    : '/api/reservations/config';
 
-const data = await api(endpoint);
+    const endpoint =
+        queryDate
+            ? `/api/reservations/config?date=${encodeURIComponent(queryDate)}`
+            : '/api/reservations/config';
 
-    if (!data?.config) {
-        throw new Error(
-            'El servidor no devolvió la configuración de reservas.'
-        );
-    }
+
+    const data =
+        await api(endpoint);
+
 
     appConfig =
-        data.config;
+        data.config || {};
+
 
     rigs =
         Array.isArray(data.rigs)
             ? data.rigs
             : [];
 
-    promos =
+
+    promotions =
         Array.isArray(data.promotions)
             ? data.promotions
             : [];
 
+
     makeDurations();
-    makeTimes();
+
     updatePrices();
 
-    /*
-     * Hasta que se seleccione fecha/hora,
-     * mostramos todos los rigs activos.
-     */
+
     render(
         rigs.map(
             (rig) => ({
@@ -527,15 +489,6 @@ const data = await api(endpoint);
                 available: true
             })
         )
-    );
-
-    console.log(
-        '[RESERVAS] Configuración cargada:',
-        {
-            config: appConfig,
-            rigs: rigs.length,
-            promotions: promos.length
-        }
     );
 }
 
@@ -546,72 +499,90 @@ const data = await api(endpoint);
 
 function updatePrices() {
 
+    if (!appConfig) {
+        return;
+    }
+
+
     const standard =
         document.querySelector(
             '[data-price="standard"]'
         );
+
 
     const premium =
         document.querySelector(
             '[data-price="premium"]'
         );
 
+
     if (standard) {
+
         standard.textContent =
-            `${money(
-                appConfig?.prices?.standard
-            )} / HORA`;
+            `${money(appConfig.prices?.standard)} / HORA`;
     }
 
+
     if (premium) {
+
         premium.textContent =
-            `${money(
-                appConfig?.prices?.premium
-            )} / HORA`;
+            `${money(appConfig.prices?.premium)} / HORA`;
     }
 }
 
 
 /* =========================================================
-   SIMULATOR CARD
+   RIG CARD
    ========================================================= */
 
-function card(rig) {
+function createRigCard(rig) {
 
     const button =
         document.createElement(
             'button'
         );
 
+
     button.type =
         'button';
+
 
     button.className =
         'simulator-card';
 
-    button.disabled =
-        !rig.available;
 
     button.dataset.id =
         rig.id;
 
-    /*
-     * Puede venir como order, number o name.
-     * Evita SIMULADOR undefined.
-     */
-    const rigNumber =
-        rig.order ??
-        rig.number ??
-        '';
 
-    const rigName =
-        rig.name ||
-        `Simulador ${rigNumber}`;
+    /*
+     * No disponible =
+     * no se puede seleccionar.
+     */
+
+    button.disabled =
+        !rig.available;
+
+
+    /*
+     * Tus rigs usan "order".
+     *
+     * Si por alguna razón falta, usamos name.
+     */
+
+    const rigLabel =
+        Number.isFinite(
+            Number(rig.order)
+        )
+            ? `SIMULADOR ${rig.order}`
+            : (
+                rig.name ||
+                'SIMULADOR'
+            );
+
 
     button.innerHTML = `
-        <span class="simulator-check">
-            ✓
-        </span>
+        <span class="simulator-check">✓</span>
 
         <img
             class="simulator-wheel"
@@ -622,17 +593,16 @@ function card(rig) {
         <span class="simulator-card-info">
 
             <small>
-                ${String(
-                    rig.type || ''
-                ).toUpperCase()}
+                ${String(rig.type || '').toUpperCase()}
             </small>
 
             <strong>
-                ${rigName.toUpperCase()}
+                ${rigLabel}
             </strong>
 
         </span>
     `;
+
 
     if (
         selected.has(rig.id) &&
@@ -643,6 +613,7 @@ function card(rig) {
         );
     }
 
+
     button.addEventListener(
         'click',
         () => {
@@ -650,6 +621,7 @@ function card(rig) {
             if (!rig.available) {
                 return;
             }
+
 
             if (
                 selected.has(
@@ -669,14 +641,17 @@ function card(rig) {
                 );
             }
 
+
             button.classList.toggle(
                 'selected',
                 selected.has(rig.id)
             );
 
-            summary();
+
+            updateSummary();
         }
     );
+
 
     return button;
 }
@@ -686,15 +661,11 @@ function card(rig) {
    RENDER RIGS
    ========================================================= */
 
-function render(list = []) {
-
-    const safeList =
-        Array.isArray(list)
-            ? list
-            : [];
+function render(list) {
 
     for (
-        const type of [
+        const type
+        of [
             'standard',
             'premium'
         ]
@@ -703,30 +674,38 @@ function render(list = []) {
         const grid =
             grids[type];
 
-        if (!grid) continue;
+
+        if (!grid) {
+            continue;
+        }
+
 
         grid.innerHTML = '';
 
+
         const typeRigs =
-            safeList.filter(
+            list.filter(
                 (rig) =>
                     rig.type === type
             );
+
 
         typeRigs.forEach(
             (rig) => {
 
                 grid.appendChild(
-                    card(rig)
+                    createRigCard(rig)
                 );
             }
         );
+
 
         const available =
             typeRigs.filter(
                 (rig) =>
                     rig.available
             ).length;
+
 
         if (counts[type]) {
 
@@ -735,15 +714,24 @@ function render(list = []) {
         }
     }
 
-    setText(
-        'availableCount',
-        safeList.filter(
-            (rig) =>
-                rig.available
-        ).length
-    );
 
-    summary();
+    const availableCount =
+        $('availableCount');
+
+
+    if (availableCount) {
+
+        availableCount.textContent =
+            String(
+                list.filter(
+                    (rig) =>
+                        rig.available
+                ).length
+            );
+    }
+
+
+    updateSummary();
 }
 
 
@@ -751,17 +739,20 @@ function render(list = []) {
    AVAILABILITY
    ========================================================= */
 
-async function availability() {
+async function loadAvailability() {
 
     if (loadingAvailability) {
         return;
     }
 
+
     selected.clear();
 
+
     /*
-     * Todavía no tenemos suficiente información.
+     * Todavía no tenemos horario completo.
      */
+
     if (
         !dateSelect?.value ||
         !timeSelect?.value ||
@@ -780,11 +771,12 @@ async function availability() {
         return;
     }
 
-    loadingAvailability = true;
+
+    loadingAvailability =
+        true;
+
 
     try {
-
-        message('');
 
         const params =
             new URLSearchParams({
@@ -798,15 +790,12 @@ async function availability() {
                     durationSelect.value
             });
 
-        console.log(
-            '[RESERVAS] Consultando disponibilidad:',
-            params.toString()
-        );
 
         const data =
             await api(
                 `/api/reservations/availability?${params.toString()}`
             );
+
 
         render(
             Array.isArray(data.rigs)
@@ -814,25 +803,29 @@ async function availability() {
                 : []
         );
 
+
+        message('');
+
+
     } catch (error) {
 
         console.error(
-            '[RESERVAS] Error de disponibilidad:',
+            '[RESERVAS] Error cargando disponibilidad:',
             error
         );
+
 
         message(
             error.message,
             'error'
         );
 
+
         /*
-         * Si el backend falla, NO permitimos
-         * seleccionar rigs.
-         *
-         * Esto es intencional para evitar
-         * reservas sobre disponibilidad desconocida.
+         * Si el servidor no pudo comprobar
+         * disponibilidad, NO dejamos seleccionar.
          */
+
         render(
             rigs.map(
                 (rig) => ({
@@ -842,52 +835,66 @@ async function availability() {
             )
         );
 
+
     } finally {
 
         loadingAvailability =
             false;
-
-        summary();
     }
 }
 
 
 /* =========================================================
-   LOCAL PRICE PREVIEW
+   LOCAL DISPLAY PRICE
+
+   Esto es SOLO visual.
+
+   El precio definitivo SIEMPRE lo vuelve
+   a calcular el backend.
    ========================================================= */
 
-function localPrice() {
+function calculateDisplayPrice() {
 
     const hours =
         Number(
-            durationSelect?.value || 1
+            durationSelect?.value ||
+            1
         );
+
 
     let base = 0;
 
+
     for (
-        const rig of selected.values()
+        const rig
+        of selected.values()
     ) {
 
-        const price =
+        const hourlyPrice =
             Number(
-                appConfig
-                    ?.prices
-                    ?.[rig.type]
-            ) || 0;
+                appConfig?.prices?.[
+                    rig.type
+                ] ||
+                0
+            );
+
 
         base +=
-            price * hours;
+            hourlyPrice *
+            hours;
     }
+
 
     let discount = 0;
 
+
     for (
-        const promo of promos
+        const promotion
+        of promotions
     ) {
 
         if (
-            promo.type ===
+            promotion.type ===
             'percent'
         ) {
 
@@ -895,27 +902,32 @@ function localPrice() {
                 base *
                 (
                     Number(
-                        promo.value || 0
-                    ) / 100
+                        promotion.value ||
+                        0
+                    ) /
+                    100
                 );
 
         } else if (
-            promo.type ===
+            promotion.type ===
             'fixed'
         ) {
 
             discount +=
                 Number(
-                    promo.value || 0
+                    promotion.value ||
+                    0
                 );
         }
     }
+
 
     discount =
         Math.min(
             base,
             discount
         );
+
 
     return Math.max(
         0,
@@ -928,141 +940,115 @@ function localPrice() {
    SUMMARY
    ========================================================= */
 
-function summary() {
+function updateSummary() {
 
-    const values =
-        [...selected.values()];
-
-    const standard =
-        values.filter(
+    const standardCount =
+        [
+            ...selected.values()
+        ].filter(
             (rig) =>
                 rig.type ===
                 'standard'
         ).length;
 
-    const premium =
-        values.filter(
+
+    const premiumCount =
+        [
+            ...selected.values()
+        ].filter(
             (rig) =>
                 rig.type ===
                 'premium'
         ).length;
 
-    const hours =
-        Number(
-            durationSelect?.value || 1
-        );
 
-    setText(
-        'summaryStandard',
-        standard
-    );
+    const summaryStandard =
+        $('summaryStandard');
 
-    setText(
-        'summaryPremium',
-        premium
-    );
+    const summaryPremium =
+        $('summaryPremium');
 
-    setText(
-        'summaryDuration',
-        `${hours} ${
-            hours === 1
-                ? 'hora'
-                : 'horas'
-        }`
-    );
+    const summaryDuration =
+        $('summaryDuration');
 
-    setText(
-        'reservationTotal',
-        money(
-            localPrice()
-        )
-    );
+    const total =
+        $('reservationTotal');
 
-    if (submitButton) {
+    const submit =
+        $('reservationSubmit');
 
-        submitButton.disabled =
-            !(
-                currentUser &&
-                dateSelect?.value &&
-                timeSelect?.value &&
-                durationSelect?.value &&
-                selected.size > 0 &&
-                !loadingAvailability
+
+    if (summaryStandard) {
+
+        summaryStandard.textContent =
+            String(
+                standardCount
             );
     }
-}
 
 
-/* =========================================================
-   USER PROFILE
-   ========================================================= */
+    if (summaryPremium) {
 
-async function profile(user) {
-    if (!user) {
-        currentProfile = null;
-        return;
+        summaryPremium.textContent =
+            String(
+                premiumCount
+            );
     }
 
-    try {
-        const snapshot = await getDoc(
-            doc(db, 'users', user.uid)
+
+    const hours =
+        Number(
+            durationSelect?.value ||
+            1
         );
 
-        const firestoreProfile = snapshot.exists()
-            ? snapshot.data()
-            : {};
 
-        currentProfile = {
-            name:
-                firestoreProfile.name ||
-                user.displayName ||
-                '',
+    if (summaryDuration) {
 
-            email:
-                firestoreProfile.email ||
-                user.email ||
-                '',
+        summaryDuration.textContent =
+            `${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+    }
 
-            phoneNumber:
-                firestoreProfile.phoneNumber ||
-                ''
-        };
 
-        console.log('[RESERVAS] Perfil cargado:', {
-            name: currentProfile.name,
-            email: currentProfile.email,
-            phoneNumber: currentProfile.phoneNumber
-                ? 'CARGADO'
-                : 'NO DISPONIBLE'
-        });
+    if (total) {
 
-    } catch (error) {
-        console.error(
-            '[RESERVAS] No se pudo cargar el perfil:',
-            error
-        );
+        total.textContent =
+            money(
+                calculateDisplayPrice()
+            );
+    }
 
-        /*
-         * Podemos recuperar nombre/correo desde Auth,
-         * pero teléfono normalmente está en Firestore.
-         */
-        currentProfile = {
-            name: user.displayName || '',
-            email: user.email || '',
-            phoneNumber: ''
-        };
+
+    if (submit) {
+
+        submit.disabled =
+            !currentUser ||
+            !dateSelect?.value ||
+            !timeSelect?.value ||
+            !durationSelect?.value ||
+            selected.size === 0;
     }
 }
+
+
 /* =========================================================
    AUTH
+
+   NO cargamos:
+   - name
+   - email
+   - phone
+
+   El backend los obtiene usando el UID.
    ========================================================= */
 
 onAuthStateChanged(
     auth,
-    async (user) => {
+    (user) => {
 
         currentUser =
             user;
+
 
         if (user) {
 
@@ -1071,13 +1057,7 @@ onAuthStateChanged(
                 user.uid
             );
 
-            await profile(
-                user
-            );
 
-            /*
-             * Quitamos mensaje viejo de login.
-             */
             message('');
 
         } else {
@@ -1086,13 +1066,15 @@ onAuthStateChanged(
                 '[RESERVAS] Usuario no autenticado.'
             );
 
+
             message(
                 'Iniciá sesión para hacer una reserva.',
                 'error'
             );
         }
 
-        summary();
+
+        updateSummary();
     }
 );
 
@@ -1105,20 +1087,34 @@ dateSelect?.addEventListener(
     'change',
     async () => {
 
-        selected.clear();
-
-        /*
-         * Primero cargamos config/promos del día.
-         */
         try {
+
+            selected.clear();
+
+
+            /*
+             * Cargamos promociones/configuración
+             * correspondientes a esa fecha.
+             */
 
             await loadConfig();
 
+
+            makeTimes();
+
+
             /*
-             * loadConfig ya llama makeTimes().
+             * Después de cambiar fecha obligamos
+             * a seleccionar hora otra vez.
              */
 
-            summary();
+            if (timeSelect) {
+                timeSelect.value = '';
+            }
+
+
+            updateSummary();
+
 
         } catch (error) {
 
@@ -1126,6 +1122,7 @@ dateSelect?.addEventListener(
                 '[RESERVAS] Error cambiando fecha:',
                 error
             );
+
 
             message(
                 error.message,
@@ -1142,9 +1139,9 @@ dateSelect?.addEventListener(
 
 timeSelect?.addEventListener(
     'change',
-    async () => {
+    () => {
 
-        await availability();
+        loadAvailability();
     }
 );
 
@@ -1155,9 +1152,9 @@ timeSelect?.addEventListener(
 
 durationSelect?.addEventListener(
     'change',
-    async () => {
+    () => {
 
-        await availability();
+        loadAvailability();
     }
 );
 
@@ -1177,21 +1174,22 @@ document
                 'change',
                 () => {
 
-                    const proofBlock =
-                        $('proofBlock');
-
-                    if (!proofBlock) {
-                        return;
-                    }
-
                     const payment =
                         document.querySelector(
                             'input[name="payment"]:checked'
                         )?.value;
 
-                    proofBlock.hidden =
-                        payment !==
-                        'transferencia';
+
+                    const proofBlock =
+                        $('proofBlock');
+
+
+                    if (proofBlock) {
+
+                        proofBlock.hidden =
+                            payment !==
+                            'transferencia';
+                    }
                 }
             );
         }
@@ -1199,7 +1197,7 @@ document
 
 
 /* =========================================================
-   SUBMIT RESERVATION
+   SUBMIT
    ========================================================= */
 
 form?.addEventListener(
@@ -1207,6 +1205,11 @@ form?.addEventListener(
     async (event) => {
 
         event.preventDefault();
+
+
+        /* =================================================
+           AUTH
+           ================================================= */
 
         if (!currentUser) {
 
@@ -1218,19 +1221,43 @@ form?.addEventListener(
             return;
         }
 
-        if (
-            !dateSelect?.value ||
-            !timeSelect?.value ||
-            !durationSelect?.value
-        ) {
+
+        /* =================================================
+           VALIDATION
+           ================================================= */
+
+        if (!dateSelect?.value) {
 
             message(
-                'Seleccioná fecha, hora y duración.',
+                'Seleccioná una fecha.',
                 'error'
             );
 
             return;
         }
+
+
+        if (!timeSelect?.value) {
+
+            message(
+                'Seleccioná una hora.',
+                'error'
+            );
+
+            return;
+        }
+
+
+        if (!durationSelect?.value) {
+
+            message(
+                'Seleccioná la duración.',
+                'error'
+            );
+
+            return;
+        }
+
 
         if (
             selected.size === 0
@@ -1244,10 +1271,12 @@ form?.addEventListener(
             return;
         }
 
+
         const payment =
             document.querySelector(
                 'input[name="payment"]:checked'
             )?.value;
+
 
         if (!payment) {
 
@@ -1259,55 +1288,68 @@ form?.addEventListener(
             return;
         }
 
+
         /*
-         * PayPal todavía no implementado.
+         * Tarjeta todavía no disponible.
          */
+
         if (
-            payment === 'paypal'
+            payment ===
+            'tarjeta'
         ) {
 
             message(
-                'El pago con tarjeta/PayPal todavía no está disponible.',
+                'El pago con tarjeta todavía no está disponible.',
                 'error'
             );
 
             return;
         }
 
+
+        /* =================================================
+           BUTTON
+           ================================================= */
+
+        const submitButton =
+            $('reservationSubmit');
+
+
         if (submitButton) {
-            submitButton.disabled = true;
+
+            submitButton.disabled =
+                true;
         }
 
+
         message(
-            'Procesando reserva…'
+            'Procesando reserva…',
+            'info'
         );
 
+
         try {
+
+            /* =================================================
+               PAYMENT PROOF
+               ================================================= */
 
             let proofPath =
                 null;
 
-            /* =============================================
-               TRANSFER
-               ============================================= */
 
             if (
                 payment ===
                 'transferencia'
             ) {
 
-                const proofInput =
+                const fileInput =
                     $('paymentProof');
 
-                if (!proofInput) {
-
-                    throw new Error(
-                        'No se encontró el campo para subir el comprobante.'
-                    );
-                }
 
                 const file =
-                    proofInput.files?.[0];
+                    fileInput?.files?.[0];
+
 
                 if (!file) {
 
@@ -1316,9 +1358,11 @@ form?.addEventListener(
                     );
                 }
 
+
                 /*
-                 * Máximo 5 MB.
+                 * 5 MB máximo.
                  */
+
                 if (
                     file.size >
                     5 * 1024 * 1024
@@ -1329,14 +1373,18 @@ form?.addEventListener(
                     );
                 }
 
+
                 /*
-                 * Tipos permitidos.
+                 * Solamente JPG, PNG o PDF.
                  */
-                const allowedTypes = [
-                    'image/jpeg',
-                    'image/png',
-                    'application/pdf'
-                ];
+
+                const allowedTypes =
+                    [
+                        'image/jpeg',
+                        'image/png',
+                        'application/pdf'
+                    ];
+
 
                 if (
                     !allowedTypes.includes(
@@ -1349,76 +1397,60 @@ form?.addEventListener(
                     );
                 }
 
-                const safeName =
+
+                /*
+                 * Sanitizamos filename.
+                 */
+
+                const safeFileName =
                     file.name.replace(
                         /[^a-zA-Z0-9._-]/g,
                         '_'
                     );
 
+
                 proofPath =
-                    `reservation-proofs/${currentUser.uid}/${crypto.randomUUID()}-${safeName}`;
+                    `reservation-proofs/${currentUser.uid}/${crypto.randomUUID()}-${safeFileName}`;
 
-                console.log(
-                    '[RESERVAS] Subiendo comprobante...'
-                );
 
-                await uploadBytes(
+                /*
+                 * Upload directo a Firebase Storage.
+                 */
+
+                const storageRef =
                     ref(
                         storage,
                         proofPath
-                    ),
+                    );
+
+
+                await uploadBytes(
+                    storageRef,
                     file,
                     {
                         contentType:
                             file.type
                     }
                 );
-
-                console.log(
-                    '[RESERVAS] Comprobante subido:',
-                    proofPath
-                );
             }
 
 
-            /* =============================================
-               CUSTOMER DATA
-               ============================================= */
-
-           if (!currentProfile) {
-    throw new Error(
-        'No se pudieron cargar los datos de tu cuenta.'
-    );
-}
-
-if (!currentProfile.name) {
-    throw new Error(
-        'Tu cuenta no tiene un nombre registrado.'
-    );
-}
-
-if (!currentProfile.email) {
-    throw new Error(
-        'Tu cuenta no tiene un correo registrado.'
-    );
-}
-
-if (!currentProfile.phoneNumber) {
-    throw new Error(
-        'Tu cuenta no tiene un número de teléfono registrado.'
-    );
-}
-
-const customer = {
-    name: currentProfile.name,
-    email: currentProfile.email,
-    phoneNumber: currentProfile.phoneNumber
-};
-
-
-            /* =============================================
+            /* =================================================
                REQUEST BODY
-               ============================================= */
+
+               IMPORTANTE:
+
+               NO mandamos:
+               - customer
+               - name
+               - email
+               - phone
+               - price
+               - total
+               - status
+
+               Todo eso lo decide el backend.
+               ================================================= */
 
             const body = {
 
@@ -1434,36 +1466,48 @@ const customer = {
                     ),
 
                 rigIds:
-                    [...selected.keys()],
+                    [
+                        ...selected.keys()
+                    ],
 
                 payment,
 
-                proofPath,
-
-                customer
+                proofPath
             };
 
+
             console.log(
-                '[RESERVAS] Creando reserva:',
+                '[RESERVAS] Solicitando reserva:',
                 {
-                    ...body,
-                    proofPath:
-                        proofPath
-                            ? '[COMPROBANTE]'
-                            : null
+                    date:
+                        body.date,
+
+                    time:
+                        body.time,
+
+                    duration:
+                        body.duration,
+
+                    rigs:
+                        body.rigIds.length,
+
+                    payment:
+                        body.payment
                 }
             );
 
 
-            /* =============================================
+            /* =================================================
                CREATE
-               ============================================= */
+               ================================================= */
 
-            const response =
+            const result =
                 await api(
                     '/api/reservations/create',
                     {
-                        method: 'POST',
+                        method:
+                            'POST',
+
                         body:
                             JSON.stringify(
                                 body
@@ -1472,33 +1516,59 @@ const customer = {
                 );
 
 
-            /* =============================================
+            /* =================================================
                SUCCESS
-               ============================================= */
-
-            const code =
-                response.code ||
-                response.reservationCode ||
-                'CREADA';
-
-            const total =
-                response.pricing?.total ??
-                response.total ??
-                localPrice();
+               ================================================= */
 
             message(
-                `Reserva ${code} creada. Estado: PENDIENTE. Total: ${money(total)}.`,
+                `Reserva ${result.code} creada. Estado: PENDIENTE. Total: ${money(result.pricing?.total)}.`,
                 'success'
             );
 
+
+            console.log(
+                '[RESERVAS] Reserva creada:',
+                {
+                    id:
+                        result.id,
+
+                    code:
+                        result.code,
+
+                    status:
+                        result.status
+                }
+            );
+
+
+            /*
+             * Limpiamos selección.
+             */
+
             selected.clear();
+
+
+            /*
+             * Limpiamos comprobante.
+             */
+
+            const fileInput =
+                $('paymentProof');
+
+
+            if (fileInput) {
+                fileInput.value = '';
+            }
+
 
             /*
              * Volvemos a consultar disponibilidad
-             * porque esta reserva pending ya debe
-             * bloquear esos rigs.
+             * porque los rigs reservados ahora
+             * deben estar bloqueados.
              */
-            await availability();
+
+            await loadAvailability();
+
 
         } catch (error) {
 
@@ -1507,15 +1577,17 @@ const customer = {
                 error
             );
 
+
             message(
                 error.message ||
                 'No se pudo crear la reserva.',
                 'error'
             );
 
+
         } finally {
 
-            summary();
+            updateSummary();
         }
     }
 );
@@ -1527,62 +1599,38 @@ const customer = {
 
 async function init() {
 
-    console.log(
-        '[RESERVAS] Inicializando...'
-    );
-
-    /*
-     * Verificamos los elementos esenciales.
-     */
-    const requiredElements = {
-        reservationForm: form,
-        reservationDate: dateSelect,
-        reservationTime: timeSelect,
-        reservationDuration:
-            durationSelect,
-        standardGrid:
-            grids.standard,
-        premiumGrid:
-            grids.premium
-    };
-
-    for (
-        const [name, element]
-        of Object.entries(
-            requiredElements
-        )
-    ) {
-
-        if (!element) {
-
-            console.error(
-                `[RESERVAS] Falta #${name} en reservas.html`
-            );
-        }
-    }
-
-    if (
-        !dateSelect ||
-        !timeSelect ||
-        !durationSelect
-    ) {
-
-        console.error(
-            '[RESERVAS] Faltan elementos esenciales del formulario.'
-        );
-
-        return;
-    }
-
-    dates();
-
     try {
+
+        createDates();
+
+
+        /*
+         * Cargamos config usando la primera fecha,
+         * que createDates() ya seleccionó.
+         */
 
         await loadConfig();
 
+
+        makeTimes();
+
+
+        /*
+         * Dejamos que el usuario elija hora.
+         */
+
+        if (timeSelect) {
+            timeSelect.value = '';
+        }
+
+
+        updateSummary();
+
+
         console.log(
-            '[RESERVAS] Inicialización completada.'
+            '[RESERVAS] Inicializado correctamente.'
         );
+
 
     } catch (error) {
 
@@ -1591,13 +1639,13 @@ async function init() {
             error
         );
 
+
         message(
-            error.message,
+            error.message ||
+            'No se pudo cargar el sistema de reservas.',
             'error'
         );
     }
-
-    summary();
 }
 
 
