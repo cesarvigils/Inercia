@@ -1030,168 +1030,490 @@ function renderProductsModal() {
         };
     });
 }
-$("#manageProductsBtn").onclick = renderProductsModal;
+$("#newReservationBtn").onclick = () => {
+    const availableRigs = activeRigs();
 
-function renderProductsModal() {
-    const productRows = products.length
-        ? products
-              .map((product) => {
-                  return `
-                    <div class="product-admin-item">
-                        <div>
-                            <strong>${esc(product.name)}</strong>
-                            <small>${money(product.price)}</small>
-                        </div>
+    /* =========================================================
+       GENERAR OPCIONES DE HORA
+       ========================================================= */
 
-                        <button
-                            type="button"
-                            class="danger product-delete"
-                            data-product="${esc(product.id)}"
-                        >
-                            ELIMINAR
-                        </button>
-                    </div>
-                  `;
-              })
-              .join("")
-        : `
-            <div class="empty-admin">
-                NO HAY PRODUCTOS CREADOS
-            </div>
-          `;
+    const timeOptions = Array.from(
+        { length: 12 },
+        (_, i) => {
+            const hour = i + 10;
+            const value = `${String(hour).padStart(2, "0")}:00`;
 
-    const html = `
-        <span class="eyebrow">CATÁLOGO INTERNO</span>
-        <h2>PRODUCTOS</h2>
+            return `
+                <option value="${value}">
+                    ${ftime(value)}
+                </option>
+            `;
+        }
+    ).join("");
 
-        <form id="productForm">
+
+    /* =========================================================
+       GENERAR RIGS
+       ========================================================= */
+
+    const rigOptions = availableRigs
+        .map((rig) => {
+            const name =
+                typeof displayRigName === "function"
+                    ? displayRigName(rig)
+                    : rig.name;
+
+            return `
+                <label class="admin-rig-option">
+                    <input
+                        type="checkbox"
+                        name="manualRig"
+                        value="${esc(rig.id)}"
+                    >
+
+                    <span>${esc(name)}</span>
+                </label>
+            `;
+        })
+        .join("");
+
+
+    /* =========================================================
+       MODAL
+       ========================================================= */
+
+    modal(`
+        <span class="eyebrow">
+            RESERVA ADMINISTRATIVA
+        </span>
+
+        <h2>NUEVA RESERVA</h2>
+
+        <form id="manualReservationForm">
+
             <label>
                 NOMBRE
                 <input
-                    id="productName"
+                    id="mrName"
                     type="text"
-                    autocomplete="off"
                     required
                 >
             </label>
 
             <label>
-                PRECIO
+                USUARIO / CORREO
                 <input
-                    id="productPrice"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
+                    id="mrUser"
+                    type="text"
+                    placeholder="Opcional"
                 >
             </label>
+
+            <label>
+                TELÉFONO
+                <input
+                    id="mrPhone"
+                    type="tel"
+                    placeholder="Opcional"
+                >
+            </label>
+
+            <div class="form-row">
+
+                <label>
+                    FECHA
+                    <input
+                        id="mrDate"
+                        type="date"
+                        value="${today()}"
+                        required
+                    >
+                </label>
+
+                <label>
+                    HORA
+                    <select
+                        id="mrTime"
+                        required
+                    >
+                        ${timeOptions}
+                    </select>
+                </label>
+
+            </div>
+
+            <label>
+                DURACIÓN
+
+                <select id="mrDuration">
+                    <option value="1">1 HORA</option>
+                    <option value="2">2 HORAS</option>
+                    <option value="3">3 HORAS</option>
+                    <option value="4">4 HORAS</option>
+                </select>
+            </label>
+
+            <div>
+                <label>SIMULADORES</label>
+
+                <div class="admin-rig-select">
+                    ${rigOptions}
+                </div>
+            </div>
+
+            <label>
+                MÉTODO DE PAGO
+
+                <select id="mrPayment">
+                    <option value="efectivo">
+                        EFECTIVO
+                    </option>
+
+                    <option value="transferencia">
+                        TRANSFERENCIA
+                    </option>
+
+                    <option value="tarjeta">
+                        TARJETA
+                    </option>
+                </select>
+            </label>
+
+            <label>
+                ESTADO
+
+                <select id="mrStatus">
+                    <option value="approved">
+                        APROBADA
+                    </option>
+
+                    <option value="pending">
+                        PENDIENTE
+                    </option>
+                </select>
+            </label>
+
+            <div class="manual-total">
+                <span>TOTAL</span>
+
+                <strong id="mrTotal">
+                    L 0
+                </strong>
+            </div>
 
             <button
                 type="submit"
                 class="primary"
             >
-                AGREGAR PRODUCTO
+                CREAR RESERVA
             </button>
+
         </form>
+    `);
 
-        <div class="product-admin-list">
-            ${productRows}
-        </div>
-    `;
 
-    modal(html);
+    /* =========================================================
+       CALCULAR TOTAL
+       ========================================================= */
 
-    const productForm = $("#productForm");
+    function calculateTotal() {
+        const duration =
+            Number($("#mrDuration").value) || 1;
 
-    productForm.onsubmit = async (event) => {
-        event.preventDefault();
+        const selectedIds = $$(
+            'input[name="manualRig"]:checked'
+        ).map((input) => input.value);
 
-        const name = $("#productName").value.trim();
-        const price = Number($("#productPrice").value);
+        const selectedRigs = availableRigs.filter(
+            (rig) => selectedIds.includes(rig.id)
+        );
 
-        if (!name) {
-            alert("Ingresá un nombre para el producto.");
-            return;
-        }
+        const total = selectedRigs.reduce(
+            (sum, rig) => {
+                const type = String(
+                    rig.type || "standard"
+                ).toLowerCase();
 
-        if (!Number.isFinite(price) || price < 0) {
-            alert("Ingresá un precio válido.");
-            return;
-        }
+                const defaultPrice =
+                    type === "premium"
+                        ? 350
+                        : 200;
 
-        const submitButton =
-            productForm.querySelector('button[type="submit"]');
-
-        submitButton.disabled = true;
-        submitButton.textContent = "GUARDANDO...";
-
-        try {
-            await addDoc(
-                collection(db, "products"),
-                {
-                    name,
-                    price,
-                    active: true,
-                    createdBy: user.uid,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
-                }
-            );
-
-            closeModal();
-        } catch (error) {
-            console.error(
-                "[ADMIN] Error creando producto:",
-                error
-            );
-
-            alert("No se pudo crear el producto.");
-
-            submitButton.disabled = false;
-            submitButton.textContent = "AGREGAR PRODUCTO";
-        }
-    };
-
-    $$(".product-delete").forEach((button) => {
-        button.onclick = async () => {
-            const productId = button.dataset.product;
-
-            if (!productId) {
-                return;
-            }
-
-            const confirmed = confirm(
-                "¿Eliminar este producto?"
-            );
-
-            if (!confirmed) {
-                return;
-            }
-
-            button.disabled = true;
-            button.textContent = "ELIMINANDO...";
-
-            try {
-                await deleteDoc(
-                    doc(
-                        db,
-                        "products",
-                        productId
-                    )
+                const price = Number(
+                    rig.pricePerHour ??
+                    defaultPrice
                 );
 
+                return sum + (price * duration);
+            },
+            0
+        );
+
+        $("#mrTotal").textContent =
+            money(total);
+
+        return {
+            total,
+            selectedRigs
+        };
+    }
+
+
+    /* =========================================================
+       EVENTOS
+       ========================================================= */
+
+    $$('input[name="manualRig"]').forEach(
+        (input) => {
+            input.addEventListener(
+                "change",
+                calculateTotal
+            );
+        }
+    );
+
+    $("#mrDuration").addEventListener(
+        "change",
+        calculateTotal
+    );
+
+
+    /* =========================================================
+       CREAR RESERVA
+       ========================================================= */
+
+    $("#manualReservationForm").onsubmit =
+        async (event) => {
+            event.preventDefault();
+
+            const submitButton =
+                event.currentTarget.querySelector(
+                    'button[type="submit"]'
+                );
+
+            const {
+                total,
+                selectedRigs
+            } = calculateTotal();
+
+
+            /* -------------------------
+               VALIDACIONES
+               ------------------------- */
+
+            const name =
+                $("#mrName").value.trim();
+
+            if (!name) {
+                alert(
+                    "Ingresá el nombre del cliente."
+                );
+                return;
+            }
+
+            if (!selectedRigs.length) {
+                alert(
+                    "Seleccioná al menos un simulador."
+                );
+                return;
+            }
+
+
+            /* -------------------------
+               DATOS
+               ------------------------- */
+
+            const status =
+                $("#mrStatus").value;
+
+            const duration =
+                Number(
+                    $("#mrDuration").value
+                );
+
+            const email =
+                $("#mrUser").value.trim();
+
+            const phone =
+                $("#mrPhone").value.trim();
+
+            const code =
+                `ADM-${Date.now()
+                    .toString()
+                    .slice(-6)}`;
+
+
+            /* -------------------------
+               DESACTIVAR BOTÓN
+               ------------------------- */
+
+            submitButton.disabled = true;
+            submitButton.textContent =
+                "CREANDO...";
+
+
+            try {
+
+                /* =============================
+                   CREAR RESERVA
+                   ============================= */
+
+                await addDoc(
+                    collection(
+                        db,
+                        "reservations"
+                    ),
+                    {
+                        code,
+
+                        source: "admin",
+
+                        /*
+                         * No existe usuario Firebase
+                         * necesariamente porque es
+                         * reserva manual.
+                         */
+                        uid: null,
+
+                        customer: {
+                            name,
+
+                            email:
+                                email || null,
+
+                            phone:
+                                phone || null
+                        },
+
+                        date:
+                            $("#mrDate").value,
+
+                        time:
+                            $("#mrTime").value,
+
+                        duration,
+
+                        rigs:
+                            selectedRigs.map(
+                                (rig) => {
+
+                                    const type =
+                                        String(
+                                            rig.type ||
+                                            "standard"
+                                        ).toLowerCase();
+
+                                    const number =
+                                        typeof rigNumber ===
+                                        "function"
+                                            ? rigNumber(rig)
+                                            : Number(
+                                                rig.number ??
+                                                rig.order ??
+                                                0
+                                            );
+
+                                    const rigName =
+                                        typeof displayRigName ===
+                                        "function"
+                                            ? displayRigName(rig)
+                                            : rig.name;
+
+                                    const price =
+                                        Number(
+                                            rig.pricePerHour ??
+                                            (
+                                                type ===
+                                                "premium"
+                                                    ? 350
+                                                    : 200
+                                            )
+                                        );
+
+                                    return {
+                                        id: rig.id,
+                                        rigId: rig.id,
+
+                                        name:
+                                            rigName,
+
+                                        type,
+
+                                        number,
+
+                                        pricePerHour:
+                                            price
+                                    };
+                                }
+                            ),
+
+                        pricing: {
+                            total
+                        },
+
+                        payment: {
+                            method:
+                                $("#mrPayment")
+                                    .value
+                        },
+
+                        status,
+
+                        confirmation: {
+                            status,
+
+                            approvedAt:
+                                status ===
+                                "approved"
+                                    ? serverTimestamp()
+                                    : null,
+
+                            approvedBy:
+                                status ===
+                                "approved"
+                                    ? user.uid
+                                    : null
+                        },
+
+                        createdBy:
+                            user.uid,
+
+                        createdAt:
+                            serverTimestamp(),
+
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+
+                /* =============================
+                   TERMINADO
+                   ============================= */
+
                 closeModal();
+
             } catch (error) {
+
                 console.error(
-                    "[ADMIN] Error eliminando producto:",
+                    "[ADMIN] Error creando reserva manual:",
                     error
                 );
 
-                alert("No se pudo eliminar el producto.");
+                alert(
+                    "No se pudo crear la reserva."
+                );
 
-                button.disabled = false;
-                button.textContent = "ELIMINAR";
+                submitButton.disabled = false;
+                submitButton.textContent =
+                    "CREAR RESERVA";
             }
         };
-    });
-}
+
+
+    /* =========================================================
+       TOTAL INICIAL
+       ========================================================= */
+
+    calculateTotal();
+};
