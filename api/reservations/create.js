@@ -35,15 +35,13 @@ const METHODS = new Set([
 
 const MAX_RIGS = 10;
 
-const MAX_PROOF_SIZE =
-    5 * 1024 * 1024;
+const MAX_PROOF_SIZE = 5 * 1024 * 1024;
 
-const ALLOWED_PROOF_TYPES =
-    new Set([
-        'image/jpeg',
-        'image/png',
-        'application/pdf'
-    ]);
+const ALLOWED_PROOF_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'application/pdf'
+]);
 
 
 /* =========================================================
@@ -58,13 +56,7 @@ export default async function handler(req, res) {
            METHOD
            ================================================= */
 
-        if (
-            !method(
-                req,
-                res,
-                ['POST']
-            )
-        ) {
+        if (!method(req, res, ['POST'])) {
             return;
         }
 
@@ -73,38 +65,34 @@ export default async function handler(req, res) {
            AUTH
            ================================================= */
 
-        const user =
-            await requireUser(req);
-
+        const user = await requireUser(req);
 
         if (!user?.uid) {
-
             throw bad(
                 'Tenés que iniciar sesión.',
                 401
             );
         }
 
-
-        const body =
-            req.body || {};
+        const body = req.body || {};
 
 
         /* =================================================
            CONFIG + DATE/TIME
            ================================================= */
 
-        const config =
-            await getConfig();
+        console.log(
+            '[RESERVAS] Cargando configuración...'
+        );
 
+        const config = await getConfig();
 
-        const when =
-            validateWhen(
-                body.date,
-                body.time,
-                body.duration,
-                config
-            );
+        const when = validateWhen(
+            body.date,
+            body.time,
+            body.duration,
+            config
+        );
 
 
         /* =================================================
@@ -116,29 +104,23 @@ export default async function handler(req, res) {
             body.rigIds.length === 0 ||
             body.rigIds.length > MAX_RIGS
         ) {
-
             throw bad(
                 'Seleccioná al menos un simulador válido.'
             );
         }
 
-
-        const uniqueRigIds =
-            [
-                ...new Set(
-                    body.rigIds.map(
-                        (id) =>
-                            String(id).trim()
-                    )
+        const uniqueRigIds = [
+            ...new Set(
+                body.rigIds.map(
+                    id => String(id).trim()
                 )
-            ].filter(Boolean);
-
+            )
+        ].filter(Boolean);
 
         if (
             uniqueRigIds.length === 0 ||
             uniqueRigIds.length > MAX_RIGS
         ) {
-
             throw bad(
                 'La selección de simuladores es inválida.'
             );
@@ -149,80 +131,58 @@ export default async function handler(req, res) {
            PAYMENT
            ================================================= */
 
-        const payment =
-            String(
-                body.payment || ''
-            ).trim();
-
+        const payment = String(
+            body.payment || ''
+        ).trim();
 
         if (!METHODS.has(payment)) {
-
             throw bad(
                 'Método de pago inválido.'
             );
         }
 
-
         /*
-         * PayPal / tarjeta todavía
-         * no está disponible.
+         * FLUJO:
+         *
+         * transferencia
+         * --------------
+         * Requiere comprobante.
+         * paymentVerification queda pending.
+         *
+         * tarjeta
+         * -------
+         * NO requiere comprobante de transferencia.
+         * paymentVerification queda not_required.
+         *
+         * La integración real del cobro con tarjeta
+         * se puede conectar posteriormente.
+         *
+         * WhatsApp todavía NO se envía aquí.
          */
-
-        if (payment === 'tarjeta') {
-
-            throw bad(
-                'El pago con tarjeta todavía no está disponible.'
-            );
-        }
 
 
         /* =================================================
-           CUSTOMER PROFILE - FIRESTORE
-
-           IMPORTANTE:
-
-           Los datos del cliente NO vienen del navegador.
-
-           El UID viene del Firebase ID Token y
-           buscamos el perfil directamente en:
-
-           Firestore:
-           users/{uid}
-
-           Esperamos:
-           - name
-           - email
-           - phone
-           - phoneNumber (fallback)
+           CUSTOMER PROFILE
            ================================================= */
 
         let profile = {};
 
-
         try {
 
-            const profileDoc =
-                await adminDb
-                    .doc(
-                        `users/${user.uid}`
-                    )
-                    .get();
-
+            const profileDoc = await adminDb
+                .doc(`users/${user.uid}`)
+                .get();
 
             if (profileDoc.exists) {
-
-                profile =
-                    profileDoc.data() || {};
+                profile = profileDoc.data() || {};
             }
-
 
         } catch (error) {
 
             console.error(
-                '[RESERVAS] Error leyendo perfil de Firestore:',
+                '[RESERVAS] Error leyendo perfil:',
                 error
             );
-
 
             throw bad(
                 'No pudimos cargar los datos de tu cuenta.'
@@ -233,57 +193,42 @@ export default async function handler(req, res) {
         /* =================================================
            CUSTOMER DATA
 
-           Firestore es la fuente principal.
+           NO confiamos en datos enviados desde DevTools.
 
-           Firebase Auth solamente sirve de fallback
-           para nombre/email.
+           Nombre/teléfono/email salen de:
+           Firestore users/{uid}
 
-           Teléfono:
-           1. profile.phone
-           2. profile.phoneNumber
+           Auth sirve de fallback para nombre/email.
            ================================================= */
 
         const customer = {
 
-            name:
-                String(
-                    profile.name ||
-                    user.name ||
-                    ''
-                ).trim(),
+            name: String(
+                profile.name ||
+                user.name ||
+                ''
+            ).trim(),
 
-            email:
-                String(
-                    profile.email ||
-                    user.email ||
-                    ''
-                )
-                    .trim()
-                    .toLowerCase(),
+            email: String(
+                profile.email ||
+                user.email ||
+                ''
+            )
+                .trim()
+                .toLowerCase(),
 
-            phoneNumber:
-                String(
-                    profile.phone ||
-                    profile.phoneNumber ||
-                    ''
-                ).trim()
+            phoneNumber: String(
+                profile.phone ||
+                profile.phoneNumber ||
+                ''
+            ).trim()
         };
 
 
-        /*
-         * Log seguro.
-         *
-         * No imprimimos teléfono/email completos.
-         */
-
         console.log(
-            '[RESERVAS] Perfil cargado desde Firestore:',
+            '[RESERVAS] Perfil:',
             {
-                uid:
-                    user.uid,
-
-                documentExists:
-                    Object.keys(profile).length > 0,
+                uid: user.uid,
 
                 name:
                     customer.name
@@ -303,28 +248,19 @@ export default async function handler(req, res) {
         );
 
 
-        /* =================================================
-           VALIDATE CUSTOMER
-           ================================================= */
-
         if (!customer.name) {
-
             throw bad(
                 'Tu cuenta no tiene un nombre registrado.'
             );
         }
 
-
         if (!customer.email) {
-
             throw bad(
                 'Tu cuenta no tiene un correo registrado.'
             );
         }
 
-
         if (!customer.phoneNumber) {
-
             throw bad(
                 'Tu cuenta no tiene un número de teléfono registrado.'
             );
@@ -335,72 +271,59 @@ export default async function handler(req, res) {
            LOAD RIGS
            ================================================= */
 
-        const rigRefs =
-            uniqueRigIds.map(
-                (id) =>
-                    adminDb.doc(
-                        `rigs/${id}`
-                    )
-            );
+        const rigRefs = uniqueRigIds.map(
+            id =>
+                adminDb.doc(
+                    `rigs/${id}`
+                )
+        );
 
-
-        const rigDocs =
-            await adminDb.getAll(
-                ...rigRefs
-            );
-
+        const rigDocs = await adminDb.getAll(
+            ...rigRefs
+        );
 
         if (
             rigDocs.some(
-                (snapshot) =>
-                    !snapshot.exists
+                snapshot => !snapshot.exists
             )
         ) {
-
             throw bad(
                 'Uno de los simuladores seleccionados no existe.'
             );
         }
 
 
-        const rigs =
-            rigDocs.map(
-                (snapshot) => {
+        const rigs = rigDocs.map(
+            snapshot => {
 
-                    const data =
-                        snapshot.data() || {};
+                const data =
+                    snapshot.data() || {};
 
+                return {
+                    id: snapshot.id,
 
-                    return {
+                    name: String(
+                        data.name || ''
+                    ).trim(),
 
-                        id:
-                            snapshot.id,
+                    type: String(
+                        data.type || ''
+                    )
+                        .trim()
+                        .toLowerCase(),
 
-                        name:
-                            String(
-                                data.name || ''
-                            ).trim(),
+                    order: Number(
+                        data.order
+                    ),
 
-                        type:
-                            String(
-                                data.type || ''
-                            )
-                                .trim()
-                                .toLowerCase(),
+                    active:
+                        data.active === true,
 
-                        order:
-                            Number(
-                                data.order
-                            ),
-
-                        active:
-                            data.active === true,
-
-                        maintenance:
-                            data.maintenance === true
-                    };
-                }
-            );
+                    maintenance:
+                        data.maintenance === true
+                };
+            }
+        );
 
 
         /* =================================================
@@ -409,42 +332,33 @@ export default async function handler(req, res) {
 
         if (
             rigs.some(
-                (rig) =>
-                    !rig.active
+                rig => !rig.active
             )
         ) {
-
             throw bad(
                 'Uno de los simuladores seleccionados ya no está activo.'
             );
         }
 
-
         if (
             rigs.some(
-                (rig) =>
-                    rig.maintenance
+                rig => rig.maintenance
             )
         ) {
-
             throw bad(
                 'Uno de los simuladores seleccionados está en mantenimiento.'
             );
         }
 
-
         if (
             rigs.some(
-                (rig) =>
+                rig =>
                     ![
                         'standard',
                         'premium'
-                    ].includes(
-                        rig.type
-                    )
+                    ].includes(rig.type)
             )
         ) {
-
             throw bad(
                 'Uno de los simuladores tiene una configuración inválida.'
             );
@@ -459,8 +373,7 @@ export default async function handler(req, res) {
             await activePromotions(
                 body.date,
                 rigs.map(
-                    (rig) =>
-                        rig.type
+                    rig => rig.type
                 )
             );
 
@@ -468,122 +381,116 @@ export default async function handler(req, res) {
         /* =================================================
            SERVER-SIDE PRICE
 
-           Nunca confiamos en el total enviado
-           por el navegador.
+           El frontend NO decide el precio.
            ================================================= */
 
         const pricing =
             priceReservation(
                 rigs,
-                Number(
-                    body.duration
-                ),
+                Number(body.duration),
                 config,
                 promotions,
                 when.lead
             );
 
 
+        console.log(
+            '[RESERVAS] Precio calculado:',
+            pricing
+        );
+
+
         /* =================================================
            PAYMENT PROOF
            ================================================= */
 
-        let proof =
-            null;
+        let proof = null;
 
 
-        if (
-            payment ===
-            'transferencia'
-        ) {
+        /* -------------------------------------------------
+           TRANSFERENCIA
+           ------------------------------------------------- */
 
-            const proofPath =
-                String(
-                    body.proofPath || ''
-                ).trim();
+        if (payment === 'transferencia') {
+
+            const proofPath = String(
+                body.proofPath || ''
+            ).trim();
 
 
             if (!proofPath) {
-
                 throw bad(
                     'Subí el comprobante de transferencia.'
                 );
             }
 
 
-            /*
-             * El archivo tiene que pertenecer
-             * al usuario autenticado.
-             */
+            /* =============================================
+               CHECK OWNER
+               ============================================= */
 
             const expectedPrefix =
                 `reservation-proofs/${user.uid}/`;
-
 
             if (
                 !proofPath.startsWith(
                     expectedPrefix
                 )
             ) {
-
                 throw bad(
                     'Comprobante inválido.'
                 );
             }
 
 
-            /*
-             * Evitamos traversal.
-             */
+            /* =============================================
+               PATH TRAVERSAL
+               ============================================= */
 
             if (
                 proofPath.includes('../') ||
                 proofPath.includes('..\\')
             ) {
-
                 throw bad(
                     'Comprobante inválido.'
                 );
             }
 
 
-            /* -------------------------------------------------
-               STORAGE FILE
-               ------------------------------------------------- */
+            /* =============================================
+               STORAGE
+               ============================================= */
+
+            console.log(
+                '[RESERVAS] Verificando comprobante...'
+            );
 
             const file =
                 adminStorage
                     .bucket()
-                    .file(
-                        proofPath
-                    );
-
+                    .file(proofPath);
 
             const [exists] =
                 await file.exists();
 
-
             if (!exists) {
-
                 throw bad(
                     'No encontramos el comprobante subido.'
                 );
             }
 
 
-            /* -------------------------------------------------
+            /* =============================================
                METADATA
-               ------------------------------------------------- */
+               ============================================= */
 
             const [metadata] =
                 await file.getMetadata();
-
 
             const size =
                 Number(
                     metadata.size || 0
                 );
-
 
             const contentType =
                 String(
@@ -591,31 +498,29 @@ export default async function handler(req, res) {
                 ).toLowerCase();
 
 
-            /* -------------------------------------------------
+            /* =============================================
                SIZE
-               ------------------------------------------------- */
+               ============================================= */
 
             if (
                 !size ||
                 size > MAX_PROOF_SIZE
             ) {
-
                 throw bad(
                     'El comprobante no puede pesar más de 5 MB.'
                 );
             }
 
 
-            /* -------------------------------------------------
+            /* =============================================
                MIME
-               ------------------------------------------------- */
+               ============================================= */
 
             if (
                 !ALLOWED_PROOF_TYPES.has(
                     contentType
                 )
             ) {
-
                 throw bad(
                     'El comprobante debe ser JPG, PNG o PDF.'
                 );
@@ -623,19 +528,63 @@ export default async function handler(req, res) {
 
 
             proof = {
-
-                path:
-                    proofPath,
-
+                path: proofPath,
                 contentType,
-
                 size
             };
+
+            console.log(
+                '[RESERVAS] Comprobante válido.'
+            );
         }
 
 
         /* =================================================
-           RESERVATION REFERENCE
+           PAYMENT VERIFICATION STATE
+           ================================================= */
+
+        const paymentVerification =
+            payment === 'transferencia'
+                ? {
+                    required: true,
+                    status: 'pending',
+                    verifiedAt: null,
+                    verifiedBy: null
+                }
+                : {
+                    required: false,
+                    status: 'not_required',
+                    verifiedAt: null,
+                    verifiedBy: null
+                };
+
+
+        /* =================================================
+           FUTURE CONFIRMATION / WHATSAPP
+
+           NO manda WhatsApp todavía.
+
+           Dejamos la estructura para posteriormente hacer:
+
+           confirmation.whatsapp.status = sent
+           confirmation.whatsapp.sentAt = Timestamp
+           confirmation.whatsapp.messageId = ...
+           ================================================= */
+
+        const confirmation = {
+
+            status: 'pending',
+
+            whatsapp: {
+                status: 'pending',
+                sentAt: null,
+                messageId: null
+            }
+        };
+
+
+        /* =================================================
+           RESERVATION
            ================================================= */
 
         const reservationRef =
@@ -644,7 +593,6 @@ export default async function handler(req, res) {
                     'reservations'
                 )
                 .doc();
-
 
         const reservationCode =
             code();
@@ -656,7 +604,7 @@ export default async function handler(req, res) {
 
         const lockRefs =
             rigs.flatMap(
-                (rig) => {
+                rig => {
 
                     const ids =
                         slotIds(
@@ -667,9 +615,8 @@ export default async function handler(req, res) {
                             rig.id
                         );
 
-
                     return ids.map(
-                        (id) =>
+                        id =>
                             adminDb.doc(
                                 `reservationLocks/${id}`
                             )
@@ -678,24 +625,28 @@ export default async function handler(req, res) {
             );
 
 
+        console.log(
+            '[RESERVAS] Locks necesarios:',
+            lockRefs.length
+        );
+
+
         /* =================================================
            TRANSACTION
 
-           Dentro de la transacción:
-           1. comprobamos locks
-           2. creamos locks
-           3. creamos reserva
+           IMPORTANTE:
+           Locks + reserva se crean juntos.
 
-           Así evitamos dos reservas simultáneas
-           sobre el mismo rig/horario.
+           Si falla cualquier parte, Firestore no crea
+           ninguno de los dos.
            ================================================= */
 
         await adminDb.runTransaction(
-            async (transaction) => {
+            async transaction => {
 
-                /* -------------------------------------------------
+                /* =========================================
                    CHECK LOCKS
-                   ------------------------------------------------- */
+                   ========================================= */
 
                 const lockDocs =
                     lockRefs.length
@@ -707,11 +658,10 @@ export default async function handler(req, res) {
 
                 if (
                     lockDocs.some(
-                        (snapshot) =>
+                        snapshot =>
                             snapshot.exists
                     )
                 ) {
-
                     throw bad(
                         'Uno de esos simuladores acaba de ser reservado. Actualizá la disponibilidad.',
                         409
@@ -719,9 +669,9 @@ export default async function handler(req, res) {
                 }
 
 
-                /* -------------------------------------------------
+                /* =========================================
                    CREATE LOCKS
-                   ------------------------------------------------- */
+                   ========================================= */
 
                 for (
                     const lockRef
@@ -731,7 +681,6 @@ export default async function handler(req, res) {
                     transaction.create(
                         lockRef,
                         {
-
                             reservationId:
                                 reservationRef.id,
 
@@ -751,17 +700,17 @@ export default async function handler(req, res) {
                 }
 
 
-                /* -------------------------------------------------
+                /* =========================================
                    CREATE RESERVATION
-                   ------------------------------------------------- */
+                   ========================================= */
 
                 transaction.create(
                     reservationRef,
                     {
 
-                        /* =============================
+                        /* ---------------------------------
                            IDENTIFICATION
-                           ============================= */
+                           --------------------------------- */
 
                         code:
                             reservationCode,
@@ -770,15 +719,11 @@ export default async function handler(req, res) {
                             user.uid,
 
 
-                        /* =============================
-                           CUSTOMER SNAPSHOT
-
-                           Guardamos copia de los datos
-                           usados al momento de reservar.
-                           ============================= */
+                        /* ---------------------------------
+                           CUSTOMER
+                           --------------------------------- */
 
                         customer: {
-
                             name:
                                 customer.name,
 
@@ -790,9 +735,9 @@ export default async function handler(req, res) {
                         },
 
 
-                        /* =============================
+                        /* ---------------------------------
                            DATE / TIME
-                           ============================= */
+                           --------------------------------- */
 
                         date:
                             body.date,
@@ -806,14 +751,13 @@ export default async function handler(req, res) {
                             ),
 
 
-                        /* =============================
+                        /* ---------------------------------
                            RIGS
-                           ============================= */
+                           --------------------------------- */
 
                         rigs:
                             rigs.map(
-                                (rig) => ({
-
+                                rig => ({
                                     id:
                                         rig.id,
 
@@ -829,45 +773,54 @@ export default async function handler(req, res) {
                             ),
 
 
-                        /* =============================
+                        /* ---------------------------------
                            PAYMENT
-                           ============================= */
+                           --------------------------------- */
 
                         payment,
 
                         paymentProof:
                             proof,
 
+                        paymentVerification,
 
-                        /* =============================
-                           SERVER CALCULATED PRICE
-                           ============================= */
+
+                        /* ---------------------------------
+                           CONFIRMATION / WHATSAPP
+                           --------------------------------- */
+
+                        confirmation,
+
+
+                        /* ---------------------------------
+                           PRICING
+                           --------------------------------- */
 
                         pricing,
 
 
-                        /* =============================
+                        /* ---------------------------------
                            PROMOTIONS
-                           ============================= */
+                           --------------------------------- */
 
                         promotionIds:
                             promotions.map(
-                                (promotion) =>
+                                promotion =>
                                     promotion.id
                             ),
 
 
-                        /* =============================
+                        /* ---------------------------------
                            STATUS
-                           ============================= */
+                           --------------------------------- */
 
                         status:
                             'pending',
 
 
-                        /* =============================
+                        /* ---------------------------------
                            TIMESTAMPS
-                           ============================= */
+                           --------------------------------- */
 
                         createdAt:
                             FieldValue.serverTimestamp(),
@@ -881,7 +834,7 @@ export default async function handler(req, res) {
 
 
         /* =================================================
-           RESPONSE
+           TRANSACTION COMPLETED
            ================================================= */
 
         console.log(
@@ -896,16 +849,29 @@ export default async function handler(req, res) {
                 uid:
                     user.uid,
 
+                payment,
+
+                paymentVerification:
+                    paymentVerification.status,
+
                 status:
                     'pending'
             }
         );
 
 
+        /* =================================================
+           RESPONSE
+
+           El frontend espera esta respuesta ANTES
+           de mostrar el alert de éxito.
+           ================================================= */
+
         return json(
             res,
             201,
             {
+                success: true,
 
                 id:
                     reservationRef.id,
@@ -915,6 +881,17 @@ export default async function handler(req, res) {
 
                 status:
                     'pending',
+
+                payment,
+
+                paymentVerification:
+                    paymentVerification.status,
+
+                confirmationStatus:
+                    confirmation.status,
+
+                whatsappStatus:
+                    confirmation.whatsapp.status,
 
                 pricing
             }
@@ -927,7 +904,6 @@ export default async function handler(req, res) {
             '[CREATE RESERVATION]',
             error
         );
-
 
         return fail(
             res,
