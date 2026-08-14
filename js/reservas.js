@@ -1634,8 +1634,8 @@ form?.addEventListener(
                 'transferencia'
             ) {
 
-                const input =
-                    $('paymentProof');
+               const proofInput =
+    $('paymentReceipt');
 
 
                 const file =
@@ -1894,7 +1894,7 @@ form?.addEventListener(
                ================================================= */
 
             const proofInput =
-                $('paymentProof');
+    $('paymentReceipt');
 
 
             if (proofInput) {
