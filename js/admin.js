@@ -169,255 +169,127 @@ function listen() {
     });
     loadSettings();
 }
+function normalizeRigType(value) {
+    return String(value || "")
+        .trim()
+        .toLowerCase() === "premium"
+        ? "premium"
+        : "standard";
+}
 
-// Active rigs helper
-function activeRigs() {
-    const defaults = Array.from(
-        { length: 10 },
-        (_, i) => ({
-            id: i < 8
-                ? `standard-${i + 1}`
-                : `premium-${i - 7}`,
+function rigNumber(rig) {
+    const type = normalizeRigType(rig.type);
 
-            name: i < 8
-                ? `Standard ${i + 1}`
-                : `Premium ${i - 7}`,
-
-            type: i < 8
-                ? "standard"
-                : "premium",
-
-            order: i + 1,
-            status: "active",
-        })
-    );
-
-    // Si Firebase todavía no tiene rigs,
-    // usamos los 10 predeterminados.
-    if (!rigs.length) {
-        return defaults;
+    // Primero usamos number si existe.
+    if (rig.number != null) {
+        return Number(rig.number);
     }
 
-    // Combinar defaults + datos reales de Firebase.
-    const merged = defaults.map((fallback) => {
-        const real = rigs.find((rig) => {
-            // Match por ID
-            if (rig.id === fallback.id) {
-                return true;
-            }
+    // Si el order global es 1-10:
+    // Standard 1-8
+    // Premium 9-10 -> Premium 1-2
+    if (rig.order != null) {
+        const order = Number(rig.order);
 
-            // Match por nombre
-            if (
-                String(rig.name || "").toLowerCase() ===
-                fallback.name.toLowerCase()
-            ) {
-                return true;
-            }
+        if (type === "premium" && order > 8) {
+            return order - 8;
+        }
 
-            // Match por tipo + número
-            const sameType =
-                String(rig.type || "").toLowerCase() ===
-                fallback.type;
+        return order;
+    }
 
-            const realNumber =
-                Number(
-                    rig.number ??
-                    rig.order ??
-                    0
-                );
+    // Último fallback: sacar número del nombre.
+    const match = String(rig.name || "").match(/\d+/);
 
-            const fallbackNumber =
-                fallback.type === "standard"
-                    ? fallback.order
-                    : fallback.order - 8;
-
-            return (
-                sameType &&
-                realNumber === fallbackNumber
-            );
-        });
-
-        return real
-            ? {
-                  ...fallback,
-                  ...real,
-
-                  // Conservamos ID real de Firestore
-                  id: real.id,
-
-                  // El order del calendario debe seguir
-                  // siendo 1-10.
-                  order: fallback.order,
-              }
-            : fallback;
-    });
-
-    // También incluir rigs adicionales creados
-    // desde el admin.
-    const extras = rigs.filter((rig) => {
-        return !merged.some(
-            (existing) =>
-                existing.id === rig.id
-        );
-    });
-
-    return [...merged, ...extras]
-        .filter(
-            (rig) =>
-                rig.status !== "disabled"
-        )
-        .sort(
-            (a, b) =>
-                Number(a.order || 999) -
-                Number(b.order || 999)
-        );
-}
-function rr(r) {
-    return r.rigs || r.simulators || [];
+    return match
+        ? Number(match[0])
+        : 0;
 }
 
-function hasRig(reservation, rig) {
-    const reservedRigs = rr(reservation);
+function displayRigName(rig) {
+    const type = normalizeRigType(rig.type);
+    const number = rigNumber(rig);
 
-    return reservedRigs.some((reserved) => {
-        /* ==========================================
-           FORMATO STRING
-           ========================================== */
+    return `${type === "premium" ? "Premium" : "Standard"} ${number}`;
+}
+// Active rigs helper
+function activeRigs() {
+    const active = rigs
+        .filter(rig => rig.status !== "disabled")
+        .map(rig => ({
+            ...rig,
+            type: normalizeRigType(rig.type)
+        }));
+
+    return active.sort((a, b) => {
+        // Standard siempre primero.
+        if (a.type !== b.type) {
+            return a.type === "standard"
+                ? -1
+                : 1;
+        }
+
+        return rigNumber(a) - rigNumber(b);
+    });
+}
+function rr(reservation) {
+    return reservation.rigs ||
+           reservation.simulators ||
+           [];
+}
+
+function hasRig(reservation, calendarRig) {
+    const calendarId =
+        String(calendarRig.id || "");
+
+    const calendarType =
+        normalizeRigType(calendarRig.type);
+
+    const calendarNumber =
+        rigNumber(calendarRig);
+
+    return rr(reservation).some(reserved => {
+        /* ============================
+           ID
+           ============================ */
 
         if (typeof reserved === "string") {
-            const value = reserved
-                .trim()
-                .toLowerCase();
-
-            const rigId = String(rig.id || "")
-                .trim()
-                .toLowerCase();
-
-            const rigName = String(rig.name || "")
-                .trim()
-                .toLowerCase();
-
-            // Match exacto únicamente
-            return value === rigId || value === rigName;
+            // Las reservas nuevas deberían guardar
+            // el ID real del rig.
+            return reserved === calendarId;
         }
 
+        const reservedId =
+            String(
+                reserved.id ||
+                reserved.rigId ||
+                ""
+            );
 
-        /* ==========================================
-           FORMATO OBJECT
-           ========================================== */
-
-        const reservedId = String(
-            reserved.id ||
-            reserved.rigId ||
-            ""
-        )
-            .trim()
-            .toLowerCase();
-
-        const rigId = String(rig.id || "")
-            .trim()
-            .toLowerCase();
-
-
-        // 1. ID exacto tiene prioridad
         if (
             reservedId &&
-            rigId &&
-            reservedId === rigId
+            calendarId &&
+            reservedId === calendarId
         ) {
             return true;
         }
 
+        /* ============================
+           TYPE + NUMBER
+           ============================ */
 
-        /* ==========================================
-           TYPE
-           ========================================== */
+        const reservedType =
+            normalizeRigType(
+                reserved.type
+            );
 
-        const reservedType = String(
-            reserved.type ||
-            reserved.category ||
-            ""
-        )
-            .trim()
-            .toLowerCase();
+        const reservedNumber =
+            rigNumber(reserved);
 
-        const rigType = String(
-            rig.type || ""
-        )
-            .trim()
-            .toLowerCase();
-
-
-        /* ==========================================
-           NUMBER
-           ========================================== */
-
-        const reservedNumber = Number(
-            reserved.number ??
-            reserved.order ??
-            reserved.rigNumber ??
-            0
+        return (
+            reservedType === calendarType &&
+            reservedNumber === calendarNumber
         );
-
-        let rigNumber = Number(
-            rig.number ??
-            rig.rigNumber ??
-            0
-        );
-
-        // Los defaults del calendario tienen:
-        // Standard: order 1-8
-        // Premium:  order 9-10
-        //
-        // Convertimos Premium 9/10 -> Premium 1/2.
-        if (!rigNumber && rig.order) {
-            rigNumber =
-                rigType === "premium"
-                    ? Number(rig.order) - 8
-                    : Number(rig.order);
-        }
-
-
-        // Para hacer match por número,
-        // TAMBIÉN tiene que coincidir el tipo.
-        if (
-            reservedType &&
-            rigType &&
-            reservedType === rigType &&
-            reservedNumber &&
-            rigNumber &&
-            reservedNumber === rigNumber
-        ) {
-            return true;
-        }
-
-
-        /* ==========================================
-           NAME EXACTO
-           ========================================== */
-
-        const reservedName = String(
-            reserved.name || ""
-        )
-            .trim()
-            .toLowerCase();
-
-        const rigName = String(
-            rig.name || ""
-        )
-            .trim()
-            .toLowerCase();
-
-        if (
-            reservedName &&
-            rigName &&
-            reservedName === rigName
-        ) {
-            return true;
-        }
-
-
-        return false;
     });
 }
 
@@ -428,7 +300,11 @@ function renderCalendar() {
         list = reservations.filter((r) => r.date === date && ["pending", "approved"].includes(r.status)),
         el = $("#reservationCalendar");
     el.style.setProperty("--rig-count", Math.max(rs.length, 1));
-    let h = `<div class="cal-head"><div class="cell">HORA</div>${rs.map((r) => `<div class="cell">${esc(r.name)}</div>`).join("")}</div>`;
+    let h = `<div class="cal-head"><div class="cell">HORA</div>${rs.map((r) => `
+    <div class="cell">
+        ${esc(displayRigName(r))}
+    </div>
+`).join("")}</div>`;
     for (let n = 10; n <= 21; n++) {
         let t = `${String(n).padStart(2, "0")}:00`;
         h += `<div class="cal-row"><div class="cell time">${ftime(t)}</div>${rs
