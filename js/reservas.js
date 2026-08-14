@@ -1639,7 +1639,7 @@ form?.addEventListener(
 
 
                 const file =
-                    input?.files?.[0];
+                    proofInput?.files?.[0];
 
 
                 if (!file) {
@@ -1894,7 +1894,7 @@ form?.addEventListener(
                ================================================= */
 
             const proofInput =
-    $('paymentReceipt');
+                $('paymentReceipt');
 
 
             if (proofInput) {
