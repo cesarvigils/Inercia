@@ -95,6 +95,68 @@ const wheel =
 
 
 /* =========================================================
+   TIMEZONE HELPERS
+   ========================================================= */
+
+/*
+ * Hora / fecha actual en Tegucigalpa, sin importar
+ * en qué timezone esté corriendo el navegador.
+ */
+
+function nowInHonduras() {
+
+    const parts =
+        new Intl.DateTimeFormat(
+            'en-CA',
+            {
+                timeZone:
+                    'America/Tegucigalpa',
+
+                year:
+                    'numeric',
+
+                month:
+                    '2-digit',
+
+                day:
+                    '2-digit',
+
+                hour:
+                    '2-digit',
+
+                minute:
+                    '2-digit',
+
+                hourCycle:
+                    'h23'
+            }
+        ).formatToParts(
+            new Date()
+        );
+
+
+    const map = {};
+
+    parts.forEach(
+        part => {
+            map[part.type] =
+                part.value;
+        }
+    );
+
+
+    return {
+        date:
+            `${map.year}-${map.month}-${map.day}`,
+
+        minutes:
+            Number(map.hour) * 60 +
+            Number(map.minute)
+    };
+}
+
+
+/* =========================================================
    MONEY
    ========================================================= */
 
@@ -258,19 +320,24 @@ function dates() {
 
 
     /* -----------------------------------------------------
-       SOLO 7 DÍAS
+       7 DÍAS DISPONIBLES, SIN CONTAR LUNES
+
+       Recorremos hacia adelante hasta juntar 7 fechas
+       válidas, saltando cualquier lunes que aparezca.
        ----------------------------------------------------- */
 
-    for (
-        let i = 0;
-        i < 7;
-        i++
+    let added = 0;
+    let offset = 0;
+
+    while (
+        added < 7 &&
+        offset < 30
     ) {
 
         const currentDate =
             new Date(
                 Date.now() +
-                i * 86400000
+                offset * 86400000
             );
 
 
@@ -280,14 +347,37 @@ function dates() {
             );
 
 
+        /*
+         * Día de la semana usando mediodía UTC
+         * para evitar saltos de fecha por timezone.
+         */
+
+        const weekday =
+            new Date(
+                `${value}T12:00:00Z`
+            ).getUTCDay();
+
+
+        /*
+         * 1 = Lunes. No se muestra en el dropdown.
+         */
+
+        if (weekday === 1) {
+
+            offset++;
+
+            continue;
+        }
+
+
         let prefix = '';
 
-        if (i === 0) {
+        if (offset === 0) {
             prefix =
                 'HOY · ';
         }
 
-        if (i === 1) {
+        if (offset === 1) {
             prefix =
                 'MAÑANA · ';
         }
@@ -308,6 +398,11 @@ function dates() {
                 value
             )
         );
+
+
+        added++;
+
+        offset++;
     }
 }
 
@@ -350,8 +445,33 @@ function makeTimes() {
         selectedDate.getUTCDay();
 
 
+    /*
+     * Lunes no se ofrece. Ya se filtra en el dropdown
+     * de fechas, pero lo bloqueamos también acá por
+     * si el value llega a setearse de otra forma.
+     */
+
+    if (day === 1) {
+        return;
+    }
+
+
+    /*
+     * Martes a viernes: horario fijo 2pm - 9pm,
+     * sin importar lo que diga appConfig.hours.
+     *
+     * El resto de los días (sábado / domingo) sigue
+     * usando la configuración normal.
+     */
+
+    const isTueToFri =
+        day >= 2 &&
+        day <= 5;
+
     const hours =
-        appConfig.hours?.[day];
+        isTueToFri
+            ? ['14:00', '21:00']
+            : appConfig.hours?.[day];
 
 
     /*
@@ -394,6 +514,18 @@ function makeTimes() {
 
 
     /*
+     * No mostramos horas que ya pasaron, si la fecha
+     * seleccionada es hoy (hora local Tegucigalpa).
+     */
+
+    const now =
+        nowInHonduras();
+
+    const isToday =
+        date.value === now.date;
+
+
+    /*
      * Las reservas son en horas exactas.
      */
 
@@ -402,6 +534,14 @@ function makeTimes() {
         minutes < end;
         minutes += 60
     ) {
+
+        if (
+            isToday &&
+            minutes <= now.minutes
+        ) {
+            continue;
+        }
+
 
         const hour =
             Math.floor(
