@@ -62,7 +62,7 @@
                 <section id="view-rigs" class="view">
                     <div class="heading">
                         <div>
-                            <span class="eyebrow">INVENTARIO OPERATIVO</span>
+                            <span class="eyebrow">INVENTARIO</span>
                             <h2>SIMULADORES</h2>
                         </div>
                         <button id="newRigBtn" class="primary">NUEVO RIG</button>
@@ -71,49 +71,80 @@
                     <div id="rigList" class="rig-list"></div>
                 </section>
                 <section id="view-ventas" class="view">
-                    <div class="sales-actions">
-    <button
-        id="newSaleBtn"
-        class="primary"
-    >
-        NUEVA VENTA
-    </button>
 
-    <button
-        id="manageProductsBtn"
-        class="ghost"
-    >
-        PRODUCTOS
-    </button>
-</div>
-                    <div class="heading">
-                        <div>
-                            <span class="eyebrow">INGRESOS</span>
-                            <h2>VENTAS</h2>
-                        </div>
-                        <button id="newSaleBtn" class="primary">NUEVA VENTA</button>
-                    </div>
-                    <div class="filters">
-                        <button class="filter active" data-range="month">ESTE MES</button
-                        ><button class="filter" data-range="week">ESTA SEMANA</button
-                        ><button class="filter" data-range="year">ESTE AÑO</button>
-                    </div>
-                    <div id="salesMetrics" class="metrics"></div>
-                    <div class="table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>FECHA</th>
-                                    <th>CONCEPTO</th>
-                                    <th>MÉTODO</th>
-                                    <th>ORIGEN</th>
-                                    <th>TOTAL</th>
-                                </tr>
-                            </thead>
-                            <tbody id="salesTable"></tbody>
-                        </table>
-                    </div>
-                </section>
+    <div class="heading sales-heading">
+        <div>
+            <span class="eyebrow">INGRESOS</span>
+            <h2>VENTAS</h2>
+        </div>
+
+        <div class="sales-actions">
+            <button
+                id="manageProductsBtn"
+                class="ghost"
+                type="button"
+            >
+                PRODUCTOS
+            </button>
+
+            <button
+                id="newSaleBtn"
+                class="primary"
+                type="button"
+            >
+                NUEVA VENTA
+            </button>
+        </div>
+    </div>
+
+    <div class="filters">
+        <button
+            class="filter active"
+            data-range="month"
+            type="button"
+        >
+            ESTE MES
+        </button>
+
+        <button
+            class="filter"
+            data-range="week"
+            type="button"
+        >
+            ESTA SEMANA
+        </button>
+
+        <button
+            class="filter"
+            data-range="year"
+            type="button"
+        >
+            ESTE AÑO
+        </button>
+    </div>
+
+    <div
+        id="salesMetrics"
+        class="metrics"
+    ></div>
+
+    <div class="table">
+        <table>
+            <thead>
+                <tr>
+                    <th>FECHA</th>
+                    <th>CONCEPTO</th>
+                    <th>MÉTODO</th>
+                    <th>ORIGEN</th>
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+
+            <tbody id="salesTable"></tbody>
+        </table>
+    </div>
+
+</section>
                 <section id="view-configuracion" class="view">
                     <div class="heading">
                         <div>
