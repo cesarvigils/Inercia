@@ -1,18 +1,14 @@
-import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { auth, db } from '../firebase-config.js';
 
 import {
-    getAuth,
     signInWithEmailAndPassword,
     onAuthStateChanged,
     signOut,
     setPersistence,
     browserLocalPersistence
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+} from 'firebase/auth';
 
 import {
-    getFirestore,
     collection,
     doc,
     getDoc,
@@ -26,7 +22,23 @@ import {
     where,
     serverTimestamp,
     writeBatch
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+} from 'firebase/firestore';
+
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const loginScreen = $('#loginScreen');
+const adminShell = $('#adminShell');
+const loginForm = $('#loginForm');
+const loginMessage = $('#loginMessage');
+
+let currentUser = null;
+let reservations = [];
+let rigs = [];
+let manualSales = [];
+let salesRange = 'month';
+let selectedReservation = null;
 const $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
 let user,
