@@ -18,36 +18,6 @@ import {
     serverTimestamp
 } from 'firebase/firestore';
 
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
-
-const authBtn = document.getElementById('authBtn');
-const authPfp = document.getElementById('authPfp');
-
-const authModal = document.getElementById('authModal');
-const authModalBackdrop = document.getElementById('authModalBackdrop');
-const authModalClose = document.getElementById('authModalClose');
-
-const authTabs = document.querySelectorAll('[data-auth-tab]');
-const authSwitchButtons = document.querySelectorAll('[data-switch-auth]');
-
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-
-const googleLoginBtn = document.getElementById('googleLoginBtn');
-const googleRegisterBtn = document.getElementById('googleRegisterBtn');
-
-const authMessage = document.getElementById('authMessage');
-
-const profileMenu = document.getElementById('profileMenu');
-const profileMenuPfp = document.getElementById('profileMenuPfp');
-const profileMenuName = document.getElementById('profileMenuName');
-const profileMenuEmail = document.getElementById('profileMenuEmail');
-
-const logoutBtn = document.getElementById('logoutBtn');
-
 function injectAuthMarkup() {
 
     if (!document.getElementById('authModal')) {
@@ -138,6 +108,38 @@ function injectAuthMarkup() {
 }
 
 injectAuthMarkup();
+
+
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
+
+const authBtn = document.getElementById('authBtn');
+const authPfp = document.getElementById('authPfp');
+
+const authModal = document.getElementById('authModal');
+const authModalBackdrop = document.getElementById('authModalBackdrop');
+const authModalClose = document.getElementById('authModalClose');
+
+const authTabs = document.querySelectorAll('[data-auth-tab]');
+const authSwitchButtons = document.querySelectorAll('[data-switch-auth]');
+
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+const googleRegisterBtn = document.getElementById('googleRegisterBtn');
+
+const authMessage = document.getElementById('authMessage');
+
+const profileMenu = document.getElementById('profileMenu');
+const profileMenuPfp = document.getElementById('profileMenuPfp');
+const profileMenuName = document.getElementById('profileMenuName');
+const profileMenuEmail = document.getElementById('profileMenuEmail');
+
+const logoutBtn = document.getElementById('logoutBtn');
+
+
 const DEFAULT_PFP =
     'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fdefaultpfp3.jpg?alt=media&token=a0435be5-f789-41ec-9d50-ab24fed4b9ec';
 
@@ -984,4 +986,3 @@ logoutBtn?.addEventListener('click', async () => {
     }
 
 });
-
