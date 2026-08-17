@@ -81,9 +81,7 @@ export default async function handler(req, res) {
            CONFIG + DATE/TIME
            ================================================= */
 
-        console.log(
-            '[RESERVAS] Cargando configuración...'
-        );
+
 
         const config = await getConfig();
 
@@ -225,27 +223,7 @@ export default async function handler(req, res) {
         };
 
 
-        console.log(
-            '[RESERVAS] Perfil:',
-            {
-                uid: user.uid,
 
-                name:
-                    customer.name
-                        ? 'OK'
-                        : 'FALTANTE',
-
-                email:
-                    customer.email
-                        ? 'OK'
-                        : 'FALTANTE',
-
-                phone:
-                    customer.phoneNumber
-                        ? 'OK'
-                        : 'FALTANTE'
-            }
-        );
 
 
         if (!customer.name) {
@@ -394,10 +372,7 @@ export default async function handler(req, res) {
             );
 
 
-        console.log(
-            '[RESERVAS] Precio calculado:',
-            pricing
-        );
+
 
 
         /* =================================================
@@ -457,13 +432,8 @@ export default async function handler(req, res) {
             }
 
 
-            /* =============================================
-               STORAGE
-               ============================================= */
+        
 
-            console.log(
-                '[RESERVAS] Verificando comprobante...'
-            );
 
             const file =
                 adminStorage
@@ -533,9 +503,7 @@ export default async function handler(req, res) {
                 size
             };
 
-            console.log(
-                '[RESERVAS] Comprobante válido.'
-            );
+
         }
 
 
@@ -625,10 +593,7 @@ export default async function handler(req, res) {
             );
 
 
-        console.log(
-            '[RESERVAS] Locks necesarios:',
-            lockRefs.length
-        );
+
 
 
         /* =================================================
@@ -833,39 +798,11 @@ export default async function handler(req, res) {
         );
 
 
-        /* =================================================
-           TRANSACTION COMPLETED
-           ================================================= */
 
-        console.log(
-            '[RESERVAS] Reserva creada:',
-            {
-                id:
-                    reservationRef.id,
-
-                code:
-                    reservationCode,
-
-                uid:
-                    user.uid,
-
-                payment,
-
-                paymentVerification:
-                    paymentVerification.status,
-
-                status:
-                    'pending'
-            }
-        );
+   
 
 
-        /* =================================================
-           RESPONSE
-
-           El frontend espera esta respuesta ANTES
-           de mostrar el alert de éxito.
-           ================================================= */
+ 
 
         return json(
             res,

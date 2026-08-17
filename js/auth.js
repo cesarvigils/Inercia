@@ -659,9 +659,7 @@ registerForm?.addEventListener('submit', async (event) => {
 
     try {
 
-        console.log(
-            '[REGISTER] Configurando persistencia...'
-        );
+
 
 
         await setPersistence(
@@ -674,9 +672,8 @@ registerForm?.addEventListener('submit', async (event) => {
            CREATE AUTH ACCOUNT
            ----------------------------------------------------- */
 
-        console.log(
-            '[REGISTER] Creando usuario...'
-        );
+
+
 
 
         const result =
@@ -687,19 +684,11 @@ registerForm?.addEventListener('submit', async (event) => {
             );
 
 
-        console.log(
-            '[REGISTER] Usuario creado:',
-            result.user.uid
-        );
 
 
-        /* -----------------------------------------------------
-           FIREBASE AUTH PROFILE
-           ----------------------------------------------------- */
 
-        console.log(
-            '[REGISTER] Guardando nombre...'
-        );
+
+
 
 
         await updateProfile(
@@ -710,9 +699,7 @@ registerForm?.addEventListener('submit', async (event) => {
         );
 
 
-        console.log(
-            '[REGISTER] Nombre guardado.'
-        );
+ 
 
 
         /* -----------------------------------------------------
@@ -722,9 +709,6 @@ registerForm?.addEventListener('submit', async (event) => {
            phone + phoneNumber se guardan ambos.
            ----------------------------------------------------- */
 
-        console.log(
-            '[REGISTER] Guardando datos en Firestore...'
-        );
 
 
         await setDoc(
@@ -767,19 +751,7 @@ registerForm?.addEventListener('submit', async (event) => {
         );
 
 
-        console.log(
-            '[REGISTER] Firestore guardado:',
-            {
-                uid:
-                    result.user.uid,
 
-                name,
-
-                email,
-
-                phone
-            }
-        );
 
 
         /* -----------------------------------------------------
@@ -912,11 +884,6 @@ async function continueWithGoogle() {
             }
         );
 
-
-        console.log(
-            '[GOOGLE AUTH] Usuario sincronizado con Firestore:',
-            result.user.uid
-        );
 
 
         closeAuthModal();

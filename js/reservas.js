@@ -650,9 +650,7 @@ function makeDurations() {
 
 async function loadConfig() {
 
-    console.log(
-        '[RESERVAS] Cargando configuración...'
-    );
+
 
 
     const query =
@@ -685,19 +683,7 @@ async function loadConfig() {
             : [];
 
 
-    console.log(
-        '[RESERVAS] Configuración cargada:',
-        {
-            rigs:
-                rigs.length,
 
-            promotions:
-                promos.length,
-
-            config:
-                appConfig
-        }
-    );
 
 
     makeDurations();
@@ -981,10 +967,7 @@ async function availability() {
         });
 
 
-    console.log(
-        '[RESERVAS] Consultando disponibilidad:',
-        params.toString()
-    );
+
 
 
     try {
@@ -1317,27 +1300,6 @@ async function profile(user) {
         }
 
 
-        console.log(
-            '[RESERVAS] Perfil cargado:',
-            {
-                name:
-                    data.name ||
-                    user.displayName ||
-                    'NO DISPONIBLE',
-
-                email:
-                    data.email ||
-                    user.email ||
-                    'NO DISPONIBLE',
-
-                phoneNumber:
-                    data.phone ||
-                    data.phoneNumber
-                        ? 'OK'
-                        : 'NO DISPONIBLE'
-            }
-        );
-
 
     } catch (error) {
 
@@ -1363,10 +1325,7 @@ onAuthStateChanged(
 
         if (user) {
 
-            console.log(
-                '[RESERVAS] Usuario autenticado:',
-                user.uid
-            );
+
 
 
             await profile(
@@ -1375,9 +1334,7 @@ onAuthStateChanged(
 
         } else {
 
-            console.log(
-                '[RESERVAS] Usuario no autenticado.'
-            );
+
 
 
             message(
@@ -1591,28 +1548,6 @@ form?.addEventListener(
         );
 
 
-        console.log(
-            '[RESERVAS] Procesando reserva...',
-            {
-                date:
-                    date.value,
-
-                time:
-                    time.value,
-
-                duration:
-                    Number(
-                        duration.value
-                    ),
-
-                rigs:
-                    [
-                        ...selected.keys()
-                    ],
-
-                payment
-            }
-        );
 
 
         try {
@@ -1704,9 +1639,7 @@ form?.addEventListener(
                     `reservation-proofs/${currentUser.uid}/${crypto.randomUUID()}-${safeName}`;
 
 
-                console.log(
-                    '[RESERVAS] Subiendo comprobante...'
-                );
+
 
 
                 await uploadBytes(
@@ -1722,10 +1655,6 @@ form?.addEventListener(
                 );
 
 
-                console.log(
-                    '[RESERVAS] Comprobante subido:',
-                    proofPath
-                );
             }
 
 
@@ -1760,10 +1689,7 @@ form?.addEventListener(
             };
 
 
-            console.log(
-                '[RESERVAS] Creando reserva:',
-                body
-            );
+
 
 
             /* =================================================
@@ -1785,10 +1711,7 @@ form?.addEventListener(
                 );
 
 
-            console.log(
-                '[RESERVAS] Respuesta create:',
-                result
-            );
+
 
 
             /* =================================================
@@ -1861,25 +1784,7 @@ form?.addEventListener(
             );
 
 
-            console.log(
-                '[RESERVAS] Reserva creada correctamente:',
-                {
-                    code:
-                        reservationCode,
 
-                    payment:
-                        result.payment,
-
-                    paymentVerification:
-                        result.paymentVerification,
-
-                    confirmationStatus:
-                        result.confirmationStatus,
-
-                    whatsappStatus:
-                        result.whatsappStatus
-                }
-            );
 
 
             /* =================================================
@@ -1955,9 +1860,7 @@ form?.addEventListener(
 
 async function initialize() {
 
-    console.log(
-        '[RESERVAS] Inicializando...'
-    );
+
 
 
     try {
@@ -1971,9 +1874,6 @@ async function initialize() {
         summary();
 
 
-        console.log(
-            '[RESERVAS] Inicialización completada.'
-        );
 
 
     } catch (error) {
