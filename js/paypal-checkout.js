@@ -16,12 +16,87 @@ function reservationMessage(text, type = 'info') {
     element.hidden = !text;
 }
 
-
+/*
+ * MODAL DE ÉXITO (REEMPLAZA window.alert)
+ *
+ * window.alert() puede ser silenciado por el navegador SIN
+ * lanzar ninguna excepción — sobre todo acá, porque el flujo
+ * de PayPal corre a partir de callbacks de un iframe/popup de
+ * terceros (el checkout de PayPal). En ese caso no hay forma
+ * de detectarlo desde JS: el código sigue corriendo normal,
+ * simplemente no aparece nada en pantalla.
+ *
+ * Por eso dejamos de depender de window.alert() y mostramos un
+ * modal propio (un <div> que nosotros controlamos). Esto
+ * SIEMPRE se ve, sin importar configuración del navegador.
+ */
 function safeAlert(text) {
     try {
-        window.alert(text);
+        const existing = document.getElementById('inercia-success-modal');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'inercia-success-modal';
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        `;
+
+        const box = document.createElement('div');
+        box.style.cssText = `
+            background: #ffffff;
+            color: #111111;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 420px;
+            width: 100%;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            white-space: pre-line;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+        `;
+        box.textContent = text;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = 'Aceptar';
+        button.style.cssText = `
+            margin-top: 20px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #111111;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+        `;
+        button.addEventListener('click', () => overlay.remove());
+
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay) overlay.remove();
+        });
+
+        box.appendChild(button);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
     } catch (error) {
-        console.warn('[PAYPAL] window.alert() fue bloqueado por el navegador:', error);
+        console.error('[PAYPAL] No se pudo mostrar el modal de éxito:', error);
+
+        // Último recurso.
+        try {
+            window.alert(text);
+        } catch {
+            // Si ni esto funciona, ya quedó el mensaje visible vía reservationMessage().
+        }
     }
 }
 
