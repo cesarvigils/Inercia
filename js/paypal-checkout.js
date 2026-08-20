@@ -348,7 +348,7 @@ async function renderPaypalButtons() {
 
                     successText =
                         `Pago confirmado. Tu reserva ${code} está APROBADA. ` +
-                        `Total: L ${total.toLocaleString('es-HN', { maximumFractionDigits: 2 })}. ` +
+                        `Total: L ${total.toLocaleString('es-HN', { maximumFractionDigits: 2 })}. + ISV ` +
                         'Revisá tu WhatsApp para recibir la confirmación y el recibo.';
 
                     captureSucceeded = true;
