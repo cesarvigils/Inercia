@@ -16,6 +16,15 @@ function reservationMessage(text, type = 'info') {
     element.hidden = !text;
 }
 
+
+function safeAlert(text) {
+    try {
+        window.alert(text);
+    } catch (error) {
+        console.warn('[PAYPAL] window.alert() fue bloqueado por el navegador:', error);
+    }
+}
+
 async function api(path, options = {}) {
     const user = auth.currentUser;
     const headers = { ...(options.headers || {}) };
@@ -194,6 +203,16 @@ async function renderPaypalButtons() {
             },
 
             onApprove: async (data) => {
+                /*
+                 * Igual que en reservas.js: separamos "¿se cobró y
+                 * se creó la reserva?" del resto del flujo (alert +
+                 * reload), para que un alert() bloqueado NUNCA
+                 * pueda hacer parecer que el pago falló cuando en
+                 * realidad sí se procesó.
+                 */
+                let captureSucceeded = false;
+                let successText = '';
+
                 try {
                     if (!checkoutReservationId) {
                         throw new Error('No encontramos la reserva asociada al pago.');
@@ -214,21 +233,30 @@ async function renderPaypalButtons() {
                     checkoutReservationId = null;
                     checkoutOrderId = null;
 
-                    const successText =
+                    successText =
                         `Pago confirmado. Tu reserva ${code} está APROBADA. ` +
                         `Total: L ${total.toLocaleString('es-HN', { maximumFractionDigits: 2 })}. ` +
                         'Revisá tu WhatsApp para recibir la confirmación y el recibo.';
 
-                    reservationMessage(successText, 'success');
-                    window.alert(successText);
-
-                    // Recarga limpia: refresca disponibilidad y borra la selección privada de reservas.js.
-                    window.location.reload();
+                    captureSucceeded = true;
                 } catch (error) {
                     reservationMessage(
                         error.message || 'PayPal confirmó la ventana, pero no pudimos validar el pago.',
                         'error'
                     );
+                }
+
+                /*
+                 * Corre SIEMPRE que la captura haya sido exitosa,
+                 * sin importar si el alert() nativo falla o es
+                 * bloqueado por el navegador.
+                 */
+                if (captureSucceeded) {
+                    reservationMessage(successText, 'success');
+                    safeAlert(successText);
+
+                    // Recarga limpia: refresca disponibilidad y borra la selección privada de reservas.js.
+                    window.location.reload();
                 }
             },
 
