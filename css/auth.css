@@ -703,3 +703,91 @@ body.auth-modal-open {
     opacity: .45;
     cursor: wait;
 }
+.auth-forgot {
+    align-self: flex-end;
+
+    border: 0;
+    background: transparent;
+
+    padding: 0;
+    margin: -6px 0 5px;
+
+    color: #8b8b8b;
+
+    font-family:
+        var(--font-display),
+        'Kenyan Coffee',
+        'Alumni Sans',
+        sans-serif;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    letter-spacing: .6px;
+
+    cursor: pointer;
+
+    transition:
+        color .18s ease;
+}
+
+.auth-forgot:hover {
+    color: #ff8b00;
+}
+
+
+.forgot-password-modal
+.auth-modal-panel {
+    width: min(
+        430px,
+        calc(100vw - 32px)
+    );
+}
+
+
+.forgot-back-btn {
+    width: 100%;
+
+    border: 1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .14
+        );
+
+    background: transparent;
+
+    color: #aaa;
+
+    padding: 13px 16px;
+
+    font-family:
+        var(--font-display),
+        'Kenyan Coffee',
+        'Alumni Sans',
+        sans-serif;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    letter-spacing: .8px;
+
+    cursor: pointer;
+
+    transition:
+        border-color .18s ease,
+        color .18s ease;
+}
+
+
+.forgot-back-btn:hover {
+    border-color: #ff8b00;
+    color: #ff8b00;
+}
+
+
+.forgot-password-modal
+.auth-message {
+    margin-top: 4px;
+}

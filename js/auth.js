@@ -48,12 +48,13 @@ function injectAuthMarkup() {
         <span>CONTRASEÑA</span>
         <input type="password" id="loginPassword" placeholder="Tu contraseña" autocomplete="current-password" required>
       </label>
-      <button
-        class="auth-forgot"
-        id="forgotPasswordBtn"
-        type="button"
-        style="background:none;border:none;padding:0;margin:-8px 0 4px;align-self:flex-end;color:inherit;opacity:0.75;font-size:13px;text-decoration:underline;cursor:pointer;"
-      >¿Olvidaste tu contraseña?</button>
+<button
+    class="auth-forgot"
+    id="forgotPasswordBtn"
+    type="button"
+>
+    ¿OLVIDASTE TU CONTRASEÑA?
+</button>
       <button class="auth-submit" type="submit">INICIAR SESIÓN</button>
       <div class="auth-divider"><span>O</span></div>
       <p class="auth-switch">¿No tienes una cuenta? <button type="button" data-switch-auth="register">REGÍSTRATE</button></p>
@@ -90,7 +91,109 @@ function injectAuthMarkup() {
   </div>
 </div>`);
     }
+if (!document.getElementById('forgotPasswordModal')) {
 
+    document.body.insertAdjacentHTML(
+        'beforeend',
+        `
+        <div
+            class="auth-modal forgot-password-modal"
+            id="forgotPasswordModal"
+            aria-hidden="true"
+        >
+
+            <div
+                class="auth-modal-backdrop"
+                id="forgotPasswordBackdrop"
+            ></div>
+
+            <div
+                class="auth-modal-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="forgotPasswordTitle"
+            >
+
+                <button
+                    class="auth-modal-close"
+                    id="forgotPasswordClose"
+                    type="button"
+                    aria-label="Cerrar"
+                >
+                    &times;
+                </button>
+
+                <div class="auth-modal-brand">
+
+                    <img
+                        src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be"
+                        alt="Simuladores Inercia"
+                    >
+
+                </div>
+
+                <form
+                    class="auth-form active"
+                    id="forgotPasswordForm"
+                >
+
+                    <div class="auth-heading">
+
+                        <h2 id="forgotPasswordTitle">
+                            RECUPERAR CONTRASEÑA
+                        </h2>
+
+                        <p>
+                            Ingresá el correo de tu cuenta y te enviaremos
+                            un enlace para restablecer tu contraseña.
+                        </p>
+
+                    </div>
+
+                    <label class="auth-field">
+
+                        <span>
+                            CORREO ELECTRÓNICO
+                        </span>
+
+                        <input
+                            type="email"
+                            id="forgotPasswordEmail"
+                            placeholder="correo@ejemplo.com"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </label>
+
+                    <button
+                        class="auth-submit"
+                        type="submit"
+                    >
+                        ENVIAR ENLACE
+                    </button>
+
+                    <button
+                        class="forgot-back-btn"
+                        id="forgotPasswordBack"
+                        type="button"
+                    >
+                        VOLVER A INICIAR SESIÓN
+                    </button>
+
+                    <p
+                        class="auth-message"
+                        id="forgotPasswordMessage"
+                    ></p>
+
+                </form>
+
+            </div>
+
+        </div>
+        `
+    );
+}
     if (!document.getElementById('profileMenu')) {
         document.body.insertAdjacentHTML('beforeend', `
 <div class="profile-menu" id="profileMenu" aria-hidden="true">
@@ -104,6 +207,7 @@ function injectAuthMarkup() {
   <button id="logoutBtn" type="button">CERRAR SESIÓN</button>
 </div>`);
     }
+
 }
 
 injectAuthMarkup();
@@ -125,9 +229,39 @@ const authSwitchButtons = document.querySelectorAll('[data-switch-auth]');
 
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
-const forgotPasswordBtn =
+const forgotPasswordModal =
     document.getElementById(
-        'forgotPasswordBtn'
+        'forgotPasswordModal'
+    );
+
+const forgotPasswordBackdrop =
+    document.getElementById(
+        'forgotPasswordBackdrop'
+    );
+
+const forgotPasswordClose =
+    document.getElementById(
+        'forgotPasswordClose'
+    );
+
+const forgotPasswordBack =
+    document.getElementById(
+        'forgotPasswordBack'
+    );
+
+const forgotPasswordForm =
+    document.getElementById(
+        'forgotPasswordForm'
+    );
+
+const forgotPasswordEmail =
+    document.getElementById(
+        'forgotPasswordEmail'
+    );
+
+const forgotPasswordMessage =
+    document.getElementById(
+        'forgotPasswordMessage'
     );
 const googleLoginBtn = document.getElementById('googleLoginBtn');
 const googleRegisterBtn = document.getElementById('googleRegisterBtn');
@@ -169,7 +303,124 @@ function closeAuthModal() {
 
     hideMessage();
 }
+function openForgotPasswordModal() {
 
+    hideMessage();
+
+    const loginEmail =
+        document
+            .getElementById(
+                'loginEmail'
+            )
+            ?.value
+            ?.trim();
+
+
+    if (
+        forgotPasswordEmail &&
+        loginEmail
+    ) {
+
+        forgotPasswordEmail.value =
+            loginEmail;
+    }
+
+
+
+    authModal?.classList.remove(
+        'open'
+    );
+
+    authModal?.setAttribute(
+        'aria-hidden',
+        'true'
+    );
+
+
+    forgotPasswordModal
+        ?.classList.add(
+            'open'
+        );
+
+    forgotPasswordModal
+        ?.setAttribute(
+            'aria-hidden',
+            'false'
+        );
+
+
+    document.body.classList.add(
+        'auth-modal-open'
+    );
+
+
+    setTimeout(
+        () => {
+            forgotPasswordEmail
+                ?.focus();
+        },
+        50
+    );
+}
+
+
+function closeForgotPasswordModal(
+    reopenLogin = false
+) {
+
+    forgotPasswordModal
+        ?.classList.remove(
+            'open'
+        );
+
+    forgotPasswordModal
+        ?.setAttribute(
+            'aria-hidden',
+            'true'
+        );
+
+
+    if (
+        forgotPasswordMessage
+    ) {
+
+        forgotPasswordMessage
+            .textContent =
+            '';
+
+        forgotPasswordMessage
+            .classList.remove(
+                'show',
+                'error',
+                'success'
+            );
+    }
+
+
+    if (reopenLogin) {
+
+        authModal
+            ?.classList.add(
+                'open'
+            );
+
+        authModal
+            ?.setAttribute(
+                'aria-hidden',
+                'false'
+            );
+
+        document.body.classList.add(
+            'auth-modal-open'
+        );
+
+    } else {
+
+        document.body.classList.remove(
+            'auth-modal-open'
+        );
+    }
+}
 
 /* =========================================================
    PROFILE MENU
@@ -234,17 +485,47 @@ document.addEventListener('click', (event) => {
 });
 
 
-document.addEventListener('keydown', (event) => {
+document.addEventListener(
+    'keydown',
+    (
+        event
+    ) => {
 
-    if (event.key !== 'Escape') return;
+        if (
+            event.key !==
+            'Escape'
+        ) {
 
-    if (authModal?.classList.contains('open')) {
-        closeAuthModal();
+            return;
+        }
+
+
+        if (
+            forgotPasswordModal
+                ?.classList
+                .contains(
+                    'open'
+                )
+        ) {
+
+            closeForgotPasswordModal(
+                true
+            );
+
+            return;
+        }
+        if (
+            authModal
+                ?.classList
+                .contains(
+                    'open'
+                )
+        ) {
+            closeAuthModal();
+        }
+        closeProfileMenu();
     }
-
-    closeProfileMenu();
-
-});
+);
 
 
 /* =========================================================
@@ -376,52 +657,231 @@ function friendlyAuthError(error) {
 }
 
 
-/* =========================================================
-   FORGOT PASSWORD
 
-   IMPORTANTE:
 
-   Firebase, por seguridad, responde OK aunque el correo
-   no exista en el sistema (así nadie puede usar este
-   formulario para averiguar qué correos están
-   registrados). Por eso el mensaje de éxito es genérico
-   y no confirma si la cuenta existe o no.
-   ========================================================= */
+function showForgotMessage(
+    text,
+    type = 'error'
+) {
 
-function friendlyResetError(error) {
+    if (!forgotPasswordMessage) {
+        return;
+    }
 
-    switch (error.code) {
+
+    forgotPasswordMessage
+        .textContent =
+        text;
+
+
+    forgotPasswordMessage
+        .classList.remove(
+            'error',
+            'success'
+        );
+
+
+    forgotPasswordMessage
+        .classList.add(
+            'show',
+            type
+        );
+}
+
+
+function friendlyResetError(
+    error
+) {
+
+    switch (
+        error.code
+    ) {
 
         case 'auth/invalid-email':
-            return 'Ese correo electrónico no es válido.';
+
+            return (
+                'Ese correo electrónico no es válido.'
+            );
+
 
         case 'auth/missing-email':
-            return 'Escribe tu correo electrónico primero.';
 
-        case 'auth/user-not-found':
+            return (
+                'Ingresá tu correo electrónico.'
+            );
 
-            /*
-             * Solo aparece en proyectos viejos de Firebase
-             * que no tienen activada la protección de
-             * enumeración de correos.
-             */
-
-            return 'No encontramos ninguna cuenta con ese correo.';
 
         case 'auth/too-many-requests':
-            return 'Demasiados intentos. Intenta de nuevo en unos minutos.';
+
+            return (
+                'Demasiados intentos. Intentá de nuevo en unos minutos.'
+            );
+
+
+        case 'auth/network-request-failed':
+
+            return (
+                'No pudimos conectar con Firebase. Revisá tu conexión.'
+            );
+
 
         default:
 
             console.error(
-                '[FORGOT PASSWORD] Error:',
+                '[FORGOT PASSWORD]',
                 error
             );
 
-            return 'No pudimos enviar el correo. Intenta de nuevo.';
-    }
 
+            return (
+                'No pudimos procesar la solicitud. Intentá de nuevo.'
+            );
+    }
 }
+
+
+
+
+forgotPasswordBtn
+    ?.addEventListener(
+        'click',
+        () => {
+
+            openForgotPasswordModal();
+        }
+    );
+
+
+
+forgotPasswordClose
+    ?.addEventListener(
+        'click',
+        () => {
+
+            closeForgotPasswordModal(
+                true
+            );
+        }
+    );
+
+
+forgotPasswordBackdrop
+    ?.addEventListener(
+        'click',
+        () => {
+
+            closeForgotPasswordModal(
+                true
+            );
+        }
+    );
+
+
+forgotPasswordBack
+    ?.addEventListener(
+        'click',
+        () => {
+
+            closeForgotPasswordModal(
+                true
+            );
+        }
+    );
+forgotPasswordForm
+    ?.addEventListener(
+        'submit',
+        async (
+            event
+        ) => {
+
+            event.preventDefault();
+
+
+            const email =
+                forgotPasswordEmail
+                    ?.value
+                    ?.trim();
+
+
+            if (!email) {
+
+                showForgotMessage(
+                    'Ingresá tu correo electrónico.'
+                );
+
+
+                forgotPasswordEmail
+                    ?.focus();
+
+
+                return;
+            }
+
+
+            const submitBtn =
+                forgotPasswordForm
+                    .querySelector(
+                        'button[type="submit"]'
+                    );
+
+
+            const originalText =
+                submitBtn
+                    ?.textContent ||
+                'ENVIAR ENLACE';
+
+
+            if (submitBtn) {
+
+                submitBtn.disabled =
+                    true;
+
+                submitBtn.textContent =
+                    'ENVIANDO...';
+            }
+
+
+            try {
+
+                await sendPasswordResetEmail(
+                    auth,
+                    email
+                );
+
+
+                showForgotMessage(
+                    'Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña. Revisá también spam o correo no deseado.',
+                    'success'
+                );
+
+
+            } catch (
+                error
+            ) {
+
+                showForgotMessage(
+                    friendlyResetError(
+                        error
+                    ),
+                    'error'
+                );
+
+
+            } finally {
+
+                if (
+                    submitBtn
+                ) {
+
+                    submitBtn.disabled =
+                        false;
+
+                    submitBtn.textContent =
+                        originalText;
+                }
+            }
+        }
+    );
 
 
 forgotPasswordBtn?.addEventListener('click', async () => {
