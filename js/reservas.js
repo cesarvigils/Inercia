@@ -150,6 +150,31 @@ const wheel =
 
 
 /* =========================================================
+   HORARIO POR DEFECTO (FALLBACK)
+
+   Se usa SOLO si el backend (appConfig.hours) no trae
+   el día correspondiente. Si el backend sí lo trae,
+   el backend manda.
+
+   Llave = getUTCDay() → 0=Domingo … 6=Sábado
+
+   - Martes a viernes: 2pm - 9pm
+   - Sábado y domingo: 12pm - 9pm
+   - Lunes: cerrado (null)
+   ========================================================= */
+
+const DEFAULT_HOURS = {
+    0: ['12:00', '21:00'], // Domingo
+    1: null,                // Lunes - CERRADO
+    2: ['14:00', '21:00'], // Martes
+    3: ['14:00', '21:00'], // Miércoles
+    4: ['14:00', '21:00'], // Jueves
+    5: ['14:00', '21:00'], // Viernes
+    6: ['12:00', '21:00']  // Sábado
+};
+
+
+/* =========================================================
    API
    ========================================================= */
 
@@ -245,6 +270,12 @@ async function api(
 
 /* =========================================================
    MESSAGE
+
+   IMPORTANTE:
+
+   Además de escribir el mensaje en el panel de la página,
+   ahora TAMBIÉN disparamos un alert() nativo para errores
+   y éxito, de forma segura (nunca puede romper el flujo).
    ========================================================= */
 
 function message(
@@ -281,6 +312,46 @@ function message(
 
     element.hidden =
         !text;
+}
+
+
+/* =========================================================
+   ALERT SEGURO
+
+   window.alert() puede fallar o ser bloqueado por el
+   navegador (por ejemplo dentro de un iframe/webview, o
+   cuando el usuario tildó "no volver a mostrar diálogos").
+
+   Antes, si window.alert() lanzaba una excepción DENTRO
+   del try del submit, esa excepción caía en el catch y
+   pisaba el mensaje de éxito con un mensaje de error,
+   aunque la reserva sí se hubiera creado. Por eso "el
+   alert no funcionaba": realmente sí corría, pero
+   rompía el resto del flujo silenciosamente.
+
+   Esta función aísla el alert para que jamás pueda
+   afectar el resto de la lógica.
+   ========================================================= */
+
+function safeAlert(
+    text
+) {
+
+    try {
+
+        window.alert(
+            text
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.warn(
+            '[RESERVAS] window.alert() fue bloqueado por el navegador:',
+            error
+        );
+    }
 }
 
 
@@ -465,6 +536,9 @@ function formatTime(
    - Respeta duración seleccionada.
    - Consulta disponibilidad real.
    - Si ningún rig está disponible, esa hora NO aparece.
+   - Si el backend no trae horario para el día, usa
+     DEFAULT_HOURS como respaldo (martes-viernes 2-9pm,
+     sábado-domingo 12-9pm, lunes cerrado).
    ========================================================= */
 
 async function makeTimes() {
@@ -529,7 +603,8 @@ async function makeTimes() {
         appConfig.hours?.[day] ??
         appConfig.hours?.[
             String(day)
-        ];
+        ] ??
+        DEFAULT_HOURS[day];
 
 
     /*
@@ -2132,6 +2207,21 @@ form
             );
 
 
+            /*
+             * Guardamos el resultado de la reserva
+             * (si se creó) FUERA del try/catch de
+             * arriba para que un fallo del alert()
+             * jamás pueda pisar el flujo de éxito.
+             */
+
+            let reservationSucceeded =
+                false;
+
+
+            let successMessage =
+                '';
+
+
             try {
 
                 let proofPath =
@@ -2411,11 +2501,7 @@ form
                     localPrice();
 
 
-                /*
-                 * ALERT DE RESERVA.
-                 */
-
-                const successMessage =
+                successMessage =
                     payment ===
                     'transferencia'
 
@@ -2440,60 +2526,8 @@ form
                         );
 
 
-                /*
-                 * Mensaje dentro de la página.
-                 */
-
-                message(
-                    successMessage,
-                    'success'
-                );
-
-
-                /*
-                 * ALERT NATIVO.
-                 */
-
-                window.alert(
-                    successMessage
-                );
-
-
-                selected.clear();
-
-
-                /*
-                 * Refrescar las horas después
-                 * de reservar.
-                 *
-                 * Esto hace que, si esa reserva
-                 * agotó completamente una hora,
-                 * desaparezca inmediatamente
-                 * del dropdown.
-                 */
-
-                await makeTimes();
-
-
-                /*
-                 * Limpiar selección de rigs.
-                 */
-
-                render(
-                    rigs.map(
-                        (
-                            rig
-                        ) => ({
-                            ...rig,
-
-                            available:
-                                true
-                        })
-                    )
-                );
-
-
-                summary();
+                reservationSucceeded =
+                    true;
 
 
             } catch (
@@ -2515,10 +2549,94 @@ form
                 );
 
 
-            } finally {
-
-                summary();
             }
+
+
+            /* =====================================================
+               POST-RESERVA
+
+               Todo lo de acá abajo corre SIEMPRE que la
+               reserva se haya creado, sin importar si el
+               alert() nativo falla o es bloqueado.
+               ===================================================== */
+
+            if (
+                reservationSucceeded
+            ) {
+
+                /*
+                 * Mensaje dentro de la página.
+                 */
+
+                message(
+                    successMessage,
+                    'success'
+                );
+
+
+                /*
+                 * ALERT NATIVO (a prueba de fallos).
+                 */
+
+                safeAlert(
+                    successMessage
+                );
+
+
+                selected.clear();
+
+
+                /*
+                 * Refrescar las horas después
+                 * de reservar.
+                 *
+                 * Esto hace que, si esa reserva
+                 * agotó completamente una hora,
+                 * desaparezca inmediatamente
+                 * del dropdown.
+                 */
+
+                try {
+
+                    await makeTimes();
+
+
+                    /*
+                     * Limpiar selección de rigs.
+                     */
+
+                    render(
+                        rigs.map(
+                            (
+                                rig
+                            ) => ({
+                                ...rig,
+
+                                available:
+                                    true
+                            })
+                        )
+                    );
+
+                } catch (
+                    refreshError
+                ) {
+
+                    /*
+                     * Si el refresco post-reserva falla,
+                     * no queremos que parezca que la
+                     * reserva falló: solo lo logueamos.
+                     */
+
+                    console.error(
+                        '[RESERVAS] Error refrescando horarios post-reserva:',
+                        refreshError
+                    );
+                }
+            }
+
+
+            summary();
         }
     );
 
