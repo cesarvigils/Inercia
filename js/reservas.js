@@ -1,5 +1,4 @@
 import { auth, db } from '../firebase-config.js';
-
 import {
     doc,
     getDoc
@@ -14,21 +13,8 @@ import {
 import {
     onAuthStateChanged
 } from 'firebase/auth';
-
-
-/* =========================================================
-   FIREBASE STORAGE
-   ========================================================= */
-
 const storage = getStorage(auth.app);
-
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
 const $ = (id) => document.getElementById(id);
-
 function money(value) {
     return `L ${Number(value || 0).toLocaleString(
         'es-HN',
@@ -38,7 +24,6 @@ function money(value) {
         }
     )}`;
 }
-
 function setValue(id, value = '') {
     const element = $(id);
 
@@ -52,7 +37,6 @@ function setValue(id, value = '') {
 
     element.value = value ?? '';
 }
-
 function setText(id, value = '') {
     const element = $(id);
 
@@ -60,12 +44,6 @@ function setText(id, value = '') {
 
     element.textContent = value;
 }
-
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
-
 const form = $('reservationForm');
 
 const dateSelect = $('reservationDate');
@@ -328,20 +306,20 @@ function formatTime(hours, minutes = 0) {
 }
 
 
-/* =========================================================
-   TIMES
-   ========================================================= */
 
-function makeTimes() {
+
+async function makeTimes() {
     if (!timeSelect) return;
 
+    timeSelect.disabled = true;
     timeSelect.innerHTML =
-        '<option value="">Seleccioná una hora</option>';
+        '<option value="">Cargando horarios...</option>';
 
-    if (
-        !dateSelect?.value ||
-        !appConfig
-    ) {
+    if (!dateSelect?.value || !appConfig) {
+        timeSelect.innerHTML =
+            '<option value="">Seleccioná una hora</option>';
+
+        timeSelect.disabled = false;
         return;
     }
 
@@ -374,6 +352,7 @@ function makeTimes() {
         timeSelect.innerHTML =
             '<option value="">Cerrado este día</option>';
 
+        timeSelect.disabled = true;
         return;
     }
 
@@ -383,13 +362,15 @@ function makeTimes() {
     const close =
         toMinutes(hoursConfig[1]);
 
+    const duration =
+        Number(
+            durationSelect?.value || 1
+        );
 
-    /* =====================================================
+
+    /* ================================================
        HORA ACTUAL EN HONDURAS
-       ===================================================== */
-
-    const now =
-        new Date();
+       ================================================ */
 
     const hnParts =
         new Intl.DateTimeFormat(
@@ -407,7 +388,9 @@ function makeTimes() {
                 hourCycle: 'h23'
             }
         )
-            .formatToParts(now)
+            .formatToParts(
+                new Date()
+            )
             .reduce(
                 (result, part) => {
                     result[part.type] =
@@ -422,14 +405,12 @@ function makeTimes() {
     const todayHN =
         `${hnParts.year}-${hnParts.month}-${hnParts.day}`;
 
+
     const currentMinutes =
         Number(hnParts.hour) * 60 +
         Number(hnParts.minute);
 
 
-    /*
-     * El backend exige 30 minutos.
-     */
     const minimumAdvanceMinutes =
         Number(
             appConfig.minimumAdvanceMinutes ??
@@ -438,7 +419,11 @@ function makeTimes() {
         );
 
 
-    let validTimes = 0;
+    /* ================================================
+       CREAR POSIBLES HORARIOS
+       ================================================ */
+
+    const candidates = [];
 
 
     for (
@@ -446,19 +431,27 @@ function makeTimes() {
         minutes < close;
         minutes += 60
     ) {
-        const hh =
-            Math.floor(
-                minutes / 60
-            );
 
-        const mm =
-            minutes % 60;
+        /*
+         * La reserva completa tiene que terminar
+         * antes del cierre.
+         */
+
+        if (
+            minutes +
+                duration * 60 >
+            close
+        ) {
+            continue;
+        }
 
 
-        /* =============================================
-           SI ES HOY:
-           ocultar horas que no cumplen anticipación
-           ============================================= */
+        /*
+         * Si seleccionó HOY:
+         *
+         * no mostrar horas pasadas ni horas que
+         * estén dentro de los próximos 30 minutos.
+         */
 
         if (
             dateSelect.value === todayHN
@@ -466,6 +459,7 @@ function makeTimes() {
             const minimumAllowed =
                 currentMinutes +
                 minimumAdvanceMinutes;
+
 
             if (
                 minutes <
@@ -476,48 +470,159 @@ function makeTimes() {
         }
 
 
+        const hh =
+            Math.floor(
+                minutes / 60
+            );
+
+        const mm =
+            minutes % 60;
+
+
         const value =
             `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 
 
-        const label =
-            formatTime(
-                hh,
-                mm
-            );
+        candidates.push({
+            value,
+
+            label:
+                formatTime(
+                    hh,
+                    mm
+                )
+        });
+    }
 
 
-        timeSelect.add(
-            new Option(
-                label,
-                value
+    /* ================================================
+       CONSULTAR DISPONIBILIDAD REAL
+       ================================================ */
+
+    const checks =
+        await Promise.all(
+            candidates.map(
+                async slot => {
+
+                    try {
+
+                        const params =
+                            new URLSearchParams({
+                                date:
+                                    dateSelect.value,
+
+                                time:
+                                    slot.value,
+
+                                duration:
+                                    String(duration)
+                            });
+
+
+                        const data =
+                            await api(
+                                `/api/reservations/availability?${params.toString()}`
+                            );
+
+
+                        /*
+                         * La hora solamente aparece
+                         * si al menos UN rig está disponible.
+                         */
+
+                        const hasAvailableRig =
+                            Array.isArray(
+                                data.rigs
+                            ) &&
+                            data.rigs.some(
+                                rig =>
+                                    rig.available
+                            );
+
+
+                        if (
+                            !hasAvailableRig
+                        ) {
+                            console.log(
+                                `[RESERVAS] ${slot.value} ocultada: no quedan rigs.`
+                            );
+
+                            return null;
+                        }
+
+
+                        return slot;
+
+
+                    } catch (error) {
+
+                        /*
+                         * Si backend devuelve 400,
+                         * ocupado, horario inválido, etc.
+                         *
+                         * NO agregamos esa hora.
+                         */
+
+                        console.log(
+                            `[RESERVAS] ${slot.value} ocultada:`,
+                            error.message
+                        );
+
+
+                        return null;
+                    }
+                }
             )
         );
 
 
-        validTimes++;
+    const availableTimes =
+        checks.filter(Boolean);
+
+
+    /* ================================================
+       LLENAR DROPDOWN
+       ================================================ */
+
+    timeSelect.innerHTML =
+        '<option value="">Seleccioná una hora</option>';
+
+
+    for (
+        const slot
+        of availableTimes
+    ) {
+
+        timeSelect.add(
+            new Option(
+                slot.label,
+                slot.value
+            )
+        );
     }
 
 
-    /* =====================================================
-       NO QUEDAN HORAS DISPONIBLES HOY
-       ===================================================== */
+    /* ================================================
+       NINGÚN HORARIO
+       ================================================ */
 
     if (
-        validTimes === 0
+        availableTimes.length === 0
     ) {
+
         timeSelect.innerHTML =
-            '<option value="">No quedan horarios disponibles hoy</option>';
+            '<option value="">No hay horarios disponibles</option>';
 
         timeSelect.disabled =
             true;
 
-    } else {
-        timeSelect.disabled =
-            false;
+        return;
     }
-}
 
+
+    timeSelect.disabled =
+        false;
+}
 
 /* =========================================================
    DURATIONS
@@ -598,8 +703,8 @@ const data = await api(endpoint);
             : [];
 
     makeDurations();
-    makeTimes();
-    updatePrices();
+await makeTimes();
+updatePrices();
 
     /*
      * Hasta que se seleccione fecha/hora,
