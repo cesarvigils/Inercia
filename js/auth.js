@@ -48,7 +48,6 @@ function injectAuthMarkup() {
       </label>
       <button class="auth-submit" type="submit">INICIAR SESIÓN</button>
       <div class="auth-divider"><span>O</span></div>
-      <button class="google-auth-btn" id="googleLoginBtn" type="button">
         <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
           <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.33 2.98-7.41z"/>
           <path fill="#34A853" d="M12 22c2.7 0 4.98-.9 6.64-2.43l-3.24-2.54c-.9.6-2.05.96-3.4.96-2.6 0-4.81-1.76-5.6-4.13H3.05v2.62A10 10 0 0 0 12 22z"/>
