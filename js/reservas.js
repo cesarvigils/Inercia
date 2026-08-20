@@ -563,7 +563,6 @@ function dates() {
         return;
     }
 
-
     dateSelect.innerHTML =
         '<option value="">Seleccioná una fecha</option>';
 
@@ -572,17 +571,10 @@ function dates() {
         new Intl.DateTimeFormat(
             'es-HN',
             {
-                weekday:
-                    'short',
-
-                day:
-                    'numeric',
-
-                month:
-                    'short',
-
-                timeZone:
-                    'America/Tegucigalpa'
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                timeZone: 'America/Tegucigalpa'
             }
         );
 
@@ -591,55 +583,95 @@ function dates() {
         new Intl.DateTimeFormat(
             'en-CA',
             {
-                year:
-                    'numeric',
-
-                month:
-                    '2-digit',
-
-                day:
-                    '2-digit',
-
-                timeZone:
-                    'America/Tegucigalpa'
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                timeZone: 'America/Tegucigalpa'
             }
         );
 
 
     /*
-     * Hoy + próximos 6 días.
+     * Mostramos los próximos 7 DÍAS DISPONIBLES.
+     *
+     * LUNES NO SE AGREGA.
      */
 
-    for (
-        let i = 0;
-        i < 7;
-        i++
-    ) {
+    let added = 0;
+    let offset = 0;
+
+
+    while (added < 7) {
 
         const date =
             new Date(
                 Date.now() +
-                i * 86400000
+                offset * 86400000
             );
 
 
-        const value =
-            valueFormatter
+        offset++;
+
+
+        /*
+         * Sacamos el día de semana usando
+         * explícitamente Honduras.
+         */
+
+        const weekday =
+            new Intl.DateTimeFormat(
+                'en-US',
+                {
+                    weekday: 'short',
+                    timeZone: 'America/Tegucigalpa'
+                }
+            )
                 .format(date);
 
 
-        let prefix =
-            '';
+        /*
+         * Lunes cerrado.
+         */
 
-
-        if (i === 0) {
-
-            prefix =
-                'HOY · ';
+        if (weekday === 'Mon') {
+            continue;
         }
 
 
-        if (i === 1) {
+        const value =
+            valueFormatter.format(date);
+
+
+        const todayValue =
+            valueFormatter.format(
+                new Date()
+            );
+
+
+        const tomorrowValue =
+            valueFormatter.format(
+                new Date(
+                    Date.now() +
+                    86400000
+                )
+            );
+
+
+        let prefix = '';
+
+
+        if (
+            value ===
+            todayValue
+        ) {
+
+            prefix =
+                'HOY · ';
+
+        } else if (
+            value ===
+            tomorrowValue
+        ) {
 
             prefix =
                 'MAÑANA · ';
@@ -649,8 +681,9 @@ function dates() {
         const label =
             (
                 prefix +
-                displayFormatter
-                    .format(date)
+                displayFormatter.format(
+                    date
+                )
             )
                 .toUpperCase();
 
@@ -661,6 +694,9 @@ function dates() {
                 value
             )
         );
+
+
+        added++;
     }
 }
 
@@ -797,12 +833,42 @@ async function makeTimes() {
             .getUTCDay();
 
 
-    const hoursConfig =
-        appConfig.hours?.[day] ??
-        appConfig.hours?.[
-            String(day)
-        ] ??
-        DEFAULT_HOURS[day];
+let hoursConfig;
+
+
+switch (day) {
+
+    case 0:
+        hoursConfig =
+            ['12:00', '21:00'];
+        break;
+
+
+    case 1:
+        hoursConfig =
+            null;
+        break;
+
+
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+        hoursConfig =
+            ['14:00', '21:00'];
+        break;
+
+
+    case 6:
+        hoursConfig =
+            ['12:00', '21:00'];
+        break;
+
+
+    default:
+        hoursConfig =
+            null;
+}
 
 
     /*
