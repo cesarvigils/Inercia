@@ -35,7 +35,7 @@ function injectAuthMarkup() {
       <button class="auth-tab active" type="button" data-auth-tab="login">INICIAR SESIÓN</button>
       <button class="auth-tab" type="button" data-auth-tab="register">REGISTRARSE</button>
     </div>
-    <form class="auth-form active" id="loginForm">
+    <form class="auth-form active" id="loginForm" novalidate>
       <div class="auth-heading">
         <h2 id="authModalTitle">BIENVENIDO</h2>
         <p>Inicia sesión en tu cuenta de Simuladores Inercia.</p>
@@ -233,6 +233,16 @@ const forgotPasswordModal =
     document.getElementById(
         'forgotPasswordModal'
     );
+if (forgotPasswordModal) {
+    forgotPasswordModal.inert = true;
+}
+
+if (
+    authModal &&
+    !authModal.classList.contains('open')
+) {
+    authModal.inert = true;
+}
 
 const forgotPasswordBackdrop =
     document.getElementById(
@@ -286,20 +296,66 @@ setPersistence(auth, browserLocalPersistence)
 
 
 function openAuthModal() {
+
     closeProfileMenu();
 
-    authModal?.classList.add('open');
-    authModal?.setAttribute('aria-hidden', 'false');
 
-    document.body.classList.add('auth-modal-open');
+    if (authModal) {
+
+        authModal.inert =
+            false;
+
+        authModal.setAttribute(
+            'aria-hidden',
+            'false'
+        );
+
+        authModal.classList.add(
+            'open'
+        );
+    }
+
+
+    document.body.classList.add(
+        'auth-modal-open'
+    );
 }
 
 
 function closeAuthModal() {
-    authModal?.classList.remove('open');
-    authModal?.setAttribute('aria-hidden', 'true');
 
-    document.body.classList.remove('auth-modal-open');
+    if (
+        authModal
+            ?.contains(
+                document.activeElement
+            )
+    ) {
+
+        document.activeElement
+            ?.blur();
+    }
+
+
+    if (authModal) {
+
+        authModal.classList.remove(
+            'open'
+        );
+
+        authModal.setAttribute(
+            'aria-hidden',
+            'true'
+        );
+
+        authModal.inert =
+            true;
+    }
+
+
+    document.body.classList.remove(
+        'auth-modal-open'
+    );
+
 
     hideMessage();
 }
@@ -309,9 +365,7 @@ function openForgotPasswordModal() {
 
     const loginEmail =
         document
-            .getElementById(
-                'loginEmail'
-            )
+            .getElementById('loginEmail')
             ?.value
             ?.trim();
 
@@ -326,6 +380,21 @@ function openForgotPasswordModal() {
     }
 
 
+    /*
+     * Quitamos foco ANTES de ocultar.
+     */
+
+    if (
+        document.activeElement instanceof HTMLElement
+    ) {
+
+        document.activeElement.blur();
+    }
+
+
+    /*
+     * Ocultar login correctamente.
+     */
 
     authModal?.classList.remove(
         'open'
@@ -336,17 +405,29 @@ function openForgotPasswordModal() {
         'true'
     );
 
+    if (authModal) {
+        authModal.inert = true;
+    }
 
-    forgotPasswordModal
-        ?.classList.add(
-            'open'
-        );
 
-    forgotPasswordModal
-        ?.setAttribute(
+    /*
+     * Activar forgot password.
+     */
+
+    if (forgotPasswordModal) {
+
+        forgotPasswordModal.inert =
+            false;
+
+        forgotPasswordModal.setAttribute(
             'aria-hidden',
             'false'
         );
+
+        forgotPasswordModal.classList.add(
+            'open'
+        );
+    }
 
 
     document.body.classList.add(
@@ -354,12 +435,16 @@ function openForgotPasswordModal() {
     );
 
 
-    setTimeout(
+    /*
+     * Dar foco DESPUÉS de abrir.
+     */
+
+    requestAnimationFrame(
         () => {
+
             forgotPasswordEmail
                 ?.focus();
-        },
-        50
+        }
     );
 }
 
@@ -368,51 +453,98 @@ function closeForgotPasswordModal(
     reopenLogin = false
 ) {
 
-    forgotPasswordModal
-        ?.classList.remove(
+    /*
+     * Muy importante:
+     * quitamos foco antes de aria-hidden.
+     */
+
+    if (
+        forgotPasswordModal
+            ?.contains(
+                document.activeElement
+            )
+    ) {
+
+        document.activeElement
+            ?.blur();
+    }
+
+
+    /*
+     * Ocultar recuperación.
+     */
+
+    if (forgotPasswordModal) {
+
+        forgotPasswordModal.classList.remove(
             'open'
         );
 
-    forgotPasswordModal
-        ?.setAttribute(
+        forgotPasswordModal.setAttribute(
             'aria-hidden',
             'true'
         );
 
-
-    if (
-        forgotPasswordMessage
-    ) {
-
-        forgotPasswordMessage
-            .textContent =
-            '';
-
-        forgotPasswordMessage
-            .classList.remove(
-                'show',
-                'error',
-                'success'
-            );
+        forgotPasswordModal.inert =
+            true;
     }
 
 
+    /*
+     * Limpiar mensaje.
+     */
+
+    if (forgotPasswordMessage) {
+
+        forgotPasswordMessage.textContent =
+            '';
+
+        forgotPasswordMessage.classList.remove(
+            'show',
+            'error',
+            'success'
+        );
+    }
+
+
+    /*
+     * Volver al login.
+     */
+
     if (reopenLogin) {
 
-        authModal
-            ?.classList.add(
-                'open'
-            );
+        if (authModal) {
 
-        authModal
-            ?.setAttribute(
+            authModal.inert =
+                false;
+
+            authModal.setAttribute(
                 'aria-hidden',
                 'false'
             );
 
+            authModal.classList.add(
+                'open'
+            );
+        }
+
+
         document.body.classList.add(
             'auth-modal-open'
         );
+
+
+        requestAnimationFrame(
+            () => {
+
+                document
+                    .getElementById(
+                        'loginEmail'
+                    )
+                    ?.focus();
+            }
+        );
+
 
     } else {
 
@@ -421,7 +553,6 @@ function closeForgotPasswordModal(
         );
     }
 }
-
 /* =========================================================
    PROFILE MENU
    ========================================================= */
@@ -797,25 +928,41 @@ forgotPasswordForm
             event.preventDefault();
 
 
-            const email =
-                forgotPasswordEmail
-                    ?.value
-                    ?.trim();
+const email =
+    forgotPasswordEmail
+        ?.value
+        ?.trim();
 
 
-            if (!email) {
+if (!email) {
 
-                showForgotMessage(
-                    'Ingresá tu correo electrónico.'
-                );
+    showForgotMessage(
+        'Ingresá tu correo electrónico.'
+    );
+
+    forgotPasswordEmail
+        ?.focus();
+
+    return;
+}
 
 
-                forgotPasswordEmail
-                    ?.focus();
+const validEmail =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        .test(email);
 
 
-                return;
-            }
+if (!validEmail) {
+
+    showForgotMessage(
+        'Ingresá un correo electrónico válido.'
+    );
+
+    forgotPasswordEmail
+        ?.focus();
+
+    return;
+}
 
 
             const submitBtn =
