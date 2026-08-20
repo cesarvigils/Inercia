@@ -1355,7 +1355,7 @@ function updatePrices() {
                 appConfig
                     ?.prices
                     ?.standard
-            )} / HORA`;
+            )} + ISV / HORA`;
     }
 
 
@@ -1366,7 +1366,7 @@ function updatePrices() {
                 appConfig
                     ?.prices
                     ?.premium
-            )} / HORA`;
+            )} + ISV / HORA`;
     }
 }
 
@@ -2836,7 +2836,7 @@ form
 
                             `Estado: PENDIENTE\n` +
 
-                            `Total: ${money(total)}\n\n` +
+                            `Total: ${money(total)}\n\n + ISV` +
 
                             `Te notificaremos por WhatsApp cuando sea aprobada.`
                         )
