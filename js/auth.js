@@ -9,7 +9,9 @@ import {
     onAuthStateChanged,
     setPersistence,
     browserLocalPersistence,
-    signOut
+    signOut,
+        sendPasswordResetEmail
+
 } from 'firebase/auth';
 
 import {
@@ -46,6 +48,12 @@ function injectAuthMarkup() {
         <span>CONTRASEÑA</span>
         <input type="password" id="loginPassword" placeholder="Tu contraseña" autocomplete="current-password" required>
       </label>
+      <button
+        class="auth-forgot"
+        id="forgotPasswordBtn"
+        type="button"
+        style="background:none;border:none;padding:0;margin:-8px 0 4px;align-self:flex-end;color:inherit;opacity:0.75;font-size:13px;text-decoration:underline;cursor:pointer;"
+      >¿Olvidaste tu contraseña?</button>
       <button class="auth-submit" type="submit">INICIAR SESIÓN</button>
       <div class="auth-divider"><span>O</span></div>
       <p class="auth-switch">¿No tienes una cuenta? <button type="button" data-switch-auth="register">REGÍSTRATE</button></p>
@@ -117,7 +125,10 @@ const authSwitchButtons = document.querySelectorAll('[data-switch-auth]');
 
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
-
+const forgotPasswordBtn =
+    document.getElementById(
+        'forgotPasswordBtn'
+    );
 const googleLoginBtn = document.getElementById('googleLoginBtn');
 const googleRegisterBtn = document.getElementById('googleRegisterBtn');
 
@@ -363,6 +374,131 @@ function friendlyAuthError(error) {
     }
 
 }
+
+
+/* =========================================================
+   FORGOT PASSWORD
+
+   IMPORTANTE:
+
+   Firebase, por seguridad, responde OK aunque el correo
+   no exista en el sistema (así nadie puede usar este
+   formulario para averiguar qué correos están
+   registrados). Por eso el mensaje de éxito es genérico
+   y no confirma si la cuenta existe o no.
+   ========================================================= */
+
+function friendlyResetError(error) {
+
+    switch (error.code) {
+
+        case 'auth/invalid-email':
+            return 'Ese correo electrónico no es válido.';
+
+        case 'auth/missing-email':
+            return 'Escribe tu correo electrónico primero.';
+
+        case 'auth/user-not-found':
+
+            /*
+             * Solo aparece en proyectos viejos de Firebase
+             * que no tienen activada la protección de
+             * enumeración de correos.
+             */
+
+            return 'No encontramos ninguna cuenta con ese correo.';
+
+        case 'auth/too-many-requests':
+            return 'Demasiados intentos. Intenta de nuevo en unos minutos.';
+
+        default:
+
+            console.error(
+                '[FORGOT PASSWORD] Error:',
+                error
+            );
+
+            return 'No pudimos enviar el correo. Intenta de nuevo.';
+    }
+
+}
+
+
+forgotPasswordBtn?.addEventListener('click', async () => {
+
+    hideMessage();
+
+
+    const emailInput =
+        document.getElementById(
+            'loginEmail'
+        );
+
+
+    const email =
+        emailInput
+            ?.value
+            .trim();
+
+
+    if (!email) {
+
+        showMessage(
+            'Escribe tu correo electrónico arriba y luego tocá "¿Olvidaste tu contraseña?" de nuevo.'
+        );
+
+
+        emailInput?.focus();
+
+
+        return;
+    }
+
+
+    const originalText =
+        forgotPasswordBtn.textContent;
+
+
+    forgotPasswordBtn.disabled =
+        true;
+
+
+    forgotPasswordBtn.textContent =
+        'ENVIANDO...';
+
+
+    try {
+
+        await sendPasswordResetEmail(
+            auth,
+            email
+        );
+
+
+        showMessage(
+            `Te enviamos un enlace a ${email} para restablecer tu contraseña. Revisá tu bandeja de entrada (y spam).`,
+            'success'
+        );
+
+
+    } catch (error) {
+
+        showMessage(
+            friendlyResetError(error)
+        );
+
+
+    } finally {
+
+        forgotPasswordBtn.disabled =
+            false;
+
+
+        forgotPasswordBtn.textContent =
+            originalText;
+    }
+
+});
 
 
 /* =========================================================
