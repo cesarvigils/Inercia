@@ -1270,3 +1270,42 @@ a.contact-item:hover {
     height: auto;
     object-fit: contain;
 }
+.auth-forgot-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -4px;
+    margin-bottom: 4px;
+}
+
+.auth-forgot-btn {
+    padding: 0;
+    border: 0;
+    background: transparent;
+
+    color: #8d8d8d;
+
+    font-family: var(
+        --font-display,
+        'Kenyan Coffee',
+        'Alumni Sans',
+        sans-serif
+    );
+
+    font-size: 13px;
+    letter-spacing: .7px;
+
+    cursor: pointer;
+
+    transition:
+        color .18s ease,
+        opacity .18s ease;
+}
+
+.auth-forgot-btn:hover {
+    color: #ff8b00;
+}
+
+.auth-forgot-btn:disabled {
+    opacity: .45;
+    cursor: wait;
+}
