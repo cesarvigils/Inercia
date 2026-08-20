@@ -1891,3 +1891,88 @@ body {
     opacity: .45;
     cursor: wait;
 }
+/* =========================================================
+   CASH PAYMENT - SUBSCRIPTION LOCKED
+   ========================================================= */
+
+.payment-option-disabled {
+    cursor: not-allowed;
+    user-select: none;
+}
+
+.payment-option-disabled .payment-card {
+    position: relative;
+
+    opacity: 0.42;
+    filter: grayscale(1);
+
+    cursor: not-allowed;
+
+    border-color:
+        rgba(255, 255, 255, 0.08);
+
+    background:
+        rgba(255, 255, 255, 0.025);
+}
+
+.payment-option-disabled:hover .payment-card {
+    border-color:
+        rgba(255, 255, 255, 0.08);
+
+    transform: none;
+}
+
+.payment-option-disabled input {
+    pointer-events: none;
+}
+
+.payment-option-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.payment-option-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.payment-coming-soon {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 20px;
+
+    padding: 3px 7px;
+
+    border: 1px solid
+        rgba(255, 139, 0, 0.25);
+
+    color:
+        rgba(255, 139, 0, 0.75);
+
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+
+    line-height: 1;
+}
+
+.payment-lock {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 24px;
+    height: 24px;
+
+    margin-left: auto;
+
+    opacity: 0.6;
+}
+
+.payment-lock svg {
+    width: 18px;
+    height: 18px;
+}

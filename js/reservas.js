@@ -139,30 +139,15 @@ let promos =
 
 let loadingAvailability =
     false;
+let paymentAccess = {
+    transferencia: true,
+    paypal: true,
+    efectivo: false
+};
 
-
-/* =========================================================
-   ASSETS
-   ========================================================= */
 
 const wheel =
     'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49';
-
-
-/* =========================================================
-   HORARIO POR DEFECTO (FALLBACK)
-
-   Se usa SOLO si el backend (appConfig.hours) no trae
-   el día correspondiente. Si el backend sí lo trae,
-   el backend manda.
-
-   Llave = getUTCDay() → 0=Domingo … 6=Sábado
-
-   - Martes a viernes: 2pm - 9pm
-   - Sábado y domingo: 12pm - 9pm
-   - Lunes: cerrado (null)
-   ========================================================= */
-
 const DEFAULT_HOURS = {
     0: ['12:00', '21:00'], // Domingo
     1: null,                // Lunes - CERRADO
@@ -1932,7 +1917,53 @@ function summary() {
     }
 }
 
+async function loadPaymentAccess() {
 
+
+    paymentAccess.transferencia =
+        true;
+
+    paymentAccess.paypal =
+        true;
+
+    paymentAccess.efectivo =
+        false;
+
+
+    if (!currentUser) {
+
+        updatePaymentAccess();
+
+        return;
+    }
+
+
+    try {
+
+        const data =
+            await api(
+                '/api/subscription/status'
+            );
+
+
+        paymentAccess.efectivo =
+            data?.active === true;
+
+
+    } catch (error) {
+
+        console.error(
+            '[RESERVAS] No se pudo verificar membresía:',
+            error
+        );
+
+        paymentAccess.efectivo =
+            false;
+    }
+
+
+    updatePaymentAccess();
+}
 /* =========================================================
    USER PROFILE
    ========================================================= */
@@ -2280,7 +2311,18 @@ document
                         document.querySelector(
                             'input[name="payment"]:checked'
                         )?.value;
+if (
+    payment === 'efectivo' &&
+    paymentAccess.efectivo !== true
+) {
 
+    message(
+        'El pago en efectivo está disponible únicamente para miembros con una suscripción activa.',
+        'error'
+    );
+
+    return;
+}
 
                     proofBlock.hidden =
                         payment !==
@@ -2290,10 +2332,89 @@ document
         }
     );
 
+function updatePaymentAccess() {
 
-/* =========================================================
-   SUBMIT RESERVATION
-   ========================================================= */
+    const cashOption =
+        document.getElementById(
+            'cashPaymentOption'
+        );
+
+    const cashInput =
+        document.getElementById(
+            'cashPaymentInput'
+        );
+
+
+    if (
+        !cashOption ||
+        !cashInput
+    ) {
+        return;
+    }
+
+
+    const cashEnabled =
+        paymentAccess.efectivo ===
+        true;
+
+
+    cashInput.disabled =
+        !cashEnabled;
+
+
+    cashOption.classList.toggle(
+        'payment-option-disabled',
+        !cashEnabled
+    );
+
+
+    cashOption.setAttribute(
+        'aria-disabled',
+        String(
+            !cashEnabled
+        )
+    );
+
+
+    const badge =
+        cashOption.querySelector(
+            '.payment-coming-soon'
+        );
+
+
+    const description =
+        cashOption.querySelector(
+            'small'
+        );
+
+
+    if (cashEnabled) {
+
+        if (badge) {
+            badge.hidden = true;
+        }
+
+
+        if (description) {
+
+            description.textContent =
+                'Pagá al llegar a Inercia';
+        }
+
+    } else {
+
+        if (badge) {
+            badge.hidden = false;
+        }
+
+
+        if (description) {
+
+            description.textContent =
+                'Disponible con membresía';
+        }
+    }
+}
 
 form
     ?.addEventListener(
@@ -2441,10 +2562,6 @@ form
                     null;
 
 
-                /* =================================================
-                   TRANSFERENCIA
-                   ================================================= */
-
                 if (
                     payment ===
                     'transferencia'
@@ -2478,10 +2595,6 @@ form
                         );
                     }
 
-
-                    /*
-                     * 5 MB máximo.
-                     */
 
                     if (
                         file.size >
@@ -2765,21 +2878,10 @@ form
             }
 
 
-            /* =====================================================
-               POST-RESERVA
-
-               Todo lo de acá abajo corre SIEMPRE que la
-               reserva se haya creado, sin importar si el
-               alert() nativo falla o es bloqueado.
-               ===================================================== */
-
             if (
                 reservationSucceeded
             ) {
 
-                /*
-                 * Mensaje dentro de la página.
-                 */
 
                 message(
                     successMessage,
@@ -2929,7 +3031,7 @@ async function init() {
 
 
     dates();
-
+updatePaymentAccess();
 
     try {
 
