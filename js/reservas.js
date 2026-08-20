@@ -1330,10 +1330,6 @@ async function loadConfig() {
 }
 
 
-/* =========================================================
-   PRICES
-   ========================================================= */
-
 function updatePrices() {
 
     const standard =
@@ -1882,15 +1878,10 @@ function summary() {
         }`
     );
 
-
-    setText(
-        'reservationTotal',
-
-        money(
-            localPrice()
-        )
-    );
-
+setText(
+    'reservationTotal',
+    `${money(localPrice())} + ISV`
+);
 
     if (
         submitButton
@@ -2828,28 +2819,19 @@ form
 
 
                 successMessage =
-                    payment ===
-                    'transferencia'
-
-                        ? (
-                            `Reserva ${code} creada correctamente.\n\n` +
-
-                            `Estado: PENDIENTE\n` +
-
-                            `Total: ${money(total)}\n\n + ISV` +
-
-                            `Te notificaremos por WhatsApp cuando sea aprobada.`
-                        )
-
-                        : (
-                            `Reserva ${code} creada y pagada correctamente.\n\n` +
-
-                            `Estado: APROBADA\n` +
-
-                            `Total: ${money(total)}\n\n` +
-
-                            `Recibirás tu confirmación por WhatsApp.`
-                        );
+    payment === 'transferencia'
+        ? (
+            `Reserva ${code} creada correctamente.\n\n` +
+            `Estado: PENDIENTE\n` +
+            `Total: ${money(total)} + ISV\n\n` +
+            `Te notificaremos por WhatsApp cuando sea aprobada.`
+        )
+        : (
+            `Reserva ${code} creada y pagada correctamente.\n\n` +
+            `Estado: APROBADA\n` +
+            `Total: ${money(total)} + ISV\n\n` +
+            `Recibirás tu confirmación por WhatsApp.`
+        );
 
 
                 reservationSucceeded =
