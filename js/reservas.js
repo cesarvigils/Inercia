@@ -333,7 +333,6 @@ function formatTime(hours, minutes = 0) {
    ========================================================= */
 
 function makeTimes() {
-
     if (!timeSelect) return;
 
     timeSelect.innerHTML =
@@ -346,21 +345,12 @@ function makeTimes() {
         return;
     }
 
-    /*
-     * Sacamos el día sin depender de timezone
-     * local del navegador.
-     *
-     * 0 domingo
-     * 1 lunes
-     * ...
-     * 6 sábado
-     */
     const [year, month, dayNumber] =
         dateSelect.value
             .split('-')
             .map(Number);
 
-    const day =
+    const selectedDate =
         new Date(
             Date.UTC(
                 year,
@@ -368,15 +358,15 @@ function makeTimes() {
                 dayNumber,
                 12
             )
-        ).getUTCDay();
+        );
+
+    const day =
+        selectedDate.getUTCDay();
 
     const hoursConfig =
         appConfig.hours?.[day] ??
         appConfig.hours?.[String(day)];
 
-    /*
-     * Día cerrado.
-     */
     if (
         !hoursConfig ||
         !Array.isArray(hoursConfig)
@@ -393,30 +383,102 @@ function makeTimes() {
     const close =
         toMinutes(hoursConfig[1]);
 
-    /*
-     * IMPORTANTE:
-     * Las reservas son solamente en horas exactas.
-     *
-     * Antes estaba:
-     *
-     * m += 30
-     *
-     * Eso permitía 2:30, 3:30, etc.
-     */
-    for (
-        let m = open;
-        m < close;
-        m += 60
-    ) {
 
+    /* =====================================================
+       HORA ACTUAL EN HONDURAS
+       ===================================================== */
+
+    const now =
+        new Date();
+
+    const hnParts =
+        new Intl.DateTimeFormat(
+            'en-CA',
+            {
+                timeZone: 'America/Tegucigalpa',
+
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+
+                hour: '2-digit',
+                minute: '2-digit',
+
+                hourCycle: 'h23'
+            }
+        )
+            .formatToParts(now)
+            .reduce(
+                (result, part) => {
+                    result[part.type] =
+                        part.value;
+
+                    return result;
+                },
+                {}
+            );
+
+
+    const todayHN =
+        `${hnParts.year}-${hnParts.month}-${hnParts.day}`;
+
+    const currentMinutes =
+        Number(hnParts.hour) * 60 +
+        Number(hnParts.minute);
+
+
+    /*
+     * El backend exige 30 minutos.
+     */
+    const minimumAdvanceMinutes =
+        Number(
+            appConfig.minimumAdvanceMinutes ??
+            appConfig.minAdvanceMinutes ??
+            30
+        );
+
+
+    let validTimes = 0;
+
+
+    for (
+        let minutes = open;
+        minutes < close;
+        minutes += 60
+    ) {
         const hh =
-            Math.floor(m / 60);
+            Math.floor(
+                minutes / 60
+            );
 
         const mm =
-            m % 60;
+            minutes % 60;
+
+
+        /* =============================================
+           SI ES HOY:
+           ocultar horas que no cumplen anticipación
+           ============================================= */
+
+        if (
+            dateSelect.value === todayHN
+        ) {
+            const minimumAllowed =
+                currentMinutes +
+                minimumAdvanceMinutes;
+
+            if (
+                minutes <
+                minimumAllowed
+            ) {
+                continue;
+            }
+        }
+
 
         const value =
             `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+
 
         const label =
             formatTime(
@@ -424,12 +486,35 @@ function makeTimes() {
                 mm
             );
 
+
         timeSelect.add(
             new Option(
                 label,
                 value
             )
         );
+
+
+        validTimes++;
+    }
+
+
+    /* =====================================================
+       NO QUEDAN HORAS DISPONIBLES HOY
+       ===================================================== */
+
+    if (
+        validTimes === 0
+    ) {
+        timeSelect.innerHTML =
+            '<option value="">No quedan horarios disponibles hoy</option>';
+
+        timeSelect.disabled =
+            true;
+
+    } else {
+        timeSelect.disabled =
+            false;
     }
 }
 
