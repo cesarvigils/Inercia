@@ -16,26 +16,8 @@ function reservationMessage(text, type = 'info') {
     element.hidden = !text;
 }
 
-/*
- * MODAL DE ÉXITO (REEMPLAZA window.alert)
- *
- * window.alert() puede ser silenciado por el navegador SIN
- * lanzar ninguna excepción — sobre todo acá, porque el flujo
- * de PayPal corre a partir de callbacks de un iframe/popup de
- * terceros (el checkout de PayPal). En ese caso no hay forma
- * de detectarlo desde JS: el código sigue corriendo normal,
- * simplemente no aparece nada en pantalla.
- *
- * Por eso dejamos de depender de window.alert() y mostramos un
- * modal propio (un <div> que nosotros controlamos). Esto
- * SIEMPRE se ve, sin importar configuración del navegador.
- */
 function safeAlert(text, onClose) {
-    /*
-     * runOnClose se asegura de que onClose corra UNA sola vez,
-     * sin importar si el usuario cierra el modal a mano o si
-     * se dispara el timeout de respaldo.
-     */
+
     let closed = false;
     const runOnClose = () => {
         if (closed) return;
@@ -221,8 +203,7 @@ function updatePaypalPreview(serverData = null) {
 
     preview.innerHTML = `
         <span>TOTAL DE LA RESERVA</span>
-        <strong>L ${hnl.toLocaleString('es-HN', { maximumFractionDigits: 2 })}</strong>
-        ${usd ? `<small>Orden PayPal aproximada: $${usd} USD</small>` : ''}
+        <strong>L ${hnl.toLocaleString('es-HN', { maximumFractionDigits: 2 })} + ISV</strong>
     `;
 }
 
