@@ -29,19 +29,20 @@ import {
    ========================================================= */
 
 const METHODS = new Set([
-    'transferencia',
-    'tarjeta'
+    'transferencia'
 ]);
 
 const MAX_RIGS = 10;
 
-const MAX_PROOF_SIZE = 5 * 1024 * 1024;
+const MAX_PROOF_SIZE =
+    5 * 1024 * 1024;
 
-const ALLOWED_PROOF_TYPES = new Set([
-    'image/jpeg',
-    'image/png',
-    'application/pdf'
-]);
+const ALLOWED_PROOF_TYPES =
+    new Set([
+        'image/jpeg',
+        'image/png',
+        'application/pdf'
+    ]);
 
 
 /* =========================================================
@@ -56,7 +57,13 @@ export default async function handler(req, res) {
            METHOD
            ================================================= */
 
-        if (!method(req, res, ['POST'])) {
+        if (
+            !method(
+                req,
+                res,
+                ['POST']
+            )
+        ) {
             return;
         }
 
@@ -65,32 +72,38 @@ export default async function handler(req, res) {
            AUTH
            ================================================= */
 
-        const user = await requireUser(req);
+        const user =
+            await requireUser(req);
+
 
         if (!user?.uid) {
+
             throw bad(
                 'Tenés que iniciar sesión.',
                 401
             );
         }
 
-        const body = req.body || {};
+
+        const body =
+            req.body || {};
 
 
         /* =================================================
            CONFIG + DATE/TIME
            ================================================= */
 
+        const config =
+            await getConfig();
 
 
-        const config = await getConfig();
-
-        const when = validateWhen(
-            body.date,
-            body.time,
-            body.duration,
-            config
-        );
+        const when =
+            validateWhen(
+                body.date,
+                body.time,
+                body.duration,
+                config
+            );
 
 
         /* =================================================
@@ -102,23 +115,29 @@ export default async function handler(req, res) {
             body.rigIds.length === 0 ||
             body.rigIds.length > MAX_RIGS
         ) {
+
             throw bad(
                 'Seleccioná al menos un simulador válido.'
             );
         }
 
-        const uniqueRigIds = [
-            ...new Set(
-                body.rigIds.map(
-                    id => String(id).trim()
+
+        const uniqueRigIds =
+            [
+                ...new Set(
+                    body.rigIds.map(
+                        (id) =>
+                            String(id).trim()
+                    )
                 )
-            )
-        ].filter(Boolean);
+            ].filter(Boolean);
+
 
         if (
             uniqueRigIds.length === 0 ||
             uniqueRigIds.length > MAX_RIGS
         ) {
+
             throw bad(
                 'La selección de simuladores es inválida.'
             );
@@ -129,58 +148,75 @@ export default async function handler(req, res) {
            PAYMENT
            ================================================= */
 
-        const payment = String(
-            body.payment || ''
-        ).trim();
+        const payment =
+            String(
+                body.payment || ''
+            ).trim();
+
 
         if (!METHODS.has(payment)) {
+
             throw bad(
                 'Método de pago inválido.'
             );
         }
 
+
         /*
-         * FLUJO:
-         *
-         * transferencia
-         * --------------
-         * Requiere comprobante.
-         * paymentVerification queda pending.
-         *
-         * tarjeta
-         * -------
-         * NO requiere comprobante de transferencia.
-         * paymentVerification queda not_required.
-         *
-         * La integración real del cobro con tarjeta
-         * se puede conectar posteriormente.
-         *
-         * WhatsApp todavía NO se envía aquí.
+         * FLUJO DE PAGO
+         * transferencia = comprobante + verificación manual
+         * PayPal usa endpoints dedicados /api/paypal/*
+         * WhatsApp se conectará después.
          */
 
 
         /* =================================================
-           CUSTOMER PROFILE
+           CUSTOMER PROFILE - FIRESTORE
+
+           IMPORTANTE:
+
+           Los datos del cliente NO vienen del navegador.
+
+           El UID viene del Firebase ID Token y
+           buscamos el perfil directamente en:
+
+           Firestore:
+           users/{uid}
+
+           Esperamos:
+           - name
+           - email
+           - phone
+           - phoneNumber (fallback)
            ================================================= */
 
         let profile = {};
 
+
         try {
 
-            const profileDoc = await adminDb
-                .doc(`users/${user.uid}`)
-                .get();
+            const profileDoc =
+                await adminDb
+                    .doc(
+                        `users/${user.uid}`
+                    )
+                    .get();
+
 
             if (profileDoc.exists) {
-                profile = profileDoc.data() || {};
+
+                profile =
+                    profileDoc.data() || {};
             }
+
 
         } catch (error) {
 
             console.error(
-                '[RESERVAS] Error leyendo perfil:',
+                '[RESERVAS] Error leyendo perfil de Firestore:',
                 error
             );
+
 
             throw bad(
                 'No pudimos cargar los datos de tu cuenta.'
@@ -191,54 +227,98 @@ export default async function handler(req, res) {
         /* =================================================
            CUSTOMER DATA
 
-           NO confiamos en datos enviados desde DevTools.
+           Firestore es la fuente principal.
 
-           Nombre/teléfono/email salen de:
-           Firestore users/{uid}
+           Firebase Auth solamente sirve de fallback
+           para nombre/email.
 
-           Auth sirve de fallback para nombre/email.
+           Teléfono:
+           1. profile.phone
+           2. profile.phoneNumber
            ================================================= */
 
         const customer = {
 
-            name: String(
-                profile.name ||
-                user.name ||
-                ''
-            ).trim(),
+            name:
+                String(
+                    profile.name ||
+                    user.name ||
+                    ''
+                ).trim(),
 
-            email: String(
-                profile.email ||
-                user.email ||
-                ''
-            )
-                .trim()
-                .toLowerCase(),
+            email:
+                String(
+                    profile.email ||
+                    user.email ||
+                    ''
+                )
+                    .trim()
+                    .toLowerCase(),
 
-            phoneNumber: String(
-                profile.phone ||
-                profile.phoneNumber ||
-                ''
-            ).trim()
+            phoneNumber:
+                String(
+                    profile.phone ||
+                    profile.phoneNumber ||
+                    ''
+                ).trim()
         };
 
 
+        /*
+         * Log seguro.
+         *
+         * No imprimimos teléfono/email completos.
+         */
+
+        console.log(
+            '[RESERVAS] Perfil cargado desde Firestore:',
+            {
+                uid:
+                    user.uid,
+
+                documentExists:
+                    Object.keys(profile).length > 0,
+
+                name:
+                    customer.name
+                        ? 'OK'
+                        : 'FALTANTE',
+
+                email:
+                    customer.email
+                        ? 'OK'
+                        : 'FALTANTE',
+
+                phone:
+                    customer.phoneNumber
+                        ? 'OK'
+                        : 'FALTANTE'
+            }
+        );
 
 
+        /* =================================================
+           VALIDATE CUSTOMER
+           ================================================= */
 
         if (!customer.name) {
+
             throw bad(
                 'Tu cuenta no tiene un nombre registrado.'
             );
         }
 
+
         if (!customer.email) {
+
             throw bad(
                 'Tu cuenta no tiene un correo registrado.'
             );
         }
 
+
         if (!customer.phoneNumber) {
+
             throw bad(
                 'Tu cuenta no tiene un número de teléfono registrado.'
             );
@@ -249,59 +329,72 @@ export default async function handler(req, res) {
            LOAD RIGS
            ================================================= */
 
-        const rigRefs = uniqueRigIds.map(
-            id =>
-                adminDb.doc(
-                    `rigs/${id}`
-                )
-        );
+        const rigRefs =
+            uniqueRigIds.map(
+                (id) =>
+                    adminDb.doc(
+                        `rigs/${id}`
+                    )
+            );
 
-        const rigDocs = await adminDb.getAll(
-            ...rigRefs
-        );
+
+        const rigDocs =
+            await adminDb.getAll(
+                ...rigRefs
+            );
+
 
         if (
             rigDocs.some(
-                snapshot => !snapshot.exists
+                (snapshot) =>
+                    !snapshot.exists
             )
         ) {
+
             throw bad(
                 'Uno de los simuladores seleccionados no existe.'
             );
         }
 
 
-        const rigs = rigDocs.map(
-            snapshot => {
+        const rigs =
+            rigDocs.map(
+                (snapshot) => {
 
-                const data =
-                    snapshot.data() || {};
+                    const data =
+                        snapshot.data() || {};
 
-                return {
-                    id: snapshot.id,
 
-                    name: String(
-                        data.name || ''
-                    ).trim(),
+                    return {
 
-                    type: String(
-                        data.type || ''
-                    )
-                        .trim()
-                        .toLowerCase(),
+                        id:
+                            snapshot.id,
 
-                    order: Number(
-                        data.order
-                    ),
+                        name:
+                            String(
+                                data.name || ''
+                            ).trim(),
 
-                    active:
-                        data.active === true,
+                        type:
+                            String(
+                                data.type || ''
+                            )
+                                .trim()
+                                .toLowerCase(),
 
-                    maintenance:
-                        data.maintenance === true
-                };
-            }
-        );
+                        order:
+                            Number(
+                                data.order
+                            ),
+
+                        active:
+                            data.active === true,
+
+                        maintenance:
+                            data.maintenance === true
+                    };
+                }
+            );
 
 
         /* =================================================
@@ -310,33 +403,42 @@ export default async function handler(req, res) {
 
         if (
             rigs.some(
-                rig => !rig.active
+                (rig) =>
+                    !rig.active
             )
         ) {
+
             throw bad(
                 'Uno de los simuladores seleccionados ya no está activo.'
             );
         }
 
+
         if (
             rigs.some(
-                rig => rig.maintenance
+                (rig) =>
+                    rig.maintenance
             )
         ) {
+
             throw bad(
                 'Uno de los simuladores seleccionados está en mantenimiento.'
             );
         }
 
+
         if (
             rigs.some(
-                rig =>
+                (rig) =>
                     ![
                         'standard',
                         'premium'
-                    ].includes(rig.type)
+                    ].includes(
+                        rig.type
+                    )
             )
         ) {
+
             throw bad(
                 'Uno de los simuladores tiene una configuración inválida.'
             );
@@ -351,7 +453,8 @@ export default async function handler(req, res) {
             await activePromotions(
                 body.date,
                 rigs.map(
-                    rig => rig.type
+                    (rig) =>
+                        rig.type
                 )
             );
 
@@ -359,108 +462,122 @@ export default async function handler(req, res) {
         /* =================================================
            SERVER-SIDE PRICE
 
-           El frontend NO decide el precio.
+           Nunca confiamos en el total enviado
+           por el navegador.
            ================================================= */
 
         const pricing =
             priceReservation(
                 rigs,
-                Number(body.duration),
+                Number(
+                    body.duration
+                ),
                 config,
                 promotions,
                 when.lead
             );
 
 
-
-
-
         /* =================================================
            PAYMENT PROOF
            ================================================= */
 
-        let proof = null;
+        let proof =
+            null;
 
 
-        /* -------------------------------------------------
-           TRANSFERENCIA
-           ------------------------------------------------- */
+        if (
+            payment ===
+            'transferencia'
+        ) {
 
-        if (payment === 'transferencia') {
-
-            const proofPath = String(
-                body.proofPath || ''
-            ).trim();
+            const proofPath =
+                String(
+                    body.proofPath || ''
+                ).trim();
 
 
             if (!proofPath) {
+
                 throw bad(
                     'Subí el comprobante de transferencia.'
                 );
             }
 
 
-            /* =============================================
-               CHECK OWNER
-               ============================================= */
+            /*
+             * El archivo tiene que pertenecer
+             * al usuario autenticado.
+             */
 
             const expectedPrefix =
                 `reservation-proofs/${user.uid}/`;
+
 
             if (
                 !proofPath.startsWith(
                     expectedPrefix
                 )
             ) {
+
                 throw bad(
                     'Comprobante inválido.'
                 );
             }
 
 
-            /* =============================================
-               PATH TRAVERSAL
-               ============================================= */
+            /*
+             * Evitamos traversal.
+             */
 
             if (
                 proofPath.includes('../') ||
                 proofPath.includes('..\\')
             ) {
+
                 throw bad(
                     'Comprobante inválido.'
                 );
             }
 
 
-        
-
+            /* -------------------------------------------------
+               STORAGE FILE
+               ------------------------------------------------- */
 
             const file =
                 adminStorage
                     .bucket()
-                    .file(proofPath);
+                    .file(
+                        proofPath
+                    );
+
 
             const [exists] =
                 await file.exists();
 
+
             if (!exists) {
+
                 throw bad(
                     'No encontramos el comprobante subido.'
                 );
             }
 
 
-            /* =============================================
+            /* -------------------------------------------------
                METADATA
-               ============================================= */
+               ------------------------------------------------- */
 
             const [metadata] =
                 await file.getMetadata();
+
 
             const size =
                 Number(
                     metadata.size || 0
                 );
+
 
             const contentType =
                 String(
@@ -468,29 +585,31 @@ export default async function handler(req, res) {
                 ).toLowerCase();
 
 
-            /* =============================================
+            /* -------------------------------------------------
                SIZE
-               ============================================= */
+               ------------------------------------------------- */
 
             if (
                 !size ||
                 size > MAX_PROOF_SIZE
             ) {
+
                 throw bad(
                     'El comprobante no puede pesar más de 5 MB.'
                 );
             }
 
 
-            /* =============================================
+            /* -------------------------------------------------
                MIME
-               ============================================= */
+               ------------------------------------------------- */
 
             if (
                 !ALLOWED_PROOF_TYPES.has(
                     contentType
                 )
             ) {
+
                 throw bad(
                     'El comprobante debe ser JPG, PNG o PDF.'
                 );
@@ -498,61 +617,19 @@ export default async function handler(req, res) {
 
 
             proof = {
-                path: proofPath,
+
+                path:
+                    proofPath,
+
                 contentType,
+
                 size
             };
-
-
         }
 
 
         /* =================================================
-           PAYMENT VERIFICATION STATE
-           ================================================= */
-
-        const paymentVerification =
-            payment === 'transferencia'
-                ? {
-                    required: true,
-                    status: 'pending',
-                    verifiedAt: null,
-                    verifiedBy: null
-                }
-                : {
-                    required: false,
-                    status: 'not_required',
-                    verifiedAt: null,
-                    verifiedBy: null
-                };
-
-
-        /* =================================================
-           FUTURE CONFIRMATION / WHATSAPP
-
-           NO manda WhatsApp todavía.
-
-           Dejamos la estructura para posteriormente hacer:
-
-           confirmation.whatsapp.status = sent
-           confirmation.whatsapp.sentAt = Timestamp
-           confirmation.whatsapp.messageId = ...
-           ================================================= */
-
-        const confirmation = {
-
-            status: 'pending',
-
-            whatsapp: {
-                status: 'pending',
-                sentAt: null,
-                messageId: null
-            }
-        };
-
-
-        /* =================================================
-           RESERVATION
+           RESERVATION REFERENCE
            ================================================= */
 
         const reservationRef =
@@ -561,6 +638,7 @@ export default async function handler(req, res) {
                     'reservations'
                 )
                 .doc();
+
 
         const reservationCode =
             code();
@@ -572,7 +650,7 @@ export default async function handler(req, res) {
 
         const lockRefs =
             rigs.flatMap(
-                rig => {
+                (rig) => {
 
                     const ids =
                         slotIds(
@@ -583,8 +661,9 @@ export default async function handler(req, res) {
                             rig.id
                         );
 
+
                     return ids.map(
-                        id =>
+                        (id) =>
                             adminDb.doc(
                                 `reservationLocks/${id}`
                             )
@@ -593,25 +672,24 @@ export default async function handler(req, res) {
             );
 
 
-
-
-
         /* =================================================
            TRANSACTION
 
-           IMPORTANTE:
-           Locks + reserva se crean juntos.
+           Dentro de la transacción:
+           1. comprobamos locks
+           2. creamos locks
+           3. creamos reserva
 
-           Si falla cualquier parte, Firestore no crea
-           ninguno de los dos.
+           Así evitamos dos reservas simultáneas
+           sobre el mismo rig/horario.
            ================================================= */
 
         await adminDb.runTransaction(
-            async transaction => {
+            async (transaction) => {
 
-                /* =========================================
+                /* -------------------------------------------------
                    CHECK LOCKS
-                   ========================================= */
+                   ------------------------------------------------- */
 
                 const lockDocs =
                     lockRefs.length
@@ -623,10 +701,11 @@ export default async function handler(req, res) {
 
                 if (
                     lockDocs.some(
-                        snapshot =>
+                        (snapshot) =>
                             snapshot.exists
                     )
                 ) {
+
                     throw bad(
                         'Uno de esos simuladores acaba de ser reservado. Actualizá la disponibilidad.',
                         409
@@ -634,9 +713,9 @@ export default async function handler(req, res) {
                 }
 
 
-                /* =========================================
+                /* -------------------------------------------------
                    CREATE LOCKS
-                   ========================================= */
+                   ------------------------------------------------- */
 
                 for (
                     const lockRef
@@ -646,6 +725,7 @@ export default async function handler(req, res) {
                     transaction.create(
                         lockRef,
                         {
+
                             reservationId:
                                 reservationRef.id,
 
@@ -665,17 +745,17 @@ export default async function handler(req, res) {
                 }
 
 
-                /* =========================================
+                /* -------------------------------------------------
                    CREATE RESERVATION
-                   ========================================= */
+                   ------------------------------------------------- */
 
                 transaction.create(
                     reservationRef,
                     {
 
-                        /* ---------------------------------
+                        /* =============================
                            IDENTIFICATION
-                           --------------------------------- */
+                           ============================= */
 
                         code:
                             reservationCode,
@@ -684,11 +764,15 @@ export default async function handler(req, res) {
                             user.uid,
 
 
-                        /* ---------------------------------
-                           CUSTOMER
-                           --------------------------------- */
+                        /* =============================
+                           CUSTOMER SNAPSHOT
+
+                           Guardamos copia de los datos
+                           usados al momento de reservar.
+                           ============================= */
 
                         customer: {
+
                             name:
                                 customer.name,
 
@@ -700,9 +784,9 @@ export default async function handler(req, res) {
                         },
 
 
-                        /* ---------------------------------
+                        /* =============================
                            DATE / TIME
-                           --------------------------------- */
+                           ============================= */
 
                         date:
                             body.date,
@@ -716,13 +800,14 @@ export default async function handler(req, res) {
                             ),
 
 
-                        /* ---------------------------------
+                        /* =============================
                            RIGS
-                           --------------------------------- */
+                           ============================= */
 
                         rigs:
                             rigs.map(
-                                rig => ({
+                                (rig) => ({
+
                                     id:
                                         rig.id,
 
@@ -738,54 +823,64 @@ export default async function handler(req, res) {
                             ),
 
 
-                        /* ---------------------------------
+                        /* =============================
                            PAYMENT
-                           --------------------------------- */
+                           ============================= */
 
                         payment,
 
                         paymentProof:
                             proof,
 
-                        paymentVerification,
+                        // Preparado para el flujo futuro de confirmación/WhatsApp.
+                        paymentVerification: {
+                            required: payment === 'transferencia',
+                            status: payment === 'transferencia'
+                                ? 'pending'
+                                : 'not_required',
+                            verifiedAt: null,
+                            verifiedBy: null
+                        },
+
+                        confirmation: {
+                            status: 'pending',
+                            whatsapp: {
+                                status: 'pending',
+                                sentAt: null,
+                                messageId: null
+                            }
+                        },
 
 
-                        /* ---------------------------------
-                           CONFIRMATION / WHATSAPP
-                           --------------------------------- */
-
-                        confirmation,
-
-
-                        /* ---------------------------------
-                           PRICING
-                           --------------------------------- */
+                        /* =============================
+                           SERVER CALCULATED PRICE
+                           ============================= */
 
                         pricing,
 
 
-                        /* ---------------------------------
+                        /* =============================
                            PROMOTIONS
-                           --------------------------------- */
+                           ============================= */
 
                         promotionIds:
                             promotions.map(
-                                promotion =>
+                                (promotion) =>
                                     promotion.id
                             ),
 
 
-                        /* ---------------------------------
+                        /* =============================
                            STATUS
-                           --------------------------------- */
+                           ============================= */
 
                         status:
                             'pending',
 
 
-                        /* ---------------------------------
+                        /* =============================
                            TIMESTAMPS
-                           --------------------------------- */
+                           ============================= */
 
                         createdAt:
                             FieldValue.serverTimestamp(),
@@ -798,17 +893,32 @@ export default async function handler(req, res) {
         );
 
 
+        /* =================================================
+           RESPONSE
+           ================================================= */
 
-   
+        console.log(
+            '[RESERVAS] Reserva creada:',
+            {
+                id:
+                    reservationRef.id,
 
+                code:
+                    reservationCode,
 
- 
+                uid:
+                    user.uid,
+
+                status:
+                    'pending'
+            }
+        );
+
 
         return json(
             res,
             201,
             {
-                success: true,
 
                 id:
                     reservationRef.id,
@@ -822,13 +932,15 @@ export default async function handler(req, res) {
                 payment,
 
                 paymentVerification:
-                    paymentVerification.status,
+                    payment === 'transferencia'
+                        ? 'pending'
+                        : 'not_required',
 
                 confirmationStatus:
-                    confirmation.status,
+                    'pending',
 
                 whatsappStatus:
-                    confirmation.whatsapp.status,
+                    'pending',
 
                 pricing
             }
@@ -841,6 +953,7 @@ export default async function handler(req, res) {
             '[CREATE RESERVATION]',
             error
         );
+
 
         return fail(
             res,

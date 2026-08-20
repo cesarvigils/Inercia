@@ -27,63 +27,76 @@ const storage = getStorage(auth.app);
    HELPERS
    ========================================================= */
 
-const $ = id =>
-    document.getElementById(id);
+const $ = (id) => document.getElementById(id);
+
+function money(value) {
+    return `L ${Number(value || 0).toLocaleString(
+        'es-HN',
+        {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        }
+    )}`;
+}
+
+function setValue(id, value = '') {
+    const element = $(id);
+
+    if (!element) {
+        console.warn(
+            `[RESERVAS] No existe el elemento #${id}`
+        );
+
+        return;
+    }
+
+    element.value = value ?? '';
+}
+
+function setText(id, value = '') {
+    const element = $(id);
+
+    if (!element) return;
+
+    element.textContent = value;
+}
 
 
 /* =========================================================
    ELEMENTS
    ========================================================= */
 
-const form =
-    $('reservationForm');
+const form = $('reservationForm');
 
-const date =
-    $('reservationDate');
-
-const time =
-    $('reservationTime');
-
-const duration =
-    $('reservationDuration');
-
+const dateSelect = $('reservationDate');
+const timeSelect = $('reservationTime');
+const durationSelect = $('reservationDuration');
 
 const grids = {
-    standard:
-        $('standardGrid'),
-
-    premium:
-        $('premiumGrid')
+    standard: $('standardGrid'),
+    premium: $('premiumGrid')
 };
-
 
 const counts = {
-    standard:
-        $('standardCount'),
-
-    premium:
-        $('premiumCount')
+    standard: $('standardCount'),
+    premium: $('premiumCount')
 };
+
+const submitButton = $('reservationSubmit');
 
 
 /* =========================================================
    STATE
    ========================================================= */
 
-const selected =
-    new Map();
+const selected = new Map();
 
-let appConfig =
-    null;
-
-let rigs =
-    [];
-
-let currentUser =
-    null;
-
-let promos =
-    [];
+let appConfig = null;
+let rigs = [];
+let currentUser = null;
+let currentProfile = null;
+let promos = [];
+let loadingAvailability = false;
 
 
 /* =========================================================
@@ -95,130 +108,37 @@ const wheel =
 
 
 /* =========================================================
-   TIMEZONE HELPERS
-   ========================================================= */
-
-/*
- * Hora / fecha actual en Tegucigalpa, sin importar
- * en qué timezone esté corriendo el navegador.
- */
-
-function nowInHonduras() {
-
-    const parts =
-        new Intl.DateTimeFormat(
-            'en-CA',
-            {
-                timeZone:
-                    'America/Tegucigalpa',
-
-                year:
-                    'numeric',
-
-                month:
-                    '2-digit',
-
-                day:
-                    '2-digit',
-
-                hour:
-                    '2-digit',
-
-                minute:
-                    '2-digit',
-
-                hourCycle:
-                    'h23'
-            }
-        ).formatToParts(
-            new Date()
-        );
-
-
-    const map = {};
-
-    parts.forEach(
-        part => {
-            map[part.type] =
-                part.value;
-        }
-    );
-
-
-    return {
-        date:
-            `${map.year}-${map.month}-${map.day}`,
-
-        minutes:
-            Number(map.hour) * 60 +
-            Number(map.minute)
-    };
-}
-
-
-/* =========================================================
-   MONEY
-   ========================================================= */
-
-function money(value) {
-
-    return `L ${Number(
-        value || 0
-    ).toLocaleString(
-        'es-HN',
-        {
-            maximumFractionDigits: 2
-        }
-    )}`;
-}
-
-
-/* =========================================================
    API
    ========================================================= */
 
-async function api(
-    path,
-    options = {}
-) {
+async function api(path, options = {}) {
 
     const headers = {
         ...(options.headers || {})
     };
 
-
-    /* -----------------------------------------------------
-       AUTH TOKEN
-       ----------------------------------------------------- */
-
+    /*
+     * Mandamos el Firebase ID Token al backend.
+     */
     if (currentUser) {
 
         const token =
-            await currentUser
-                .getIdToken();
+            await currentUser.getIdToken();
 
         headers.Authorization =
             `Bearer ${token}`;
     }
 
-
-    /* -----------------------------------------------------
-       JSON
-       ----------------------------------------------------- */
-
+    /*
+     * Solo JSON cuando no estamos mandando FormData.
+     */
     if (
         options.body &&
         !(options.body instanceof FormData)
     ) {
-
         headers['Content-Type'] =
             'application/json';
     }
-
-
-    /* -----------------------------------------------------
-       REQUEST
-       ----------------------------------------------------- */
 
     const response =
         await fetch(
@@ -229,23 +149,13 @@ async function api(
             }
         );
 
-
     let data = {};
 
     try {
-
-        data =
-            await response.json();
-
+        data = await response.json();
     } catch {
-
         data = {};
     }
-
-
-    /* -----------------------------------------------------
-       ERROR
-       ----------------------------------------------------- */
 
     if (!response.ok) {
 
@@ -262,8 +172,39 @@ async function api(
         );
     }
 
-
     return data;
+}
+
+
+/* =========================================================
+   MESSAGE
+   ========================================================= */
+
+function message(text, type = 'info') {
+
+    const element =
+        $('reservationMessage');
+
+    if (!element) {
+
+        if (text) {
+            console.log(
+                `[RESERVAS:${type}]`,
+                text
+            );
+        }
+
+        return;
+    }
+
+    element.textContent =
+        text || '';
+
+    element.dataset.type =
+        type;
+
+    element.hidden =
+        !text;
 }
 
 
@@ -273,137 +214,117 @@ async function api(
 
 function dates() {
 
-    if (!date) {
-        return;
-    }
+    if (!dateSelect) return;
 
+    /*
+     * Evita duplicar fechas si la función
+     * se ejecuta más de una vez.
+     */
+    dateSelect.innerHTML =
+        '<option value="">Seleccioná una fecha</option>';
 
-    date.innerHTML = '';
-
-
-    const labelFormatter =
+    const displayFormatter =
         new Intl.DateTimeFormat(
             'es-HN',
             {
-                weekday:
-                    'short',
-
-                day:
-                    'numeric',
-
-                month:
-                    'short',
-
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
                 timeZone:
                     'America/Tegucigalpa'
             }
         );
-
 
     const valueFormatter =
         new Intl.DateTimeFormat(
             'en-CA',
             {
-                year:
-                    'numeric',
-
-                month:
-                    '2-digit',
-
-                day:
-                    '2-digit',
-
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
                 timeZone:
                     'America/Tegucigalpa'
             }
         );
 
+    /*
+     * Hoy + próximos 6 días.
+     * Total: 7 días.
+     */
+    for (let i = 0; i < 7; i++) {
 
-    /* -----------------------------------------------------
-       7 DÍAS DISPONIBLES, SIN CONTAR LUNES
-
-       Recorremos hacia adelante hasta juntar 7 fechas
-       válidas, saltando cualquier lunes que aparezca.
-       ----------------------------------------------------- */
-
-    let added = 0;
-    let offset = 0;
-
-    while (
-        added < 7 &&
-        offset < 30
-    ) {
-
-        const currentDate =
+        const d =
             new Date(
                 Date.now() +
-                offset * 86400000
+                i * 86400000
             );
-
 
         const value =
-            valueFormatter.format(
-                currentDate
-            );
-
-
-        /*
-         * Día de la semana usando mediodía UTC
-         * para evitar saltos de fecha por timezone.
-         */
-
-        const weekday =
-            new Date(
-                `${value}T12:00:00Z`
-            ).getUTCDay();
-
-
-        /*
-         * 1 = Lunes. No se muestra en el dropdown.
-         */
-
-        if (weekday === 1) {
-
-            offset++;
-
-            continue;
-        }
-
+            valueFormatter.format(d);
 
         let prefix = '';
 
-        if (offset === 0) {
-            prefix =
-                'HOY · ';
+        if (i === 0) {
+            prefix = 'HOY · ';
         }
 
-        if (offset === 1) {
-            prefix =
-                'MAÑANA · ';
+        if (i === 1) {
+            prefix = 'MAÑANA · ';
         }
-
 
         const label =
             (
                 prefix +
-                labelFormatter.format(
-                    currentDate
-                )
+                displayFormatter.format(d)
             ).toUpperCase();
 
-
-        date.add(
+        dateSelect.add(
             new Option(
                 label,
                 value
             )
         );
-
-
-        added++;
-
-        offset++;
     }
+}
+
+
+/* =========================================================
+   TIME HELPERS
+   ========================================================= */
+
+function toMinutes(value) {
+
+    if (!value) return 0;
+
+    const [hours, minutes] =
+        value
+            .split(':')
+            .map(Number);
+
+    return (
+        hours * 60 +
+        minutes
+    );
+}
+
+function formatTime(hours, minutes = 0) {
+
+    const d =
+        new Date(
+            2000,
+            0,
+            1,
+            hours,
+            minutes
+        );
+
+    return new Intl.DateTimeFormat(
+        'en-US',
+        {
+            hour: 'numeric',
+            minute: '2-digit'
+        }
+    ).format(d);
 }
 
 
@@ -413,177 +334,97 @@ function dates() {
 
 function makeTimes() {
 
-    if (!time) {
-        return;
-    }
+    if (!timeSelect) return;
 
-
-    time.innerHTML =
+    timeSelect.innerHTML =
         '<option value="">Seleccioná una hora</option>';
 
-
     if (
-        !date?.value ||
+        !dateSelect?.value ||
         !appConfig
     ) {
         return;
     }
 
-
     /*
-     * Usamos mediodía UTC para evitar
-     * cambios de fecha por timezone.
+     * Sacamos el día sin depender de timezone
+     * local del navegador.
+     *
+     * 0 domingo
+     * 1 lunes
+     * ...
+     * 6 sábado
      */
-
-    const selectedDate =
-        new Date(
-            `${date.value}T12:00:00Z`
-        );
-
+    const [year, month, dayNumber] =
+        dateSelect.value
+            .split('-')
+            .map(Number);
 
     const day =
-        selectedDate.getUTCDay();
+        new Date(
+            Date.UTC(
+                year,
+                month - 1,
+                dayNumber,
+                12
+            )
+        ).getUTCDay();
 
-
-    /*
-     * Lunes no se ofrece. Ya se filtra en el dropdown
-     * de fechas, pero lo bloqueamos también acá por
-     * si el value llega a setearse de otra forma.
-     */
-
-    if (day === 1) {
-        return;
-    }
-
-
-    /*
-     * Martes a viernes: horario fijo 2pm - 9pm,
-     * sin importar lo que diga appConfig.hours.
-     *
-     * El resto de los días (sábado / domingo) sigue
-     * usando la configuración normal.
-     */
-
-    const isTueToFri =
-        day >= 2 &&
-        day <= 5;
-
-    const hours =
-        isTueToFri
-            ? ['14:00', '21:00']
-            : appConfig.hours?.[day];
-
+    const hoursConfig =
+        appConfig.hours?.[day] ??
+        appConfig.hours?.[String(day)];
 
     /*
      * Día cerrado.
      */
+    if (
+        !hoursConfig ||
+        !Array.isArray(hoursConfig)
+    ) {
+        timeSelect.innerHTML =
+            '<option value="">Cerrado este día</option>';
 
-    if (!hours) {
         return;
     }
 
+    const open =
+        toMinutes(hoursConfig[0]);
 
-    const toMinutes =
-        value => {
-
-            const [
-                hour,
-                minute
-            ] =
-                value
-                    .split(':')
-                    .map(Number);
-
-
-            return (
-                hour * 60 +
-                minute
-            );
-        };
-
-
-    const start =
-        toMinutes(
-            hours[0]
-        );
-
-    const end =
-        toMinutes(
-            hours[1]
-        );
-
+    const close =
+        toMinutes(hoursConfig[1]);
 
     /*
-     * No mostramos horas que ya pasaron, si la fecha
-     * seleccionada es hoy (hora local Tegucigalpa).
+     * IMPORTANTE:
+     * Las reservas son solamente en horas exactas.
+     *
+     * Antes estaba:
+     *
+     * m += 30
+     *
+     * Eso permitía 2:30, 3:30, etc.
      */
-
-    const now =
-        nowInHonduras();
-
-    const isToday =
-        date.value === now.date;
-
-
-    /*
-     * Las reservas son en horas exactas.
-     */
-
     for (
-        let minutes = start;
-        minutes < end;
-        minutes += 60
+        let m = open;
+        m < close;
+        m += 60
     ) {
 
-        if (
-            isToday &&
-            minutes <= now.minutes
-        ) {
-            continue;
-        }
+        const hh =
+            Math.floor(m / 60);
 
-
-        const hour =
-            Math.floor(
-                minutes / 60
-            );
-
-        const minute =
-            minutes % 60;
-
+        const mm =
+            m % 60;
 
         const value =
-            `${String(hour).padStart(
-                2,
-                '0'
-            )}:${String(minute).padStart(
-                2,
-                '0'
-            )}`;
-
+            `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 
         const label =
-            new Intl.DateTimeFormat(
-                'en-US',
-                {
-                    hour:
-                        'numeric',
-
-                    minute:
-                        '2-digit'
-                }
-            ).format(
-                new Date(
-                    2000,
-                    0,
-                    1,
-                    hour,
-                    minute
-                )
+            formatTime(
+                hh,
+                mm
             );
 
-
-        time.add(
+        timeSelect.add(
             new Option(
                 label,
                 value
@@ -600,29 +441,23 @@ function makeTimes() {
 function makeDurations() {
 
     if (
-        !duration ||
+        !durationSelect ||
         !appConfig
     ) {
         return;
     }
 
-
-    duration.innerHTML =
-        '';
-
+    durationSelect.innerHTML = '';
 
     const min =
         Number(
-            appConfig.minDurationHours ||
-            1
-        );
+            appConfig.minDurationHours
+        ) || 1;
 
     const max =
         Number(
-            appConfig.maxDurationHours ||
-            8
-        );
-
+            appConfig.maxDurationHours
+        ) || 8;
 
     for (
         let i = min;
@@ -630,14 +465,14 @@ function makeDurations() {
         i++
     ) {
 
-        duration.add(
+        durationSelect.add(
             new Option(
                 `${i} ${
                     i === 1
                         ? 'hora'
                         : 'horas'
                 }`,
-                i
+                String(i)
             )
         );
     }
@@ -645,27 +480,24 @@ function makeDurations() {
 
 
 /* =========================================================
-   LOAD CONFIG
+   CONFIG
    ========================================================= */
 
 async function loadConfig() {
 
+    const queryDate = dateSelect?.value;
 
+const endpoint = queryDate
+    ? `/api/reservations/config?date=${encodeURIComponent(queryDate)}`
+    : '/api/reservations/config';
 
+const data = await api(endpoint);
 
-    const query =
-        date?.value
-            ? `?date=${encodeURIComponent(
-                date.value
-            )}`
-            : '';
-
-
-    const data =
-        await api(
-            `/api/reservations/config${query}`
+    if (!data?.config) {
+        throw new Error(
+            'El servidor no devolvió la configuración de reservas.'
         );
-
+    }
 
     appConfig =
         data.config;
@@ -676,34 +508,40 @@ async function loadConfig() {
             : [];
 
     promos =
-        Array.isArray(
-            data.promotions
-        )
+        Array.isArray(data.promotions)
             ? data.promotions
             : [];
 
-
-
-
-
     makeDurations();
-
+    makeTimes();
     updatePrices();
 
-
+    /*
+     * Hasta que se seleccione fecha/hora,
+     * mostramos todos los rigs activos.
+     */
     render(
         rigs.map(
-            rig => ({
+            (rig) => ({
                 ...rig,
                 available: true
             })
         )
     );
+
+    console.log(
+        '[RESERVAS] Configuración cargada:',
+        {
+            config: appConfig,
+            rigs: rigs.length,
+            promotions: promos.length
+        }
+    );
 }
 
 
 /* =========================================================
-   UPDATE PRICES
+   PRICES
    ========================================================= */
 
 function updatePrices() {
@@ -718,18 +556,14 @@ function updatePrices() {
             '[data-price="premium"]'
         );
 
-
     if (standard) {
-
         standard.textContent =
             `${money(
                 appConfig?.prices?.standard
             )} / HORA`;
     }
 
-
     if (premium) {
-
         premium.textContent =
             `${money(
                 appConfig?.prices?.premium
@@ -739,7 +573,7 @@ function updatePrices() {
 
 
 /* =========================================================
-   RIG CARD
+   SIMULATOR CARD
    ========================================================= */
 
 function card(rig) {
@@ -748,7 +582,6 @@ function card(rig) {
         document.createElement(
             'button'
         );
-
 
     button.type =
         'button';
@@ -762,12 +595,18 @@ function card(rig) {
     button.dataset.id =
         rig.id;
 
-
-    const number =
+    /*
+     * Puede venir como order, number o name.
+     * Evita SIMULADOR undefined.
+     */
+    const rigNumber =
         rig.order ??
         rig.number ??
         '';
 
+    const rigName =
+        rig.name ||
+        `Simulador ${rigNumber}`;
 
     button.innerHTML = `
         <span class="simulator-check">
@@ -789,23 +628,20 @@ function card(rig) {
             </small>
 
             <strong>
-                SIMULADOR ${number}
+                ${rigName.toUpperCase()}
             </strong>
 
         </span>
     `;
 
-
     if (
         selected.has(rig.id) &&
         rig.available
     ) {
-
         button.classList.add(
             'selected'
         );
     }
-
 
     button.addEventListener(
         'click',
@@ -814,7 +650,6 @@ function card(rig) {
             if (!rig.available) {
                 return;
             }
-
 
             if (
                 selected.has(
@@ -834,19 +669,14 @@ function card(rig) {
                 );
             }
 
-
             button.classList.toggle(
                 'selected',
-                selected.has(
-                    rig.id
-                )
+                selected.has(rig.id)
             );
-
 
             summary();
         }
     );
-
 
     return button;
 }
@@ -856,11 +686,15 @@ function card(rig) {
    RENDER RIGS
    ========================================================= */
 
-function render(list) {
+function render(list = []) {
+
+    const safeList =
+        Array.isArray(list)
+            ? list
+            : [];
 
     for (
-        const type
-        of [
+        const type of [
             'standard',
             'premium'
         ]
@@ -869,36 +703,30 @@ function render(list) {
         const grid =
             grids[type];
 
-        if (!grid) {
-            continue;
-        }
+        if (!grid) continue;
 
-
-        grid.innerHTML =
-            '';
-
+        grid.innerHTML = '';
 
         const typeRigs =
-            list.filter(
-                rig =>
+            safeList.filter(
+                (rig) =>
                     rig.type === type
             );
 
-
         typeRigs.forEach(
-            rig =>
-                grid.append(
-                    card(rig)
-                )
-        );
+            (rig) => {
 
+                grid.appendChild(
+                    card(rig)
+                );
+            }
+        );
 
         const available =
             typeRigs.filter(
-                rig =>
+                (rig) =>
                     rig.available
             ).length;
-
 
         if (counts[type]) {
 
@@ -907,20 +735,13 @@ function render(list) {
         }
     }
 
-
-    const availableCount =
-        $('availableCount');
-
-
-    if (availableCount) {
-
-        availableCount.textContent =
-            list.filter(
-                rig =>
-                    rig.available
-            ).length;
-    }
-
+    setText(
+        'availableCount',
+        safeList.filter(
+            (rig) =>
+                rig.available
+        ).length
+    );
 
     summary();
 }
@@ -932,18 +753,24 @@ function render(list) {
 
 async function availability() {
 
+    if (loadingAvailability) {
+        return;
+    }
+
     selected.clear();
 
-
+    /*
+     * Todavía no tenemos suficiente información.
+     */
     if (
-        !date?.value ||
-        !time?.value ||
-        !duration?.value
+        !dateSelect?.value ||
+        !timeSelect?.value ||
+        !durationSelect?.value
     ) {
 
         render(
             rigs.map(
-                rig => ({
+                (rig) => ({
                     ...rig,
                     available: true
                 })
@@ -953,117 +780,110 @@ async function availability() {
         return;
     }
 
-
-    const params =
-        new URLSearchParams({
-            date:
-                date.value,
-
-            time:
-                time.value,
-
-            duration:
-                duration.value
-        });
-
-
-
-
+    loadingAvailability = true;
 
     try {
+
+        message('');
+
+        const params =
+            new URLSearchParams({
+                date:
+                    dateSelect.value,
+
+                time:
+                    timeSelect.value,
+
+                duration:
+                    durationSelect.value
+            });
+
+        console.log(
+            '[RESERVAS] Consultando disponibilidad:',
+            params.toString()
+        );
 
         const data =
             await api(
                 `/api/reservations/availability?${params.toString()}`
             );
 
-
         render(
-            Array.isArray(
-                data.rigs
-            )
+            Array.isArray(data.rigs)
                 ? data.rigs
                 : []
         );
 
-
     } catch (error) {
 
         console.error(
-            '[RESERVAS] Error consultando disponibilidad:',
+            '[RESERVAS] Error de disponibilidad:',
             error
         );
-
 
         message(
             error.message,
             'error'
         );
 
-
         /*
-         * Si no podemos comprobar disponibilidad,
-         * NO dejamos seleccionar rigs.
+         * Si el backend falla, NO permitimos
+         * seleccionar rigs.
+         *
+         * Esto es intencional para evitar
+         * reservas sobre disponibilidad desconocida.
          */
-
         render(
             rigs.map(
-                rig => ({
+                (rig) => ({
                     ...rig,
                     available: false
                 })
             )
         );
+
+    } finally {
+
+        loadingAvailability =
+            false;
+
+        summary();
     }
 }
 
 
 /* =========================================================
    LOCAL PRICE PREVIEW
-
-   Esto es únicamente visual.
-
-   El backend vuelve a calcular TODO.
    ========================================================= */
 
 function localPrice() {
 
     const hours =
         Number(
-            duration?.value ||
-            1
+            durationSelect?.value || 1
         );
 
-
-    let base =
-        0;
-
+    let base = 0;
 
     for (
-        const rig
-        of selected.values()
+        const rig of selected.values()
     ) {
 
+        const price =
+            Number(
+                appConfig
+                    ?.prices
+                    ?.[rig.type]
+            ) || 0;
+
         base +=
-            (
-                Number(
-                    appConfig
-                        ?.prices
-                        ?.[rig.type]
-                ) ||
-                0
-            ) *
-            hours;
+            price * hours;
     }
 
-
-    let discount =
-        0;
-
+    let discount = 0;
 
     for (
-        const promo
-        of promos
+        const promo of promos
     ) {
 
         if (
@@ -1075,10 +895,8 @@ function localPrice() {
                 base *
                 (
                     Number(
-                        promo.value ||
-                        0
-                    ) /
-                    100
+                        promo.value || 0
+                    ) / 100
                 );
 
         } else if (
@@ -1088,20 +906,20 @@ function localPrice() {
 
             discount +=
                 Number(
-                    promo.value ||
-                    0
+                    promo.value || 0
                 );
         }
     }
 
-
-    return Math.max(
-        0,
-        base -
+    discount =
         Math.min(
             base,
             discount
-        )
+        );
+
+    return Math.max(
+        0,
+        base - discount
     );
 }
 
@@ -1112,237 +930,167 @@ function localPrice() {
 
 function summary() {
 
-    const standardCount =
-        [
-            ...selected.values()
-        ].filter(
-            rig =>
+    const values =
+        [...selected.values()];
+
+    const standard =
+        values.filter(
+            (rig) =>
                 rig.type ===
                 'standard'
         ).length;
 
-
-    const premiumCount =
-        [
-            ...selected.values()
-        ].filter(
-            rig =>
+    const premium =
+        values.filter(
+            (rig) =>
                 rig.type ===
                 'premium'
         ).length;
 
+    const hours =
+        Number(
+            durationSelect?.value || 1
+        );
 
-    const summaryStandard =
-        $('summaryStandard');
+    setText(
+        'summaryStandard',
+        standard
+    );
 
-    const summaryPremium =
-        $('summaryPremium');
+    setText(
+        'summaryPremium',
+        premium
+    );
 
-    const summaryDuration =
-        $('summaryDuration');
+    setText(
+        'summaryDuration',
+        `${hours} ${
+            hours === 1
+                ? 'hora'
+                : 'horas'
+        }`
+    );
 
-    const reservationTotal =
-        $('reservationTotal');
+    setText(
+        'reservationTotal',
+        money(
+            localPrice()
+        )
+    );
 
-    const submit =
-        $('reservationSubmit');
+    if (submitButton) {
 
-
-    if (summaryStandard) {
-
-        summaryStandard.textContent =
-            standardCount;
-    }
-
-
-    if (summaryPremium) {
-
-        summaryPremium.textContent =
-            premiumCount;
-    }
-
-
-    if (summaryDuration) {
-
-        const value =
-            Number(
-                duration?.value ||
-                1
-            );
-
-
-        summaryDuration.textContent =
-            `${value} ${
-                value === 1
-                    ? 'hora'
-                    : 'horas'
-            }`;
-    }
-
-
-    if (reservationTotal) {
-
-        reservationTotal.textContent =
-            money(
-                localPrice()
-            );
-    }
-
-
-    if (submit) {
-
-        submit.disabled =
+        submitButton.disabled =
             !(
                 currentUser &&
-                date?.value &&
-                time?.value &&
-                duration?.value &&
-                selected.size > 0
+                dateSelect?.value &&
+                timeSelect?.value &&
+                durationSelect?.value &&
+                selected.size > 0 &&
+                !loadingAvailability
             );
     }
 }
 
 
 /* =========================================================
-   MESSAGE
-   ========================================================= */
-
-function message(
-    text,
-    type = 'info'
-) {
-
-    const element =
-        $('reservationMessage');
-
-
-    if (!element) {
-        return;
-    }
-
-
-    element.textContent =
-        text || '';
-
-    element.dataset.type =
-        type;
-
-    element.hidden =
-        !text;
-}
-
-
-/* =========================================================
-   PROFILE
+   USER PROFILE
    ========================================================= */
 
 async function profile(user) {
+    if (!user) {
+        currentProfile = null;
+        return;
+    }
 
     try {
+        const snapshot = await getDoc(
+            doc(db, 'users', user.uid)
+        );
 
-        const snapshot =
-            await getDoc(
-                doc(
-                    db,
-                    'users',
-                    user.uid
-                )
-            );
+        const firestoreProfile = snapshot.exists()
+            ? snapshot.data()
+            : {};
 
-
-        const data =
-            snapshot.exists()
-                ? snapshot.data()
-                : {};
-
-
-        /*
-         * Estos elementos son opcionales.
-         *
-         * Si existen en HTML, los rellenamos.
-         * Si no existen, no explota reservas.js.
-         */
-
-        const name =
-            $('reservationName');
-
-        const email =
-            $('reservationEmail');
-
-        const phone =
-            $('reservationPhone');
-
-
-        if (name) {
-
-            name.value =
-                data.name ||
+        currentProfile = {
+            name:
+                firestoreProfile.name ||
                 user.displayName ||
-                '';
-        }
+                '',
 
-
-        if (email) {
-
-            email.value =
-                data.email ||
+            email:
+                firestoreProfile.email ||
                 user.email ||
-                '';
-        }
+                '',
 
+            phoneNumber:
+                firestoreProfile.phoneNumber ||
+                ''
+        };
 
-        if (phone) {
-
-            phone.value =
-                data.phone ||
-                data.phoneNumber ||
-                '';
-        }
-
-
+        console.log('[RESERVAS] Perfil cargado:', {
+            name: currentProfile.name,
+            email: currentProfile.email,
+            phoneNumber: currentProfile.phoneNumber
+                ? 'CARGADO'
+                : 'NO DISPONIBLE'
+        });
 
     } catch (error) {
-
         console.error(
-            '[RESERVAS] Error cargando perfil:',
+            '[RESERVAS] No se pudo cargar el perfil:',
             error
         );
+
+        /*
+         * Podemos recuperar nombre/correo desde Auth,
+         * pero teléfono normalmente está en Firestore.
+         */
+        currentProfile = {
+            name: user.displayName || '',
+            email: user.email || '',
+            phoneNumber: ''
+        };
     }
 }
-
-
 /* =========================================================
    AUTH
    ========================================================= */
 
 onAuthStateChanged(
     auth,
-    async user => {
+    async (user) => {
 
         currentUser =
             user;
 
-
         if (user) {
 
-
-
+            console.log(
+                '[RESERVAS] Usuario autenticado:',
+                user.uid
+            );
 
             await profile(
                 user
             );
 
+            /*
+             * Quitamos mensaje viejo de login.
+             */
+            message('');
+
         } else {
 
-
-
+            console.log(
+                '[RESERVAS] Usuario no autenticado.'
+            );
 
             message(
                 'Iniciá sesión para hacer una reserva.',
                 'error'
             );
         }
-
 
         summary();
     }
@@ -1353,18 +1101,24 @@ onAuthStateChanged(
    DATE CHANGE
    ========================================================= */
 
-date?.addEventListener(
+dateSelect?.addEventListener(
     'change',
     async () => {
 
         selected.clear();
 
-
+        /*
+         * Primero cargamos config/promos del día.
+         */
         try {
 
             await loadConfig();
 
-            makeTimes();
+            /*
+             * loadConfig ya llama makeTimes().
+             */
+
+            summary();
 
         } catch (error) {
 
@@ -1373,15 +1127,11 @@ date?.addEventListener(
                 error
             );
 
-
             message(
                 error.message,
                 'error'
             );
         }
-
-
-        summary();
     }
 );
 
@@ -1390,9 +1140,12 @@ date?.addEventListener(
    TIME CHANGE
    ========================================================= */
 
-time?.addEventListener(
+timeSelect?.addEventListener(
     'change',
-    availability
+    async () => {
+
+        await availability();
+    }
 );
 
 
@@ -1400,14 +1153,17 @@ time?.addEventListener(
    DURATION CHANGE
    ========================================================= */
 
-duration?.addEventListener(
+durationSelect?.addEventListener(
     'change',
-    availability
+    async () => {
+
+        await availability();
+    }
 );
 
 
 /* =========================================================
-   PAYMENT
+   PAYMENT METHOD
    ========================================================= */
 
 document
@@ -1415,28 +1171,27 @@ document
         'input[name="payment"]'
     )
     .forEach(
-        input => {
+        (input) => {
 
             input.addEventListener(
                 'change',
                 () => {
 
-                    const selectedPayment =
+                    const proofBlock =
+                        $('proofBlock');
+
+                    if (!proofBlock) {
+                        return;
+                    }
+
+                    const payment =
                         document.querySelector(
                             'input[name="payment"]:checked'
                         )?.value;
 
-
-                    const proofBlock =
-                        $('proofBlock');
-
-
-                    if (proofBlock) {
-
-                        proofBlock.hidden =
-                            selectedPayment !==
-                            'transferencia';
-                    }
+                    proofBlock.hidden =
+                        payment !==
+                        'transferencia';
                 }
             );
         }
@@ -1444,19 +1199,14 @@ document
 
 
 /* =========================================================
-   SUBMIT
+   SUBMIT RESERVATION
    ========================================================= */
 
 form?.addEventListener(
     'submit',
-    async event => {
+    async (event) => {
 
         event.preventDefault();
-
-
-        /* -------------------------------------------------
-           AUTH
-           ------------------------------------------------- */
 
         if (!currentUser) {
 
@@ -1468,15 +1218,10 @@ form?.addEventListener(
             return;
         }
 
-
-        /* -------------------------------------------------
-           BASIC VALIDATION
-           ------------------------------------------------- */
-
         if (
-            !date?.value ||
-            !time?.value ||
-            !duration?.value
+            !dateSelect?.value ||
+            !timeSelect?.value ||
+            !durationSelect?.value
         ) {
 
             message(
@@ -1486,7 +1231,6 @@ form?.addEventListener(
 
             return;
         }
-
 
         if (
             selected.size === 0
@@ -1500,23 +1244,12 @@ form?.addEventListener(
             return;
         }
 
-
-        /* -------------------------------------------------
-           PAYMENT
-           ------------------------------------------------- */
-
         const payment =
             document.querySelector(
                 'input[name="payment"]:checked'
             )?.value;
 
-
-        if (
-            ![
-                'transferencia',
-                'tarjeta'
-            ].includes(payment)
-        ) {
+        if (!payment) {
 
             message(
                 'Seleccioná un método de pago.',
@@ -1526,56 +1259,55 @@ form?.addEventListener(
             return;
         }
 
+        /*
+         * PayPal todavía no implementado.
+         */
+        if (
+            payment === 'paypal'
+        ) {
 
-        /* -------------------------------------------------
-           BUTTON
-           ------------------------------------------------- */
+            message(
+                'Para pagar con PayPal, usá el botón de PayPal que aparece en Método de pago.',
+                'error'
+            );
 
-        const button =
-            $('reservationSubmit');
-
-
-        if (button) {
-
-            button.disabled =
-                true;
+            return;
         }
 
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
 
         message(
-            'Procesando reserva…',
-            'info'
+            'Procesando reserva…'
         );
 
-
-
-
         try {
-
-            /* =================================================
-               PROOF
-               ================================================= */
 
             let proofPath =
                 null;
 
-
-            /* -------------------------------------------------
-               TRANSFERENCIA
-               ------------------------------------------------- */
+            /* =============================================
+               TRANSFER
+               ============================================= */
 
             if (
                 payment ===
                 'transferencia'
             ) {
 
-               const proofInput =
-    $('paymentReceipt');
+                const proofInput =
+                    $('paymentReceipt');
 
+                if (!proofInput) {
+
+                    throw new Error(
+                        'No se encontró el campo para subir el comprobante.'
+                    );
+                }
 
                 const file =
-                    proofInput?.files?.[0];
-
+                    proofInput.files?.[0];
 
                 if (!file) {
 
@@ -1584,11 +1316,9 @@ form?.addEventListener(
                     );
                 }
 
-
-                /* ---------------------------------------------
-                   MAX 5 MB
-                   --------------------------------------------- */
-
+                /*
+                 * Máximo 5 MB.
+                 */
                 if (
                     file.size >
                     5 * 1024 * 1024
@@ -1599,21 +1329,17 @@ form?.addEventListener(
                     );
                 }
 
-
-                /* ---------------------------------------------
-                   TYPE
-                   --------------------------------------------- */
-
-                const allowed =
-                    [
-                        'image/jpeg',
-                        'image/png',
-                        'application/pdf'
-                    ];
-
+                /*
+                 * Tipos permitidos.
+                 */
+                const allowedTypes = [
+                    'image/jpeg',
+                    'image/png',
+                    'application/pdf'
+                ];
 
                 if (
-                    !allowed.includes(
+                    !allowedTypes.includes(
                         file.type
                     )
                 ) {
@@ -1623,24 +1349,18 @@ form?.addEventListener(
                     );
                 }
 
-
-                /* ---------------------------------------------
-                   STORAGE PATH
-                   --------------------------------------------- */
-
                 const safeName =
                     file.name.replace(
                         /[^a-zA-Z0-9._-]/g,
                         '_'
                     );
 
-
                 proofPath =
                     `reservation-proofs/${currentUser.uid}/${crypto.randomUUID()}-${safeName}`;
 
-
-
-
+                console.log(
+                    '[RESERVAS] Subiendo comprobante...'
+                );
 
                 await uploadBytes(
                     ref(
@@ -1654,55 +1374,96 @@ form?.addEventListener(
                     }
                 );
 
-
+                console.log(
+                    '[RESERVAS] Comprobante subido:',
+                    proofPath
+                );
             }
 
 
-            /* =================================================
-               CREATE BODY
+            /* =============================================
+               CUSTOMER DATA
+               ============================================= */
 
-               NO mandamos customer.
-               El backend carga esos datos desde Firestore.
-               ================================================= */
+           if (!currentProfile) {
+    throw new Error(
+        'No se pudieron cargar los datos de tu cuenta.'
+    );
+}
+
+if (!currentProfile.name) {
+    throw new Error(
+        'Tu cuenta no tiene un nombre registrado.'
+    );
+}
+
+if (!currentProfile.email) {
+    throw new Error(
+        'Tu cuenta no tiene un correo registrado.'
+    );
+}
+
+if (!currentProfile.phoneNumber) {
+    throw new Error(
+        'Tu cuenta no tiene un número de teléfono registrado.'
+    );
+}
+
+const customer = {
+    name: currentProfile.name,
+    email: currentProfile.email,
+    phoneNumber: currentProfile.phoneNumber
+};
+
+
+            /* =============================================
+               REQUEST BODY
+               ============================================= */
 
             const body = {
 
                 date:
-                    date.value,
+                    dateSelect.value,
 
                 time:
-                    time.value,
+                    timeSelect.value,
 
                 duration:
                     Number(
-                        duration.value
+                        durationSelect.value
                     ),
 
                 rigIds:
-                    [
-                        ...selected.keys()
-                    ],
+                    [...selected.keys()],
 
                 payment,
 
-                proofPath
+                proofPath,
+
+                customer
             };
 
+            console.log(
+                '[RESERVAS] Creando reserva:',
+                {
+                    ...body,
+                    proofPath:
+                        proofPath
+                            ? '[COMPROBANTE]'
+                            : null
+                }
+            );
 
 
+            /* =============================================
+               CREATE
+               ============================================= */
 
-
-            /* =================================================
-               CREATE RESERVATION
-               ================================================= */
-
-            const result =
+            const response =
                 await api(
                     '/api/reservations/create',
                     {
-                        method:
-                            'POST',
-
+                        method: 'POST',
                         body:
                             JSON.stringify(
                                 body
@@ -1711,125 +1472,47 @@ form?.addEventListener(
                 );
 
 
+            /* =============================================
+               SUCCESS
+               ============================================= */
 
-
-
-            /* =================================================
-               VALIDATE RESPONSE
-               ================================================= */
-
-            if (
-                !result?.code
-            ) {
-
-                throw new Error(
-                    'El servidor creó una respuesta inválida.'
-                );
-            }
-
-
-            const reservationCode =
-                result.code;
-
+            const code =
+                response.code ||
+                response.reservationCode ||
+                'CREADA';
 
             const total =
-                result.pricing?.total ??
+                response.pricing?.total ??
+                response.total ??
                 localPrice();
 
-
-            /* =================================================
-               SUCCESS MESSAGE
-               ================================================= */
-
-            let successMessage;
-
-
-            if (
-                payment ===
-                'transferencia'
-            ) {
-
-                successMessage =
-                    `Su reserva ${reservationCode} ha sido procesada, pero está pendiente de verificación del comprobante.\n\nRevisá tu WhatsApp; por ese medio se te confirmará la reserva.\n\nTotal: ${money(total)}.`;
-
-            } else {
-
-                successMessage =
-                    `Su reserva ${reservationCode} ha sido procesada.\n\nRevisá tu WhatsApp; por ese medio se te confirmará la reserva.\n\nTotal: ${money(total)}.`;
-            }
-
-
-            /* =================================================
-               PAGE MESSAGE
-               ================================================= */
+            const successMessage =
+                payment === 'transferencia'
+                    ? `Su reserva ${code} ha sido procesada, pero está pendiente de verificación del comprobante. Revise su WhatsApp; por ese medio se le confirmará la reserva. Total: ${money(total)}.`
+                    : `Su reserva ${code} ha sido procesada. Revise su WhatsApp; por ese medio se le confirmará la reserva. Total: ${money(total)}.`;
 
             message(
-                successMessage.replace(
-                    /\n+/g,
-                    ' '
-                ),
+                successMessage,
                 'success'
             );
 
-
-            /* =================================================
-               ALERT
-
-               IMPORTANTE:
-               Esto ocurre DESPUÉS del 201 del backend.
-               ================================================= */
-
-            window.alert(
-                successMessage
-            );
-
-
-
-
-
-            /* =================================================
-               CLEAR SELECTION
-               ================================================= */
+            // Solo mostramos éxito después de recibir 201 del backend.
+            window.alert(successMessage);
 
             selected.clear();
 
-
-            /* =================================================
-               CLEAR PROOF
-               ================================================= */
-
-            const proofInput =
-                $('paymentReceipt');
-
-
-            if (proofInput) {
-
-                proofInput.value =
-                    '';
-            }
-
-
-            /* =================================================
-               REFRESH AVAILABILITY
-
-               La reserva YA existe.
-               Si esto falla NO mostramos la reserva como fallida.
-               ================================================= */
-
+            /*
+             * La reserva ya existe en este punto.
+             * Esta consulta solo refresca los rigs disponibles.
+             */
             try {
-
                 await availability();
-
-            } catch (
-                availabilityError
-            ) {
-
+            } catch (availabilityError) {
                 console.error(
-                    '[RESERVAS] La reserva fue creada, pero no se pudo refrescar disponibilidad:',
+                    '[RESERVAS] Reserva creada, pero no se pudo refrescar disponibilidad:',
                     availabilityError
                 );
             }
-
 
         } catch (error) {
 
@@ -1838,13 +1521,11 @@ form?.addEventListener(
                 error
             );
 
-
             message(
                 error.message ||
                 'No se pudo crear la reserva.',
                 'error'
             );
-
 
         } finally {
 
@@ -1858,23 +1539,64 @@ form?.addEventListener(
    INITIALIZE
    ========================================================= */
 
-async function initialize() {
+async function init() {
 
+    console.log(
+        '[RESERVAS] Inicializando...'
+    );
 
+    /*
+     * Verificamos los elementos esenciales.
+     */
+    const requiredElements = {
+        reservationForm: form,
+        reservationDate: dateSelect,
+        reservationTime: timeSelect,
+        reservationDuration:
+            durationSelect,
+        standardGrid:
+            grids.standard,
+        premiumGrid:
+            grids.premium
+    };
 
+    for (
+        const [name, element]
+        of Object.entries(
+            requiredElements
+        )
+    ) {
+
+        if (!element) {
+
+            console.error(
+                `[RESERVAS] Falta #${name} en reservas.html`
+            );
+        }
+    }
+
+    if (
+        !dateSelect ||
+        !timeSelect ||
+        !durationSelect
+    ) {
+
+        console.error(
+            '[RESERVAS] Faltan elementos esenciales del formulario.'
+        );
+
+        return;
+    }
+
+    dates();
 
     try {
 
-        dates();
-
         await loadConfig();
 
-        makeTimes();
-
-        summary();
-
-
-
+        console.log(
+            '[RESERVAS] Inicialización completada.'
+        );
 
     } catch (error) {
 
@@ -1883,14 +1605,14 @@ async function initialize() {
             error
         );
 
-
         message(
-            error.message ||
-            'No se pudo cargar el sistema de reservas.',
+            error.message,
             'error'
         );
     }
+
+    summary();
 }
 
 
-initialize();
+init();
