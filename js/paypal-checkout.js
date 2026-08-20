@@ -30,7 +30,25 @@ function reservationMessage(text, type = 'info') {
  * modal propio (un <div> que nosotros controlamos). Esto
  * SIEMPRE se ve, sin importar configuración del navegador.
  */
-function safeAlert(text) {
+function safeAlert(text, onClose) {
+    /*
+     * runOnClose se asegura de que onClose corra UNA sola vez,
+     * sin importar si el usuario cierra el modal a mano o si
+     * se dispara el timeout de respaldo.
+     */
+    let closed = false;
+    const runOnClose = () => {
+        if (closed) return;
+        closed = true;
+        if (typeof onClose === 'function') {
+            try {
+                onClose();
+            } catch (error) {
+                console.error('[PAYPAL] Error en onClose del modal:', error);
+            }
+        }
+    };
+
     try {
         const existing = document.getElementById('inercia-success-modal');
         if (existing) existing.remove();
@@ -79,15 +97,33 @@ function safeAlert(text) {
             cursor: pointer;
             width: 100%;
         `;
-        button.addEventListener('click', () => overlay.remove());
+
+        const closeModal = () => {
+            overlay.remove();
+            clearTimeout(fallbackTimer);
+            runOnClose();
+        };
+
+        button.addEventListener('click', closeModal);
 
         overlay.addEventListener('click', (event) => {
-            if (event.target === overlay) overlay.remove();
+            if (event.target === overlay) closeModal();
         });
 
         box.appendChild(button);
         overlay.appendChild(box);
         document.body.appendChild(overlay);
+
+        /*
+         * Respaldo: si el usuario nunca toca el botón (se
+         * distrae, cambia de pestaña, etc.), igual queremos
+         * que onClose (por ejemplo el reload) corra tarde o
+         * temprano en vez de quedar esperando para siempre.
+         */
+        const fallbackTimer = setTimeout(() => {
+            overlay.remove();
+            runOnClose();
+        }, 8000);
     } catch (error) {
         console.error('[PAYPAL] No se pudo mostrar el modal de éxito:', error);
 
@@ -97,6 +133,8 @@ function safeAlert(text) {
         } catch {
             // Si ni esto funciona, ya quedó el mensaje visible vía reservationMessage().
         }
+
+        runOnClose();
     }
 }
 
@@ -328,10 +366,13 @@ async function renderPaypalButtons() {
                  */
                 if (captureSucceeded) {
                     reservationMessage(successText, 'success');
-                    safeAlert(successText);
 
-                    // Recarga limpia: refresca disponibilidad y borra la selección privada de reservas.js.
-                    window.location.reload();
+                    // El reload corre recién cuando el usuario cierra el modal
+                    // (o al toque de 8s de respaldo), nunca antes.
+                    safeAlert(successText, () => {
+                        // Recarga limpia: refresca disponibilidad y borra la selección privada de reservas.js.
+                        window.location.reload();
+                    });
                 }
             },
 

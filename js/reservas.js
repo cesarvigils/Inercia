@@ -331,8 +331,47 @@ function message(
    ========================================================= */
 
 function safeAlert(
-    text
+    text,
+    onClose
 ) {
+
+    let closed =
+        false;
+
+
+    const runOnClose =
+        () => {
+
+            if (closed) {
+                return;
+            }
+
+
+            closed =
+                true;
+
+
+            if (
+                typeof onClose ===
+                'function'
+            ) {
+
+                try {
+
+                    onClose();
+
+                } catch (
+                    error
+                ) {
+
+                    console.error(
+                        '[RESERVAS] Error en onClose del modal:',
+                        error
+                    );
+                }
+            }
+        };
+
 
     try {
 
@@ -423,12 +462,24 @@ function safeAlert(
         `;
 
 
-        button.addEventListener(
-            'click',
+        const closeModal =
             () => {
 
                 overlay.remove();
-            }
+
+
+                clearTimeout(
+                    fallbackTimer
+                );
+
+
+                runOnClose();
+            };
+
+
+        button.addEventListener(
+            'click',
+            closeModal
         );
 
 
@@ -443,7 +494,7 @@ function safeAlert(
                     overlay
                 ) {
 
-                    overlay.remove();
+                    closeModal();
                 }
             }
         );
@@ -462,6 +513,25 @@ function safeAlert(
         document.body.appendChild(
             overlay
         );
+
+
+        /*
+         * Respaldo: si nadie toca el botón,
+         * igual queremos que onClose corra
+         * tarde o temprano.
+         */
+
+        const fallbackTimer =
+            setTimeout(
+                () => {
+
+                    overlay.remove();
+
+
+                    runOnClose();
+                },
+                8000
+            );
 
 
     } catch (
@@ -491,6 +561,9 @@ function safeAlert(
              * el mensaje visible vía message().
              */
         }
+
+
+        runOnClose();
     }
 }
 
