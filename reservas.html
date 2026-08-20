@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="/css/reservas.css">
     <link rel="stylesheet" href="/css/reservas-backend.css">
     <link rel="stylesheet" href="/css/auth.css">
+    <link rel="stylesheet" href="/css/paypal.css">
 
     <script type="module" src="/js/auth.js"></script>
 </head>
@@ -711,13 +712,13 @@
 
                     <label
                         class="payment-option"
-                        data-payment-method="tarjeta"
+                        data-payment-method="paypal"
                     >
 
                         <input
                             type="radio"
                             name="payment"
-                            value="tarjeta"
+                            value="paypal"
                         >
 
                         <span class="payment-card">
@@ -751,11 +752,11 @@
                             <span>
 
                                 <strong>
-                                    TARJETA
+                                    PAYPAL
                                 </strong>
 
                                 <small>
-                                    Pago con tarjeta
+                                    PayPal Wallet o tarjeta mediante PayPal
                                 </small>
 
                             </span>
@@ -941,35 +942,22 @@
 
                     </div>
 
-
-                    <!-- =============================================
-                         CARD
-                         ============================================= -->
-
                     <div
                         class="payment-panel"
-                        id="cardPanel"
+                        id="paypalPanel"
                         hidden
                     >
-
-                        <div class="card-payment-placeholder">
-
-                            <span class="payment-proof-label">
-                                PAGO CON TARJETA
-                            </span>
-
-                            <h3>
-                                PRÓXIMAMENTE
-                            </h3>
-
-                            <p>
-                                Estamos preparando el pago con tarjeta.
-                                Por ahora, usá transferencia bancaria
-                                para completar tu reserva.
+                        <div class="paypal-checkout-box">
+                            <span class="payment-proof-label">PAGO CON PAYPAL</span>
+                            <p class="paypal-checkout-copy">
+                                El total de tu reserva se calcula en lempiras. El servidor lo convierte a USD al crear la orden de PayPal.
                             </p>
-
+                            <div class="paypal-amount-preview" id="paypalAmountPreview"></div>
+                            <div id="paypalButtons"></div>
+                            <p class="paypal-checkout-note">
+                                Tu reserva se aprueba automáticamente solamente cuando PayPal confirma el pago.
+                            </p>
                         </div>
-
                     </div>
 
                 </div>
@@ -1088,12 +1076,6 @@
         </form>
 
     </main>
-
-
-    <!-- =====================================================
-         SCRIPTS
-         ===================================================== -->
-
     <script
         type="module"
         src="/js/menu.js"
@@ -1106,7 +1088,7 @@
 
     <script
         type="module"
-        src="/js/paymodal.js"
+        src="/js/paypal-checkout.js"
     ></script>
 
 </body>
