@@ -1403,3 +1403,302 @@ body {
     height: auto;
     object-fit: contain;
 }
+/* =========================================================
+   LOGIN REQUIRED MODAL
+   ========================================================= */
+
+body.reservation-login-modal-open {
+    overflow: hidden;
+}
+
+
+.reservation-login-required {
+    position: fixed;
+    inset: 0;
+
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+        opacity .2s ease,
+        visibility .2s ease;
+}
+
+
+.reservation-login-required.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+
+.reservation-login-backdrop {
+    position: absolute;
+    inset: 0;
+
+    background:
+        rgba(0, 0, 0, .78);
+
+    backdrop-filter:
+        blur(8px);
+
+    -webkit-backdrop-filter:
+        blur(8px);
+}
+
+
+.reservation-login-panel {
+    position: relative;
+
+    z-index: 2;
+
+    width: min(
+        440px,
+        100%
+    );
+
+    padding:
+        38px 36px 34px;
+
+    background:
+        #121212;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, .1);
+
+    border-top:
+        3px solid
+        #ff8b00;
+
+    box-shadow:
+        0 30px 90px
+        rgba(0, 0, 0, .55);
+
+    transform:
+        translateY(14px)
+        scale(.985);
+
+    transition:
+        transform .2s ease;
+}
+
+
+.reservation-login-required.open
+.reservation-login-panel {
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+
+.reservation-login-eyebrow {
+    display: block;
+
+    margin-bottom: 9px;
+
+    color:
+        #ff8b00;
+
+    font-family:
+        'Alumni Sans',
+        'Arial Narrow',
+        sans-serif;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    letter-spacing:
+        1.8px;
+}
+
+
+.reservation-login-panel h2 {
+    margin:
+        0 0 18px;
+
+    color:
+        #f5f5f5;
+
+    font-family:
+        'Alumni Sans',
+        'Arial Narrow',
+        sans-serif;
+
+    font-size:
+        clamp(
+            39px,
+            8vw,
+            52px
+        );
+
+    font-weight: 700;
+
+    line-height:
+        .88;
+
+    letter-spacing:
+        -.5px;
+}
+
+
+.reservation-login-panel h2 span {
+    display: block;
+
+    color:
+        #ff8b00;
+}
+
+
+.reservation-login-panel p {
+    margin:
+        0 0 27px;
+
+    max-width:
+        350px;
+
+    color:
+        #8e8e8e;
+
+    font-family:
+        'Poppins',
+        sans-serif;
+
+    font-size:
+        13px;
+
+    line-height:
+        1.7;
+}
+
+
+.reservation-login-primary {
+    width: 100%;
+
+    min-height:
+        48px;
+
+    border:
+        1px solid
+        #ff8b00;
+
+    background:
+        #ff8b00;
+
+    color:
+        #101010;
+
+    font-family:
+        'Alumni Sans',
+        'Arial Narrow',
+        sans-serif;
+
+    font-size:
+        18px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        1px;
+
+    cursor:
+        pointer;
+
+    transition:
+        background .18s ease,
+        color .18s ease,
+        transform .18s ease;
+}
+
+
+.reservation-login-primary:hover {
+    background:
+        #ff9d27;
+
+    transform:
+        translateY(-1px);
+}
+
+
+.reservation-login-primary:active {
+    transform:
+        translateY(0);
+}
+
+
+.reservation-login-primary:focus-visible {
+    outline:
+        2px solid
+        #ffffff;
+
+    outline-offset:
+        3px;
+}
+
+
+.reservation-login-back {
+    display:
+        block;
+
+    width:
+        fit-content;
+
+    margin:
+        20px auto 0;
+
+    color:
+        #676767;
+
+    font-family:
+        'Alumni Sans',
+        'Arial Narrow',
+        sans-serif;
+
+    font-size:
+        14px;
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        1px;
+
+    text-decoration:
+        none;
+
+    transition:
+        color .18s ease;
+}
+
+
+.reservation-login-back:hover {
+    color:
+        #ff8b00;
+}
+
+
+@media (
+    max-width: 520px
+) {
+
+    .reservation-login-required {
+        padding:
+            18px;
+    }
+
+
+    .reservation-login-panel {
+        padding:
+            32px 24px 28px;
+    }
+}

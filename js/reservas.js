@@ -1056,13 +1056,257 @@ async function profile(user) {
 /* =========================================================
    AUTH
    ========================================================= */
+let loginRequiredShown = false;
 
+
+function createLoginRequiredModal() {
+
+    if (
+        document.getElementById(
+            'loginRequiredModal'
+        )
+    ) {
+        return;
+    }
+
+
+    document.body.insertAdjacentHTML(
+        'beforeend',
+        `
+        <div
+            class="reservation-login-required"
+            id="loginRequiredModal"
+            aria-hidden="true"
+        >
+            <div
+                class="reservation-login-backdrop"
+            ></div>
+
+            <div
+                class="reservation-login-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="reservationLoginTitle"
+            >
+
+                <span class="reservation-login-eyebrow">
+                    SIMULADORES INERCIA
+                </span>
+
+                <h2 id="reservationLoginTitle">
+                    INICIÁ SESIÓN
+                    <span>PARA RESERVAR</span>
+                </h2>
+
+                <p>
+                    Para consultar disponibilidad y crear una
+                    reserva necesitás iniciar sesión primero.
+                </p>
+
+                <button
+                    type="button"
+                    class="reservation-login-primary"
+                    id="reservationLoginBtn"
+                >
+                    INICIAR SESIÓN
+                </button>
+
+                <a
+                    href="/"
+                    class="reservation-login-back"
+                >
+                    VOLVER AL INICIO
+                </a>
+
+            </div>
+        </div>
+        `
+    );
+
+
+    const modal =
+        document.getElementById(
+            'loginRequiredModal'
+        );
+
+
+    const loginButton =
+        document.getElementById(
+            'reservationLoginBtn'
+        );
+
+
+    loginButton?.addEventListener(
+        'click',
+        () => {
+
+            closeLoginRequiredModal();
+
+
+            /*
+             * Abrimos el sistema de autenticación
+             * que ya tiene la página.
+             */
+
+            const authButton =
+                document.getElementById(
+                    'authBtn'
+                );
+
+
+            if (authButton) {
+
+                authButton.click();
+
+                return;
+            }
+
+
+            /*
+             * Fallback por si el auth button
+             * no existe por alguna razón.
+             */
+
+            const authModal =
+                document.getElementById(
+                    'authModal'
+                );
+
+
+            if (authModal) {
+
+                authModal.inert =
+                    false;
+
+                authModal.setAttribute(
+                    'aria-hidden',
+                    'false'
+                );
+
+                authModal.classList.add(
+                    'open'
+                );
+
+
+                document.body.classList.add(
+                    'auth-modal-open'
+                );
+            }
+        }
+    );
+
+
+    modal
+        ?.querySelector(
+            '.reservation-login-backdrop'
+        )
+        ?.addEventListener(
+            'click',
+            closeLoginRequiredModal
+        );
+}
+
+
+function openLoginRequiredModal() {
+
+    createLoginRequiredModal();
+
+
+    const modal =
+        document.getElementById(
+            'loginRequiredModal'
+        );
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.classList.add(
+        'open'
+    );
+
+
+    modal.setAttribute(
+        'aria-hidden',
+        'false'
+    );
+
+
+    modal.inert =
+        false;
+
+
+    document.body.classList.add(
+        'reservation-login-modal-open'
+    );
+
+
+    requestAnimationFrame(
+        () => {
+
+            document
+                .getElementById(
+                    'reservationLoginBtn'
+                )
+                ?.focus();
+        }
+    );
+}
+
+
+function closeLoginRequiredModal() {
+
+    const modal =
+        document.getElementById(
+            'loginRequiredModal'
+        );
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    if (
+        modal.contains(
+            document.activeElement
+        )
+    ) {
+
+        document.activeElement
+            ?.blur();
+    }
+
+
+    modal.classList.remove(
+        'open'
+    );
+
+
+    modal.setAttribute(
+        'aria-hidden',
+        'true'
+    );
+
+
+    modal.inert =
+        true;
+
+
+    document.body.classList.remove(
+        'reservation-login-modal-open'
+    );
+}
 onAuthStateChanged(
     auth,
-    async (user) => {
+
+    async user => {
 
         currentUser =
             user;
+
 
         if (user) {
 
@@ -1071,14 +1315,27 @@ onAuthStateChanged(
                 user.uid
             );
 
+
+            /*
+             * Si inició sesión mientras el aviso
+             * estaba abierto, lo cerramos.
+             */
+
+            closeLoginRequiredModal();
+
+
             await profile(
                 user
             );
 
-            /*
-             * Quitamos mensaje viejo de login.
-             */
-            message('');
+
+            await loadPaymentAccess();
+
+
+            message(
+                ''
+            );
+
 
         } else {
 
@@ -1086,11 +1343,40 @@ onAuthStateChanged(
                 '[RESERVAS] Usuario no autenticado.'
             );
 
-            message(
-                'Iniciá sesión para hacer una reserva.',
-                'error'
-            );
+
+            currentProfile =
+                null;
+
+
+            /*
+             * Mostrar solamente una vez por
+             * carga de página.
+             */
+
+            if (
+                !loginRequiredShown
+            ) {
+
+                loginRequiredShown =
+                    true;
+
+
+                /*
+                 * Pequeño delay para que la página
+                 * termine de cargar visualmente.
+                 */
+
+                setTimeout(
+                    () => {
+
+                        openLoginRequiredModal();
+
+                    },
+                    350
+                );
+            }
         }
+
 
         summary();
     }
