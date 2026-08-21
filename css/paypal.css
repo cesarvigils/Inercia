@@ -1,0 +1,77 @@
+/* =========================================================
+   PAYPAL CHECKOUT
+   ========================================================= */
+
+.paypal-checkout-box {
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #121212;
+}
+
+.paypal-checkout-copy {
+    margin: 7px 0 18px;
+    color: rgba(255, 255, 255, 0.58);
+    font-family: var(--body, 'Poppins', sans-serif);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.paypal-amount-preview {
+    display: grid;
+    gap: 4px;
+    margin: 0 0 18px;
+    padding: 16px 18px;
+    border-left: 3px solid var(--orange, #ff8b00);
+    background: rgba(255, 139, 0, 0.055);
+}
+
+.paypal-amount-preview span {
+    color: #777;
+    font-family: var(--display, 'Kenyan Coffee', sans-serif);
+    font-size: 14px;
+}
+
+.paypal-amount-preview strong {
+    color: #fff;
+    font-family: var(--display, 'Kenyan Coffee', sans-serif);
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.paypal-amount-preview small {
+    color: #a5a5a5;
+    font-family: var(--body, 'Poppins', sans-serif);
+    font-size: 11px;
+}
+
+#paypalButtons {
+    min-height: 48px;
+    position: relative;
+    z-index: 2;
+}
+
+.paypal-checkout-note,
+.paypal-unavailable {
+    margin: 13px 0 0;
+    color: #777;
+    font-family: var(--body, 'Poppins', sans-serif);
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.paypal-unavailable {
+    padding: 14px;
+    border: 1px solid rgba(255, 139, 0, 0.35);
+    color: #ddd;
+}
+
+.reservation-submit[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 600px) {
+    .paypal-checkout-box {
+        padding: 18px;
+    }
+}

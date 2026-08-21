@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/standings",
+      "destination": "/standings.html"
+    },
+    {
+      "source": "/contacto",
+      "destination": "/contacto.html"
+    },
+        {
+      "source": "/reservas",
+      "destination": "/reservas.html"
+    },
+        {
+      "source": "/inicio",
+      "destination": "/index.html"
+    }
+  ]
+}

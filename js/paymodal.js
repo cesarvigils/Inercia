@@ -1,0 +1,140 @@
+const paymentOptions =
+    document.querySelectorAll('.payment-option');
+
+const transferPanel =
+    document.getElementById('transferPanel');
+
+const cardPanel =
+    document.getElementById('cardPanel');
+
+const paymentReceipt =
+    document.getElementById('paymentReceipt');
+
+const receiptUpload =
+    document.getElementById('receiptUpload');
+
+const receiptFileName =
+    document.getElementById('receiptFileName');
+
+
+/* =========================================================
+   PAYMENT METHOD
+   ========================================================= */
+
+paymentOptions.forEach(option => {
+
+    const radio =
+        option.querySelector(
+            'input[name="payment"]'
+        );
+
+    if (!radio) return;
+
+
+    option.addEventListener('click', () => {
+
+        paymentOptions.forEach(item => {
+            item.classList.remove('active');
+        });
+
+
+        option.classList.add('active');
+
+        radio.checked = true;
+
+
+        /*
+         * Ocultar todos los paneles primero.
+         */
+
+        transferPanel.hidden = true;
+        cardPanel.hidden = true;
+
+
+        /*
+         * Mostrar el correspondiente.
+         */
+
+        if (radio.value === 'transferencia') {
+
+            transferPanel.hidden = false;
+
+        }
+
+
+        if (radio.value === 'tarjeta') {
+
+            cardPanel.hidden = false;
+
+        }
+
+    });
+
+});
+
+
+/* =========================================================
+   RECEIPT FILE
+   ========================================================= */
+
+paymentReceipt?.addEventListener(
+    'change',
+    () => {
+
+        const file =
+            paymentReceipt.files?.[0];
+
+
+        if (!file) {
+
+            receiptUpload?.classList.remove(
+                'has-file'
+            );
+
+            receiptFileName.textContent =
+                'SUBÍ TU COMPROBANTE';
+
+            return;
+        }
+
+
+        /*
+         * Máximo 5 MB
+         */
+
+        const maxSize =
+            5 * 1024 * 1024;
+
+
+        if (file.size > maxSize) {
+
+            alert(
+                'El archivo no puede superar los 5 MB.'
+            );
+
+            paymentReceipt.value = '';
+
+            receiptUpload?.classList.remove(
+                'has-file'
+            );
+
+            receiptFileName.textContent =
+                'SUBÍ TU COMPROBANTE';
+
+            return;
+        }
+
+
+        /*
+         * Mostrar archivo seleccionado
+         */
+
+        receiptUpload?.classList.add(
+            'has-file'
+        );
+
+        receiptFileName.textContent =
+            file.name;
+
+    }
+);

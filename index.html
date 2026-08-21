@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simuladores Inercia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/menu.css">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link
+  href="https://fonts.googleapis.com/css2?family=Alumni+Sans:wght@600&display=swap"
+  rel="stylesheet"
+>
+<script type="module" src="js/auth.js"></script></head>
+
+<body>
+
+  <div class="header-wrap">
+    <header class="header">
+<button
+  class="menu-btn"
+  id="menuBtn"
+  type="button"
+  aria-label="Abrir menú"
+  aria-expanded="false"
+  aria-controls="sideMenu"
+>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M4 6H20M4 12H20M4 18H20"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+  </svg>
+</button>
+      <div class="logo">
+        <img class="logo-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Simuladores Inercia">
+      </div>
+      <button class="auth-btn" id="authBtn" type="button" aria-label="Iniciar sesión">
+    <img
+        src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fdefaultpfp3.jpg?alt=media&token=a0435be5-f789-41ec-9d50-ab24fed4b9ec"
+        alt="Perfil"
+        class="auth-pfp"
+        id="authPfp"
+    >
+</button>
+    </header>   
+<div class="menu-overlay" id="menuOverlay"></div>
+<nav class="side-menu" id="sideMenu" aria-hidden="true">
+  <div class="side-menu-header">
+<img src="/assets/menu.png" alt="Menú" class="menu-title-img" href="/inicio">
+    <button class="menu-close" id="menuClose" type="button" aria-label="Cerrar menú">
+      &times;
+    </button>
+  </div>
+  <div class="side-menu-links">
+        <a href="/inicio" class="side-menu-link">
+      INICIO
+    </a>
+    <a href="/reservas" class="side-menu-link">
+      RESERVAR
+    </a>
+    <a href="/standings" class="side-menu-link">
+      RESULTADOS
+    </a>
+    <a href="/contacto" class="side-menu-link">
+      CONTACTO
+    </a>
+  </div>
+  <div class="side-menu-footer">
+    <span>SIMULADORES INERCIA</span>
+  </div>
+</nav>
+
+  </div>
+
+  <section class="hero reveal">
+    <div class="hero-art" role="img">
+      <img class="hero-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fpanoramicarigs.jpg?alt=media&token=4b312fec-49b1-4239-ab79-4c143d6531ca" alt="Sala de simuladores de carreras con luces de neón">
+      <div class="hero-vignette"></div>
+    </div>
+
+    <div class="hero-copy">
+      <h1 class="reveal-up d1">RESERVÁ TU SIMULADOR</h1>
+      <p class="reveal-up d2">TENEMOS SIMULADORES QUE SE AJUSTAN A UNA EXPERIENCIA ÚNICA</p>
+    </div>
+  </section>
+  <main id="reserva" class="packages">
+    <article class="card reveal">
+      <div class="card-art" aria-hidden="true">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fduron.jpg?alt=media&token=fa8002b1-9042-4dae-93aa-93e81304eaeb" alt="Simulador Standard">
+      </div>
+      <div class="card-body">
+        <p class="eyebrow reveal-up">SIMULADOR</p>
+        <h2 class="reveal-up">STANDARD</h2>
+        <p class="desc reveal-up">Butaca deportiva, volante con feedback y monitor. Ideal para los que se inician en el simracing y buscan experimentar las carreras con periféricos adecuados para el deporte electrónico.</p>
+      </div>
+    </article>
+
+    <article class="card reveal">
+      <div class="card-art" aria-hidden="true">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftriple23.jpg?alt=media&token=0711d1b9-ea96-44ae-bedf-a2d594cf75b3" alt="Simulador Premium">
+      </div>
+      <div class="card-body">
+        <p class="eyebrow reveal-up">SIMULADOR</p>
+        <h2 class="reveal-up">PREMIUM</h2>
+        <p class="desc reveal-up">Butaca deportiva, volante con feedback y monitor. Ideal para los que se inician en el simracing y buscan experimentar las carreras con periféricos adecuados para el deporte electrónico.</p>
+      </div>
+    </article>
+
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> Simuladores Inercia — Todos los derechos reservados</p>
+  </footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+  const revealEls = document.querySelectorAll('.reveal, .reveal-up');
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  revealEls.forEach(el => io.observe(el));
+</script>
+<script type="module" src="js/menu.js"></script>
+</body>
+<video class="page-bg-video" autoplay muted loop playsinline>
+    <source src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fbackground1.mp4?alt=media&token=cc4f4fcf-328b-4e9f-a13e-e90faa3ae8ce" type="video/mp4">
+</video>
+</html>

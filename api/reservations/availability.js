@@ -1,0 +1,4 @@
+import { method,json,fail } from '../_lib/http.js';
+import { adminDb } from '../_lib/firebase-admin.js';
+import { getConfig,validateWhen,slotIds,bad } from '../_lib/reservations.js';
+export default async function handler(req,res){ try{ if(!method(req,res,['GET']))return; const {date,time,duration}=req.query; const config=await getConfig(); const {start,end}=validateWhen(date,time,Number(duration),config); const rigs=(await adminDb.collection('rigs').where('active','==',true).get()).docs.map(d=>({id:d.id,...d.data()})); const refs=rigs.flatMap(r=>slotIds(date,start,end,config.slotMinutes,r.id).map(id=>adminDb.doc(`reservationLocks/${id}`))); const docs=refs.length?await adminDb.getAll(...refs):[]; const locked=new Set(docs.filter(x=>x.exists).map(x=>x.id.split('_').at(-1))); json(res,200,{rigs:rigs.map(r=>({...r,available:!locked.has(r.id)}))}); }catch(e){fail(res,e)} }
