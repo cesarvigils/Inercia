@@ -1953,24 +1953,45 @@ setText(
         submitButton
     ) {
 
+        /*
+         * FIX:
+         *
+         * Antes el botón quedaba disabled cuando
+         * !currentUser, y un <button disabled> NUNCA
+         * dispara el evento "submit" del formulario.
+         *
+         * Eso significaba que un usuario sin sesión
+         * no podía ni siquiera hacer click para que
+         * apareciera el modal de "iniciá sesión":
+         * el navegador ignoraba el click por completo.
+         *
+         * Ahora: si NO hay sesión, el botón se queda
+         * habilitado (para que el submit handler pueda
+         * atraparlo y mostrar el modal de login). Si SÍ
+         * hay sesión, aplicamos las validaciones de
+         * siempre (fecha, hora, duración, rig, etc).
+         */
+
         submitButton.disabled =
-            !(
-                currentUser &&
+            !currentUser
 
-                dateSelect
-                    ?.value &&
+                ? false
 
-                timeSelect
-                    ?.value &&
+                : !(
+                    dateSelect
+                        ?.value &&
 
-                durationSelect
-                    ?.value &&
+                    timeSelect
+                        ?.value &&
 
-                selected.size >
-                0 &&
+                    durationSelect
+                        ?.value &&
 
-                !loadingAvailability
-            );
+                    selected.size >
+                    0 &&
+
+                    !loadingAvailability
+                );
     }
 }
 
