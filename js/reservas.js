@@ -2407,6 +2407,28 @@ onAuthStateChanged(
             );
 
 
+            /*
+             * Si el modal de "iniciá sesión" estaba
+             * abierto (porque el usuario intentó
+             * reservar sin sesión), lo cerramos ahora
+             * que ya inició sesión.
+             */
+
+            closeLoginRequiredModal();
+
+
+            loginRequiredShown =
+                false;
+
+
+            /*
+             * Revisamos el acceso a "efectivo"
+             * (depende de si tiene membresía activa).
+             */
+
+            await loadPaymentAccess();
+
+
         } else {
 
             console.log(
@@ -2422,6 +2444,9 @@ onAuthStateChanged(
                 'Iniciá sesión para hacer una reserva.',
                 'error'
             );
+
+
+            updatePaymentAccess();
         }
 
 
@@ -2728,6 +2753,11 @@ form
 
             /* =====================================================
                USER
+
+               FIX: si no hay sesión iniciada, además del
+               mensaje inline, mostramos el modal de
+               "iniciá sesión" que ya existía en el código
+               pero nunca se llamaba desde ningún lado.
                ===================================================== */
 
             if (
@@ -2738,6 +2768,9 @@ form
                     'Iniciá sesión para continuar.',
                     'error'
                 );
+
+
+                openLoginRequiredModal();
 
 
                 return;
