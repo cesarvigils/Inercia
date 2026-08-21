@@ -126,7 +126,6 @@ body {
 }
 
 
-.menu-btn,
 .auth-btn {
     position: absolute;
 
@@ -136,9 +135,7 @@ body {
 }
 
 
-.menu-btn {
-    left: 32px;
-}
+
 
 
 .auth-btn {
@@ -889,9 +886,7 @@ body {
     }
 
 
-    .menu-btn {
-        left: 16px;
-    }
+
 
 
     .auth-btn {
