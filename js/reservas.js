@@ -2481,6 +2481,31 @@ onAuthStateChanged(
 
 
             updatePaymentAccess();
+
+
+            /*
+             * FIX: mostrar el modal de "iniciá sesión"
+             * INMEDIATAMENTE al detectar que no hay
+             * sesión, sin esperar a que el usuario
+             * intente enviar el formulario.
+             *
+             * Solo lo mostramos una vez por carga de
+             * página (loginRequiredShown) para no
+             * volver a abrirlo si Firebase dispara este
+             * callback más de una vez mientras se
+             * confirma que no hay sesión.
+             */
+
+            if (
+                !loginRequiredShown
+            ) {
+
+                loginRequiredShown =
+                    true;
+
+
+                openLoginRequiredModal();
+            }
         }
 
 
