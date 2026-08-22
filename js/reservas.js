@@ -146,6 +146,10 @@ let paymentAccess = {
 };
 
 
+let loginRequiredShown =
+    false;
+
+
 const wheel =
     'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49';
 const DEFAULT_HOURS = {
@@ -550,6 +554,257 @@ function safeAlert(
 
         runOnClose();
     }
+}
+
+
+/* =========================================================
+   MODAL DE "INICIÁ SESIÓN"
+
+   Se muestra cuando un usuario sin sesión intenta
+   reservar. Antes esta función no existía en este
+   archivo (se perdió en un revert), por eso el flujo
+   de "iniciá sesión" no aparecía nunca.
+   ========================================================= */
+
+function createLoginRequiredModal() {
+
+    if (
+        document.getElementById(
+            'loginRequiredModal'
+        )
+    ) {
+        return;
+    }
+
+
+    document.body.insertAdjacentHTML(
+        'beforeend',
+        `
+        <div
+            class="reservation-login-required"
+            id="loginRequiredModal"
+            aria-hidden="true"
+        >
+            <div
+                class="reservation-login-backdrop"
+            ></div>
+
+            <div
+                class="reservation-login-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="reservationLoginTitle"
+            >
+
+                <span class="reservation-login-eyebrow">
+                    SIMULADORES INERCIA
+                </span>
+
+                <h2 id="reservationLoginTitle">
+                    INICIÁ SESIÓN
+                    <span>PARA RESERVAR</span>
+                </h2>
+
+                <p>
+                    Para consultar disponibilidad y crear una
+                    reserva necesitás iniciar sesión primero.
+                </p>
+
+                <button
+                    type="button"
+                    class="reservation-login-primary"
+                    id="reservationLoginBtn"
+                >
+                    INICIAR SESIÓN
+                </button>
+
+                <a
+                    href="/"
+                    class="reservation-login-back"
+                >
+                    VOLVER AL INICIO
+                </a>
+
+            </div>
+        </div>
+        `
+    );
+
+
+    const modal =
+        document.getElementById(
+            'loginRequiredModal'
+        );
+
+
+    const loginButton =
+        document.getElementById(
+            'reservationLoginBtn'
+        );
+
+
+    loginButton?.addEventListener(
+        'click',
+        () => {
+
+            closeLoginRequiredModal();
+
+
+            /*
+             * Abrimos el sistema de autenticación
+             * que ya tiene la página.
+             */
+
+            const authButton =
+                document.getElementById(
+                    'authBtn'
+                );
+
+
+            if (authButton) {
+
+                authButton.click();
+
+                return;
+            }
+
+
+            /*
+             * Fallback por si el auth button
+             * no existe por alguna razón.
+             */
+
+            const authModal =
+                document.getElementById(
+                    'authModal'
+                );
+
+
+            if (authModal) {
+
+                authModal.inert =
+                    false;
+
+                authModal.setAttribute(
+                    'aria-hidden',
+                    'false'
+                );
+
+                authModal.classList.add(
+                    'open'
+                );
+
+
+                document.body.classList.add(
+                    'auth-modal-open'
+                );
+            }
+        }
+    );
+
+
+    modal
+        ?.querySelector(
+            '.reservation-login-backdrop'
+        )
+        ?.addEventListener(
+            'click',
+            closeLoginRequiredModal
+        );
+}
+
+
+function openLoginRequiredModal() {
+
+    createLoginRequiredModal();
+
+
+    const modal =
+        document.getElementById(
+            'loginRequiredModal'
+        );
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.classList.add(
+        'open'
+    );
+
+
+    modal.setAttribute(
+        'aria-hidden',
+        'false'
+    );
+
+
+    modal.inert =
+        false;
+
+
+    document.body.classList.add(
+        'reservation-login-modal-open'
+    );
+
+
+    requestAnimationFrame(
+        () => {
+
+            document
+                .getElementById(
+                    'reservationLoginBtn'
+                )
+                ?.focus();
+        }
+    );
+}
+
+
+function closeLoginRequiredModal() {
+
+    const modal =
+        document.getElementById(
+            'loginRequiredModal'
+        );
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    if (
+        modal.contains(
+            document.activeElement
+        )
+    ) {
+
+        document.activeElement
+            ?.blur();
+    }
+
+
+    modal.classList.remove(
+        'open'
+    );
+
+
+    modal.setAttribute(
+        'aria-hidden',
+        'true'
+    );
+
+
+    modal.inert =
+        true;
+
+
+    document.body.classList.remove(
+        'reservation-login-modal-open'
+    );
 }
 
 
@@ -1953,24 +2208,45 @@ setText(
         submitButton
     ) {
 
+        /*
+         * FIX:
+         *
+         * Antes el botón quedaba disabled cuando
+         * !currentUser, y un <button disabled> NUNCA
+         * dispara el evento "submit" del formulario.
+         *
+         * Eso significaba que un usuario sin sesión
+         * no podía ni siquiera hacer click para
+         * enterarse de que necesitaba loguearse: el
+         * navegador ignoraba el click por completo.
+         *
+         * Ahora: si NO hay sesión, el botón se queda
+         * habilitado (para que el submit handler pueda
+         * atraparlo y mostrar el modal de login). Si SÍ
+         * hay sesión, aplicamos las validaciones de
+         * siempre (fecha, hora, duración, rig, etc).
+         */
+
         submitButton.disabled =
-            !(
-                currentUser &&
+            !currentUser
 
-                dateSelect
-                    ?.value &&
+                ? false
 
-                timeSelect
-                    ?.value &&
+                : !(
+                    dateSelect
+                        ?.value &&
 
-                durationSelect
-                    ?.value &&
+                    timeSelect
+                        ?.value &&
 
-                selected.size >
-                0 &&
+                    durationSelect
+                        ?.value &&
 
-                !loadingAvailability
-            );
+                    selected.size >
+                    0 &&
+
+                    !loadingAvailability
+                );
     }
 }
 
@@ -2165,6 +2441,28 @@ onAuthStateChanged(
             );
 
 
+            /*
+             * Si el modal de "iniciá sesión" estaba
+             * abierto (porque el usuario intentó
+             * reservar sin sesión), lo cerramos ahora
+             * que ya inició sesión.
+             */
+
+            closeLoginRequiredModal();
+
+
+            loginRequiredShown =
+                false;
+
+
+            /*
+             * Revisamos el acceso a "efectivo"
+             * (depende de si tiene membresía activa).
+             */
+
+            await loadPaymentAccess();
+
+
         } else {
 
             console.log(
@@ -2180,6 +2478,34 @@ onAuthStateChanged(
                 'Iniciá sesión para hacer una reserva.',
                 'error'
             );
+
+
+            updatePaymentAccess();
+
+
+            /*
+             * FIX: mostrar el modal de "iniciá sesión"
+             * INMEDIATAMENTE al detectar que no hay
+             * sesión, sin esperar a que el usuario
+             * intente enviar el formulario.
+             *
+             * Solo lo mostramos una vez por carga de
+             * página (loginRequiredShown) para no
+             * volver a abrirlo si Firebase dispara este
+             * callback más de una vez mientras se
+             * confirma que no hay sesión.
+             */
+
+            if (
+                !loginRequiredShown
+            ) {
+
+                loginRequiredShown =
+                    true;
+
+
+                openLoginRequiredModal();
+            }
         }
 
 
@@ -2486,6 +2812,12 @@ form
 
             /* =====================================================
                USER
+
+               FIX: si no hay sesión iniciada, además del
+               mensaje inline, mostramos el modal de
+               "iniciá sesión" (createLoginRequiredModal /
+               openLoginRequiredModal), que se había perdido
+               en un revert anterior.
                ===================================================== */
 
             if (
@@ -2496,6 +2828,9 @@ form
                     'Iniciá sesión para continuar.',
                     'error'
                 );
+
+
+                openLoginRequiredModal();
 
 
                 return;
