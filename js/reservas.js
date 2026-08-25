@@ -2046,7 +2046,24 @@ async function availability() {
         summary();
     }
 }
+function getTuesdayDiscount() {
+    if (!dateSelect?.value) {
+        return 0;
+    }
 
+    const [year, month, day] =
+        dateSelect.value
+            .split('-')
+            .map(Number);
+
+    const selectedDate =
+        new Date(year, month - 1, day);
+
+    // 2 = martes
+    return selectedDate.getDay() === 2
+        ? 0.50
+        : 0;
+}
 
 /* =========================================================
    LOCAL PRICE PREVIEW
@@ -2088,6 +2105,10 @@ function localPrice() {
         0;
 
 
+    /*
+     * PROMOCIONES EXISTENTES
+     */
+
     for (
         const promo
         of promos
@@ -2123,6 +2144,71 @@ function localPrice() {
     }
 
 
+    /*
+     * EMERGENCY PATCH
+     * TODOS LOS MARTES = 50% OFF
+     */
+
+    if (
+        dateSelect?.value
+    ) {
+
+        const [
+            year,
+            month,
+            day
+        ] =
+            dateSelect.value
+                .split('-')
+                .map(Number);
+
+
+        const selectedDate =
+            new Date(
+                year,
+                month - 1,
+                day
+            );
+
+
+        /*
+         * 0 domingo
+         * 1 lunes
+         * 2 martes
+         */
+
+        if (
+            selectedDate.getDay() === 2
+        ) {
+
+            /*
+             * Si ya existe una promo del 50%
+             * para martes en Firebase, NO la duplicamos.
+             */
+
+            const alreadyHasTuesday50 =
+                promos.some(
+                    promo =>
+                        promo.type === 'percent' &&
+                        Number(promo.value) === 50
+                );
+
+
+            if (
+                !alreadyHasTuesday50
+            ) {
+
+                discount +=
+                    base * 0.50;
+            }
+        }
+    }
+
+
+    /*
+     * Nunca permitir descuento mayor al total.
+     */
+
     discount =
         Math.min(
             base,
@@ -2136,7 +2222,6 @@ function localPrice() {
         discount
     );
 }
-
 
 /* =========================================================
    SUMMARY
