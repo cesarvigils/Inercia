@@ -1663,28 +1663,6 @@ function updatePrices() {
         document.querySelector(
             '[data-price="premium"]'
         );
-
-
-    if (standard) {
-
-        standard.textContent =
-            `${money(
-                appConfig
-                    ?.prices
-                    ?.standard
-            )} + ISV / HORA`;
-    }
-
-
-    if (premium) {
-
-        premium.textContent =
-            `${money(
-                appConfig
-                    ?.prices
-                    ?.premium
-            )} + ISV / HORA`;
-    }
 }
 
 
