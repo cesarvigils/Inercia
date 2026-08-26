@@ -205,9 +205,14 @@ function showError(message) {
   }
 }
 function normalizeDriverName(value) {
-
     return String(value || '')
         .trim()
+
+        /*
+         * (S) viene del Sheets.
+         * Se ignora únicamente al comparar con
+         * el nombre guardado en Firebase.
+         */
         .replace(/\s*\(S\)\s*$/i, '')
 
         .trim()
@@ -340,72 +345,105 @@ function updateMyTime() {
    FIREBASE USER
    ========================================================= */
 
-onAuthStateChanged(
-    auth,
+function updateMyTime() {
 
-    async user => {
+    const card =
+        document.getElementById(
+            'myTimeCard'
+        );
 
-        if (!user) {
+    const value =
+        document.getElementById(
+            'myTimeValue'
+        );
 
-            standingsUserName =
-                null;
-
-            updateMyTime();
-
-            return;
-        }
-
-
-        try {
-
-            const snapshot =
-                await getDoc(
-                    doc(
-                        db,
-                        'users',
-                        user.uid
-                    )
-                );
+    const driver =
+        document.getElementById(
+            'myTimeDriver'
+        );
 
 
-            const profile =
-                snapshot.exists()
-                    ? snapshot.data()
-                    : {};
-
-
-            standingsUserName =
-                String(
-                    profile.name ||
-                    user.displayName ||
-                    ''
-                ).trim();
-
-
-            console.log(
-                '[STANDINGS] Nombre Firebase:',
-                standingsUserName
-            );
-
-
-        } catch (
-            error
-        ) {
-
-            console.error(
-                '[STANDINGS] No se pudo obtener el nombre del usuario:',
-                error
-            );
-
-
-            standingsUserName =
-                String(
-                    user.displayName ||
-                    ''
-                ).trim();
-        }
-
-
-        updateMyTime();
+    if (
+        !card ||
+        !value ||
+        !driver
+    ) {
+        return;
     }
-);
+
+
+    card.classList.remove(
+        'found',
+        'no-record'
+    );
+
+
+    if (!standingsUserName) {
+
+        value.textContent =
+            'INICIÁ SESIÓN';
+
+        driver.textContent =
+            '';
+
+        card.classList.add(
+            'no-record'
+        );
+
+        return;
+    }
+
+
+    const firebaseName =
+        normalizeDriverName(
+            standingsUserName
+        );
+
+
+    /*
+     * currentStandingsRows son las filas
+     * que YA vinieron del Google Sheets.
+     */
+    const sheetRow =
+        currentStandingsRows.find(
+            row =>
+                normalizeDriverName(
+                    row.nombre
+                ) === firebaseName
+        );
+
+
+    if (!sheetRow) {
+
+        value.textContent =
+            'SIN REGISTRO';
+
+        driver.textContent =
+            standingsUserName;
+
+        card.classList.add(
+            'no-record'
+        );
+
+        return;
+    }
+
+
+    /*
+     * TODO ESTO SALE DEL SHEETS.
+     */
+
+    value.textContent =
+        sheetRow.tiempo ||
+        '--';
+
+
+    driver.textContent =
+        sheetRow.nombre ||
+        standingsUserName;
+
+
+    card.classList.add(
+        'found'
+    );
+}
