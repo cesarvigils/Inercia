@@ -25,7 +25,7 @@ import {
     query,
     where,
     serverTimestamp,
-    writeBatch,a
+    writeBatch,
         orderBy
 
 } from 'firebase/firestore';
