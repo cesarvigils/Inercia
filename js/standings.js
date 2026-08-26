@@ -204,17 +204,14 @@ function showError(message) {
     leaderboardEl.appendChild(p);
   }
 }
-function normalizeDriverName(
-    value
-) {
+function normalizeDriverName(value) {
 
-    return String(
-        value || ''
-    )
+    return String(value || '')
         .trim()
-        .toLocaleLowerCase(
-            'es'
-        );
+        .replace(/\s*\(S\)\s*$/i, '')
+
+        .trim()
+        .toLocaleLowerCase('es');
 }
 
 
