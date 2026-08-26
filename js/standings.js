@@ -40,7 +40,9 @@ async function initStandings() {
     if (circuitoEl) circuitoEl.textContent = data.circuito || 'N/D';
 
     allDrivers = data.drivers || [];
+currentStandingsRows = allDrivers;
 
+updateMyTime();
     setupCategorySelect();
     renderCategory(getSelectedCategory());
   } catch (err) {
