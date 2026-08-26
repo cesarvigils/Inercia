@@ -231,7 +231,66 @@ function normalizeDriverName(value) {
         .toLocaleLowerCase('es');
 }
 
+function ensureMyTimeCard() {
 
+    let card =
+        document.getElementById(
+            'myTimeCard'
+        );
+
+    if (card) {
+        return card;
+    }
+
+    card =
+        document.createElement(
+            'div'
+        );
+
+    card.id =
+        'myTimeCard';
+
+    card.className =
+        'my-time-card';
+
+    card.innerHTML = `
+        <div class="my-time-copy">
+            <span class="my-time-label">
+                MI TIEMPO
+            </span>
+
+            <strong
+                class="my-time-value"
+                id="myTimeValue"
+            >
+                --
+            </strong>
+        </div>
+
+        <span
+            class="my-time-driver"
+            id="myTimeDriver"
+        ></span>
+    `;
+
+    const leaderboard =
+        document.getElementById(
+            'leaderboard'
+        );
+
+    if (leaderboard?.parentNode) {
+        leaderboard.parentNode.insertBefore(
+            card,
+            leaderboard
+        );
+    } else {
+        document.body.appendChild(
+            card
+        );
+    }
+
+    return card;
+}
 
 function updateMyTime() {
 
