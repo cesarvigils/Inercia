@@ -1,4 +1,18 @@
+import {
+    auth,
+    db
+} from '../firebase-config.js';
 
+import {
+    onAuthStateChanged
+} from 'firebase/auth';
+
+import {
+    doc,
+    getDoc
+} from 'firebase/firestore';
+let standingsUserName = null;
+let currentStandingsRows = [];
 
 const TRACKS_JSON_PATH = 'data/tracks.json';
 const DEFAULT_CATEGORY = 'todos';
@@ -190,3 +204,211 @@ function showError(message) {
     leaderboardEl.appendChild(p);
   }
 }
+function normalizeDriverName(
+    value
+) {
+
+    return String(
+        value || ''
+    )
+        .trim()
+        .toLocaleLowerCase(
+            'es'
+        );
+}
+
+
+function updateMyTime() {
+
+    const card =
+        document.getElementById(
+            'myTimeCard'
+        );
+
+    const value =
+        document.getElementById(
+            'myTimeValue'
+        );
+
+    const driver =
+        document.getElementById(
+            'myTimeDriver'
+        );
+
+
+    if (
+        !card ||
+        !value ||
+        !driver
+    ) {
+        return;
+    }
+
+
+    card.classList.remove(
+        'found',
+        'no-record'
+    );
+
+
+    /*
+     * Usuario no autenticado.
+     */
+
+    if (
+        !standingsUserName
+    ) {
+
+        value.textContent =
+            'INICIÁ SESIÓN';
+
+        driver.textContent =
+            '';
+
+        card.classList.add(
+            'no-record'
+        );
+
+        return;
+    }
+
+
+    const userName =
+        normalizeDriverName(
+            standingsUserName
+        );
+
+
+    /*
+     * Coincidencia:
+     *
+     * "Cesar Vigil"
+     * "CESAR VIGIL"
+     * "cesar vigil"
+     *
+     * = MATCH
+     *
+     * Pero:
+     *
+     * "Cesar Vigil A."
+     *
+     * != MATCH
+     */
+
+    const result =
+        currentStandingsRows.find(
+            row => {
+
+                return (
+                    normalizeDriverName(
+                        row.nombre
+                    ) ===
+                    userName
+                );
+            }
+        );
+
+
+    if (!result) {
+
+        value.textContent =
+            'SIN REGISTRO';
+
+        driver.textContent =
+            standingsUserName;
+
+        card.classList.add(
+            'no-record'
+        );
+
+        return;
+    }
+
+
+    value.textContent =
+        result.tiempo ||
+        '--';
+
+
+    driver.textContent =
+        result.nombre ||
+        standingsUserName;
+
+
+    card.classList.add(
+        'found'
+    );
+}
+/* =========================================================
+   FIREBASE USER
+   ========================================================= */
+
+onAuthStateChanged(
+    auth,
+
+    async user => {
+
+        if (!user) {
+
+            standingsUserName =
+                null;
+
+            updateMyTime();
+
+            return;
+        }
+
+
+        try {
+
+            const snapshot =
+                await getDoc(
+                    doc(
+                        db,
+                        'users',
+                        user.uid
+                    )
+                );
+
+
+            const profile =
+                snapshot.exists()
+                    ? snapshot.data()
+                    : {};
+
+
+            standingsUserName =
+                String(
+                    profile.name ||
+                    user.displayName ||
+                    ''
+                ).trim();
+
+
+            console.log(
+                '[STANDINGS] Nombre Firebase:',
+                standingsUserName
+            );
+
+
+        } catch (
+            error
+        ) {
+
+            console.error(
+                '[STANDINGS] No se pudo obtener el nombre del usuario:',
+                error
+            );
+
+
+            standingsUserName =
+                String(
+                    user.displayName ||
+                    ''
+                ).trim();
+        }
+
+
+        updateMyTime();
+    }
+);

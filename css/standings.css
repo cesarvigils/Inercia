@@ -1619,3 +1619,145 @@ body.auth-modal-open {
     height: auto;
     object-fit: contain;
 }
+/* =========================================================
+   MY TIME
+   ========================================================= */
+
+.my-time-card {
+    width: 100%;
+
+    margin:
+        0 0 18px;
+
+    padding:
+        15px 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 18px;
+
+    background:
+        rgba(255, 255, 255, 0.035);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.08);
+
+    border-left:
+        3px solid
+        #ff8b00;
+}
+
+.my-time-copy {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.my-time-label {
+    color:
+        #8a8a8a;
+
+    font-family:
+        'Alumni Sans',
+        'Arial Narrow',
+        sans-serif;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        1.4px;
+}
+
+.my-time-value {
+    color:
+        #f5f5f5;
+
+    font-family:
+        'Alumni Sans',
+        'Arial Narrow',
+        sans-serif;
+
+    font-size:
+        30px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1;
+}
+
+.my-time-driver {
+    max-width:
+        45%;
+
+    color:
+        #ff8b00;
+
+    font-family:
+        'Alumni Sans',
+        'Arial Narrow',
+        sans-serif;
+
+    font-size:
+        14px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        .5px;
+
+    text-align:
+        right;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+}
+
+.my-time-card.no-record
+.my-time-value {
+    color:
+        #777;
+}
+
+.my-time-card.found
+.my-time-value {
+    color:
+        #ff8b00;
+}
+
+
+@media (
+    max-width: 500px
+) {
+
+    .my-time-card {
+        padding:
+            13px 15px;
+    }
+
+    .my-time-value {
+        font-size:
+            27px;
+    }
+
+    .my-time-driver {
+        max-width:
+            50%;
+    }
+}
