@@ -339,16 +339,6 @@ function updateMyTime() {
      * DEBUG
      */
 
-    console.log(
-        '[STANDINGS] Buscando Mi Tiempo:',
-        {
-            firebaseName:
-                standingsUserName,
-
-            driversLoaded:
-                currentStandingsRows.length
-        }
-    );
 
 
     /* =====================================================
@@ -398,24 +388,7 @@ function updateMyTime() {
                     );
 
 
-                console.log(
-                    '[STANDINGS MATCH]',
-                    {
-                        firebase:
-                            firebaseName,
-
-                        sheetOriginal:
-                            row.name,
-
-                        sheetNormalized:
-                            sheetName,
-
-                        match:
-                            sheetName ===
-                            firebaseName
-                    }
-                );
-
+            
 
                 return (
                     sheetName ===
@@ -458,10 +431,7 @@ function updateMyTime() {
        ENCONTRADO
        ===================================================== */
 
-    console.log(
-        '[STANDINGS] MATCH ENCONTRADO:',
-        sheetRow
-    );
+
 
 
     /*
@@ -546,10 +516,7 @@ onAuthStateChanged(
                 ).trim();
 
 
-            console.log(
-                '[STANDINGS] Nombre Firebase:',
-                standingsUserName
-            );
+
 
 
         } catch (
