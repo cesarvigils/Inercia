@@ -207,32 +207,48 @@ function showError(message) {
   }
 }
 function normalizeDriverName(value) {
+
     return String(value || '')
         .trim()
 
         /*
-         * (S) viene del Sheets.
-         * Se ignora únicamente al comparar con
-         * el nombre guardado en Firebase.
+         * Si el nombre del Sheets es:
+         *
+         * Cesar Vigil (S)
+         *
+         * para comparar usamos:
+         *
+         * Cesar Vigil
+         *
+         * pero NO modificamos el nombre real.
          */
-        .replace(/\s*\(S\)\s*$/i, '')
+        .replace(
+            /\s*\(S\)\s*$/i,
+            ''
+        )
 
         .trim()
         .toLocaleLowerCase('es');
 }
 
 
+
 function updateMyTime() {
+
+    ensureMyTimeCard();
+
 
     const card =
         document.getElementById(
             'myTimeCard'
         );
 
+
     const value =
         document.getElementById(
             'myTimeValue'
         );
+
 
     const driver =
         document.getElementById(
@@ -245,6 +261,11 @@ function updateMyTime() {
         !value ||
         !driver
     ) {
+
+        console.error(
+            '[STANDINGS] No se pudieron crear los elementos de Mi Tiempo.'
+        );
+
         return;
     }
 
@@ -255,17 +276,40 @@ function updateMyTime() {
     );
 
 
+    /*
+     * DEBUG
+     */
+
+    console.log(
+        '[STANDINGS] Buscando Mi Tiempo:',
+        {
+            firebaseName:
+                standingsUserName,
+
+            driversLoaded:
+                currentStandingsRows.length
+        }
+    );
+
+
+    /* =====================================================
+       NO LOGUEADO
+       ===================================================== */
+
     if (!standingsUserName) {
 
         value.textContent =
             'INICIÁ SESIÓN';
 
+
         driver.textContent =
             '';
+
 
         card.classList.add(
             'no-record'
         );
+
 
         return;
     }
@@ -277,46 +321,119 @@ function updateMyTime() {
         );
 
 
-    /*
-     * currentStandingsRows son las filas
-     * que YA vinieron del Google Sheets.
-     */
+    /* =====================================================
+       BUSCAR EN DATOS DEL SHEETS
+       ===================================================== */
+
     const sheetRow =
         currentStandingsRows.find(
-            row =>
-                normalizeDriverName(
-                    row.nombre
-                ) === firebaseName
+            row => {
+
+                /*
+                 * TU API REAL USA row.name.
+                 */
+
+                const sheetName =
+                    normalizeDriverName(
+                        row.name
+                    );
+
+
+                console.log(
+                    '[STANDINGS MATCH]',
+                    {
+                        firebase:
+                            firebaseName,
+
+                        sheetOriginal:
+                            row.name,
+
+                        sheetNormalized:
+                            sheetName,
+
+                        match:
+                            sheetName ===
+                            firebaseName
+                    }
+                );
+
+
+                return (
+                    sheetName ===
+                    firebaseName
+                );
+            }
         );
 
 
+    /* =====================================================
+       NO ENCONTRADO
+       ===================================================== */
+
     if (!sheetRow) {
+
+        console.warn(
+            '[STANDINGS] No encontramos al usuario en Sheets:',
+            standingsUserName
+        );
+
 
         value.textContent =
             'SIN REGISTRO';
 
+
         driver.textContent =
             standingsUserName;
+
 
         card.classList.add(
             'no-record'
         );
 
+
         return;
     }
 
 
+    /* =====================================================
+       ENCONTRADO
+       ===================================================== */
+
+    console.log(
+        '[STANDINGS] MATCH ENCONTRADO:',
+        sheetRow
+    );
+
+
     /*
-     * TODO ESTO SALE DEL SHEETS.
+     * TU API REAL USA:
+     *
+     * row.ms
+     * row.timeStr
      */
 
     value.textContent =
-        sheetRow.tiempo ||
-        '--';
+        sheetRow.ms !== null &&
+        sheetRow.ms !== undefined
 
+            ? (
+                sheetRow.timeStr ||
+                '--'
+            )
+
+            : 'NT';
+
+
+    /*
+     * Enseñamos exactamente el nombre del Sheets.
+     *
+     * Ej:
+     *
+     * Cesar Vigil (S)
+     */
 
     driver.textContent =
-        sheetRow.nombre ||
+        sheetRow.name ||
         standingsUserName;
 
 
