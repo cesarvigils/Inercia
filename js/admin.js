@@ -1690,9 +1690,9 @@ if (lockdownForm) {
                     active:
                         true,
 
-                    createdBy:
-                        user?.uid ||
-                        null,
+ createdBy:
+    auth.currentUser?.uid ||
+    null,
 
                     createdAt:
                         serverTimestamp(),
