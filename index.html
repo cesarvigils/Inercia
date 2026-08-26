@@ -172,6 +172,67 @@
                             ><button class="primary">GUARDAR HORARIO</button>
                         </form>
                     </div>
+                    <div class="card lockdown-card">
+    <span class="eyebrow">DISPONIBILIDAD</span>
+    <h3>BLOQUEO DE DÍAS</h3>
+
+    <p class="settings-description">
+        Cerrá temporalmente las reservaciones durante un rango de horas.
+    </p>
+
+    <form id="lockdownForm">
+        <label>
+            FECHA
+            <input
+                id="lockdownDate"
+                type="date"
+                required
+            />
+        </label>
+
+        <div class="lockdown-hours">
+            <label>
+                DESDE
+                <input
+                    id="lockdownStart"
+                    type="time"
+                    required
+                />
+            </label>
+
+            <label>
+                HASTA
+                <input
+                    id="lockdownEnd"
+                    type="time"
+                    required
+                />
+            </label>
+        </div>
+
+        <label>
+            MOTIVO
+            <input
+                id="lockdownReason"
+                type="text"
+                maxlength="100"
+                placeholder="Ej. Evento privado"
+            />
+        </label>
+
+        <button
+            type="submit"
+            class="primary"
+        >
+            BLOQUEAR HORARIO
+        </button>
+    </form>
+
+    <div
+        id="lockdownList"
+        class="lockdown-list"
+    ></div>
+</div>
                 </section>
             </main>
         </div>

@@ -1514,3 +1514,245 @@ $("#newReservationBtn").onclick = () => {
 
     calculateTotal();
 };
+let lockdowns = [];
+
+const lockdownForm =
+    document.getElementById(
+        'lockdownForm'
+    );
+
+const lockdownList =
+    document.getElementById(
+        'lockdownList'
+    );
+
+
+/* =========================================================
+   LOCKDOWNS
+   ========================================================= */
+
+function renderLockdowns() {
+
+    if (!lockdownList) {
+        return;
+    }
+
+    if (!lockdowns.length) {
+
+        lockdownList.innerHTML = `
+            <div class="lockdown-empty">
+                NO HAY BLOQUEOS PROGRAMADOS
+            </div>
+        `;
+
+        return;
+    }
+
+
+    lockdownList.innerHTML =
+        lockdowns.map(lock => `
+
+            <div class="lockdown-item">
+
+                <div class="lockdown-date">
+                    <strong>
+                        ${esc(lock.date)}
+                    </strong>
+
+                    <span>
+                        ${esc(lock.start)}
+                        —
+                        ${esc(lock.end)}
+                    </span>
+                </div>
+
+                <div class="lockdown-info">
+
+                    ${
+                        lock.reason
+                            ? `
+                                <small>
+                                    ${esc(lock.reason)}
+                                </small>
+                            `
+                            : ''
+                    }
+
+                </div>
+
+                <button
+                    type="button"
+                    class="danger lockdown-delete"
+                    data-id="${esc(lock.id)}"
+                >
+                    ELIMINAR
+                </button>
+
+            </div>
+
+        `).join('');
+
+
+    $$('.lockdown-delete')
+        .forEach(button => {
+
+            button.onclick =
+                async () => {
+
+                    if (
+                        !confirm(
+                            '¿Eliminar este bloqueo?'
+                        )
+                    ) {
+                        return;
+                    }
+
+                    await deleteDoc(
+                        doc(
+                            db,
+                            'availabilityLockdowns',
+                            button.dataset.id
+                        )
+                    );
+                };
+        });
+}
+
+
+if (lockdownForm) {
+
+    lockdownForm.onsubmit =
+        async event => {
+
+            event.preventDefault();
+
+
+            const date =
+                $('#lockdownDate')
+                    .value;
+
+            const start =
+                $('#lockdownStart')
+                    .value;
+
+            const end =
+                $('#lockdownEnd')
+                    .value;
+
+            const reason =
+                $('#lockdownReason')
+                    .value
+                    .trim();
+
+
+            if (
+                !date ||
+                !start ||
+                !end
+            ) {
+
+                alert(
+                    'Completá la fecha y las horas.'
+                );
+
+                return;
+            }
+
+
+            if (
+                end <= start
+            ) {
+
+                alert(
+                    'La hora final debe ser posterior a la hora inicial.'
+                );
+
+                return;
+            }
+
+
+            await addDoc(
+                collection(
+                    db,
+                    'availabilityLockdowns'
+                ),
+                {
+                    date,
+
+                    start,
+
+                    end,
+
+                    reason:
+                        reason ||
+                        null,
+
+                    active:
+                        true,
+
+                    createdBy:
+                        user?.uid ||
+                        null,
+
+                    createdAt:
+                        serverTimestamp(),
+
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+
+
+            lockdownForm.reset();
+
+
+            $('#lockdownDate').value =
+                today();
+        };
+}
+
+
+/*
+ * Escuchar bloqueos en tiempo real.
+ */
+
+const lockdownQuery =
+    query(
+        collection(
+            db,
+            'availabilityLockdowns'
+        ),
+        orderBy(
+            'date',
+            'asc'
+        )
+    );
+
+
+onSnapshot(
+    lockdownQuery,
+
+    snapshot => {
+
+        lockdowns =
+            snapshot.docs.map(
+                snapshot => ({
+                    id:
+                        snapshot.id,
+
+                    ...snapshot.data()
+                })
+            );
+
+
+        renderLockdowns();
+    },
+
+    error => {
+
+        console.error(
+            '[LOCKDOWNS]',
+            error
+        );
+    }
+);
