@@ -14,7 +14,7 @@ import {
 let standingsUserName = null;
 let currentStandingsRows = [];
 
-const TRACKS_JSON_PATH = 'data/tracks.json';
+const TRACKS_JSON_PATH = '/data/tracks.json';
 const DEFAULT_CATEGORY = 'todos';
 
 let allDrivers = [];
