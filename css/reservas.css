@@ -2194,7 +2194,30 @@ body.reservation-login-modal-open {
     color: #ddd;
     border-color: #4a4a4a;
 }
+.reservation-login-panel {
+    width: min(380px, 100%);
+}
 
+.reservation-login-eyebrow {
+    margin: 16px 22px 6px;
+}
+
+.reservation-login-panel h2 {
+    margin: 0 22px 14px;
+    font-size: 28px;
+}
+
+.reservation-login-panel p {
+    margin: 0 22px 18px;
+}
+
+.reservation-login-primary {
+    margin: 0 6px 14px 22px;
+}
+
+.reservation-login-back {
+    margin-bottom: 14px;
+}
 @media (max-width: 500px) {
 
     .reservation-login-panel {
