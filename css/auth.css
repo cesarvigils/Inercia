@@ -650,7 +650,170 @@ body.auth-modal-open {
 #logoutBtn:hover {
     color: #fff;
 }
+/* =========================================
+   LOGIN REQUIRED
+   ========================================= */
 
+.login-required {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: grid;
+    place-items: center;
+
+    padding: 20px;
+}
+
+.login-required[hidden] {
+    display: none;
+}
+
+.login-required__backdrop {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(0, 0, 0, .72);
+    backdrop-filter: blur(3px);
+}
+
+.login-required__panel {
+    position: relative;
+    z-index: 1;
+
+    width: min(430px, 100%);
+
+    padding: 32px;
+
+    background: #0d0d0d;
+    border: 1px solid #2a2a2a;
+    border-top: 3px solid #ff8a00;
+}
+
+.login-required__eyebrow {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #ff8a00;
+
+    font-family: "Alumni Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+}
+
+.login-required__panel h2 {
+    margin: 0;
+
+    color: #fff;
+
+    font-family: "Alumni Sans", sans-serif;
+    font-size: clamp(38px, 7vw, 52px);
+    font-weight: 700;
+
+    line-height: .95;
+}
+
+.login-required__panel p {
+    max-width: 340px;
+
+    margin: 18px 0 26px;
+
+    color: #999;
+
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+.login-required__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.login-required__actions button {
+    min-height: 44px;
+
+    padding: 0 20px;
+
+    border-radius: 0;
+
+    font-family: "Alumni Sans", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+
+    letter-spacing: .5px;
+
+    cursor: pointer;
+}
+
+.login-required__primary {
+    flex: 1;
+
+    color: #050505;
+
+    background: #ff8a00;
+    border: 1px solid #ff8a00;
+}
+
+.login-required__primary:hover {
+    background: #ff9d26;
+    border-color: #ff9d26;
+}
+
+.login-required__secondary {
+    color: #aaa;
+
+    background: transparent;
+    border: 1px solid #333;
+}
+
+.login-required__secondary:hover {
+    color: #fff;
+    border-color: #555;
+}
+
+.login-required__close {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+
+    padding: 0;
+
+    color: #777;
+
+    background: none;
+    border: 0;
+
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.login-required__close:hover {
+    color: #fff;
+}
+
+@media (max-width: 500px) {
+    .login-required__panel {
+        padding: 28px 22px 22px;
+    }
+
+    .login-required__actions {
+        flex-direction: column;
+    }
+
+    .login-required__secondary {
+        min-height: 40px;
+    }
+}
 
 @media (min-width: 860px) {
 

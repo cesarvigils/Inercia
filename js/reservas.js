@@ -605,10 +605,7 @@ function createLoginRequiredModal() {
                     <span>PARA RESERVAR</span>
                 </h2>
 
-                <p>
-                    Para consultar disponibilidad y crear una
-                    reserva necesitás iniciar sesión primero.
-                </p>
+
 
                 <button
                     type="button"
