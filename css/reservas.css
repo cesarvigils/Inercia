@@ -2275,3 +2275,200 @@ body.reservation-login-modal-open {
             32px 24px 28px;
     }
 }
+
+.reservation-auth-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: grid;
+    place-items: center;
+
+    padding: 20px;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+        opacity .15s ease,
+        visibility .15s ease;
+}
+
+.reservation-auth-gate.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.reservation-auth-gate__backdrop {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(0, 0, 0, .72);
+}
+
+.reservation-auth-gate__panel {
+    position: relative;
+    z-index: 1;
+
+    width: min(460px, 100%);
+
+    background: #111;
+    border: 1px solid #2b2b2b;
+
+    box-shadow:
+        0 20px 70px rgba(0, 0, 0, .45);
+}
+
+.reservation-auth-gate__top {
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 14px 0 17px;
+
+    border-bottom: 1px solid #262626;
+}
+
+.reservation-auth-gate__top span {
+    color: #777;
+
+    font-family:
+        'Alumni Sans',
+        sans-serif;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    letter-spacing: 1.4px;
+}
+
+.reservation-auth-gate__top button {
+    width: 28px;
+    height: 28px;
+
+    padding: 0;
+
+    border: 0;
+    background: transparent;
+
+    color: #666;
+
+    font-family: Arial, sans-serif;
+    font-size: 22px;
+
+    cursor: pointer;
+}
+
+.reservation-auth-gate__top button:hover {
+    color: #fff;
+}
+
+.reservation-auth-gate__body {
+    padding: 28px 28px 25px;
+}
+
+.reservation-auth-gate__body h2 {
+    margin: 0 0 10px;
+
+    color: #f3f3f3;
+
+    font-family:
+        'Alumni Sans',
+        sans-serif;
+
+    font-size: 31px;
+    font-weight: 700;
+
+    line-height: 1;
+
+    letter-spacing: .2px;
+}
+
+.reservation-auth-gate__body p {
+    margin: 0;
+
+    color: #858585;
+
+    font-family:
+        'Poppins',
+        sans-serif;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+.reservation-auth-gate__actions {
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    padding: 14px;
+
+    background: #0d0d0d;
+
+    border-top: 1px solid #262626;
+}
+
+.reservation-auth-gate__actions button {
+    min-height: 38px;
+
+    padding: 0 17px;
+
+    font-family:
+        'Alumni Sans',
+        sans-serif;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    letter-spacing: .5px;
+
+    cursor: pointer;
+}
+
+.reservation-auth-gate__login {
+    border: 1px solid #ff8b00;
+
+    background: #ff8b00;
+
+    color: #101010;
+}
+
+.reservation-auth-gate__login:hover {
+    background: #ff9b20;
+}
+
+.reservation-auth-gate__cancel {
+    border: 1px solid #333;
+
+    background: transparent;
+
+    color: #888;
+}
+
+.reservation-auth-gate__cancel:hover {
+    border-color: #555;
+
+    color: #ddd;
+}
+
+@media (max-width: 500px) {
+
+    .reservation-auth-gate {
+        padding: 14px;
+    }
+
+    .reservation-auth-gate__body {
+        padding: 24px 20px;
+    }
+
+    .reservation-auth-gate__actions {
+        flex-direction: row;
+    }
+}
