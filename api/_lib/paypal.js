@@ -1,3 +1,56 @@
+    /*
+     * api/_lib/paypal.js
+     *
+     * Server-side helpers for talking to PayPal's REST API (OAuth2 client
+     * credentials flow) and for converting reservation totals (stored in
+     * Honduran Lempiras, HNL) into USD for PayPal checkout, since PayPal
+     * charges in USD here.
+     *
+     * Required environment variables:
+     *   PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET   App credentials from
+     *                                            developer.paypal.com.
+     *   PAYPAL_WEBHOOK_ID                        ID of the PayPal webhook
+     *                                            configured to hit
+     *                                            api/paypal/webhook.js,
+     *                                            used to verify incoming
+     *                                            webhook signatures.
+     *   PAYPAL_ENV                               "sandbox" (default) or
+     *                                            "live" — picks which
+     *                                            PayPal API host to use.
+     *   PAYPAL_HNL_USD_RATE                      Fallback exchange rate
+     *                                            used only if there is no
+     *                                            settings/payments document
+     *                                            in Firestore (see
+     *                                            getPaypalRate below).
+     *
+     * Exports:
+     *   - paypalBaseUrl()        Sandbox vs live API base URL.
+     *   - paypalClientId()       Reads PAYPAL_CLIENT_ID (throws if missing).
+     *   - paypalWebhookId()      Reads PAYPAL_WEBHOOK_ID (throws if missing).
+     *   - paypalAccessToken()    Exchanges client id/secret for a short-lived
+     *                            OAuth2 access token (not cached — fetched
+     *                            fresh on every call).
+     *   - paypalRequest(path, o) Generic authenticated fetch against the
+     *                            PayPal API; throws a normalized error with
+     *                            .status = 502 and the raw PayPal error body
+     *                            attached as .paypal on failure.
+     *   - getPaypalRate()        HNL-per-USD exchange rate: prefers the rate
+     *                            stored in Firestore's settings/payments doc
+     *                            (also checks a `paypal.enabled` kill switch
+     *                            there), and falls back to the
+     *                            PAYPAL_HNL_USD_RATE env var if Firestore
+     *                            doesn't have one yet.
+     *   - hnlToUsd(total, rate)  Converts an HNL amount to a USD string with
+     *                            2 decimals, for the PayPal order amount.
+     *   - verifyPaypalWebhook(headers, event)
+     *                            Calls PayPal's webhook-signature-verification
+     *                            endpoint using the headers PayPal sends with
+     *                            each webhook delivery. Returns false (does
+     *                            NOT throw) if required headers are missing,
+     *                            so callers should treat a false return as
+     *                            "reject this webhook".
+     */
+
     import { adminDb } from './firebase-admin.js';
 
     function required(name) {

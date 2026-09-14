@@ -1,3 +1,30 @@
+/*
+ * api/_lib/paypal-reservation.js
+ *
+ * Builds and persists a "payment_pending" reservation for the PayPal
+ * checkout flow. This is the bridge between the booking rules in
+ * reservations.js and the PayPal order in api/paypal/create-order.js.
+ *
+ * Flow:
+ *   1. api/paypal/create-order.js calls createPaypalPendingReservation(user, body).
+ *   2. That calls buildPaypalReservationData() to validate the request,
+ *      price it, and build the full Firestore document to write.
+ *   3. It then runs a Firestore transaction that (a) checks none of the
+ *      required reservationLocks/<slotId> documents already exist (i.e.
+ *      the rig/time isn't already booked or held), (b) creates those lock
+ *      documents, and (c) creates the reservation document itself, all
+ *      atomically — this is what prevents double-booking.
+ *   4. If the user never completes payment, releasePaypalReservation()
+ *      is called (e.g. from a cancel/expire path) to mark the reservation
+ *      as cancelled/expired and delete its locks so the slot frees up.
+ *
+ * IMPORTANT: there is a hardcoded "Tuesday = 50% off" promotion applied
+ * directly in buildPaypalReservationData() below (search for "EMERGENCY
+ * PATCH"). It is NOT read from Firestore's `promotions` collection like
+ * normal promotions — it's applied in code, after the normal pricing
+ * step. If this promotion should end or change, look for that block.
+ */
+
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin.js';
 import {

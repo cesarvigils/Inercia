@@ -1,3 +1,74 @@
+/*
+ * api/_lib/reservations.js
+ *
+ * Core booking rules and pricing logic shared by the reservation API
+ * routes (api/reservations/*.js) and the PayPal checkout flow
+ * (api/_lib/paypal-reservation.js). This file is intentionally dense
+ * (many one-line functions) — read this header before editing anything
+ * below, since the logic is easy to misread at a glance.
+ *
+ * All times are handled in the TZ timezone (America/Tegucigalpa), NOT
+ * server-local time or UTC, because Vercel serverless functions can run
+ * in any region.
+ *
+ * Exports, in the order they appear below:
+ *   - TZ                    IANA timezone used for all date/time math.
+ *   - DEFAULT_CONFIG        Fallback booking rules (hours, prices, booking
+ *                           window, late-booking penalty, payment methods)
+ *                           used when Firestore doc settings/reservations
+ *                           doesn't exist yet or is missing a field.
+ *   - merge(a, b)           Shallow-merges DEFAULT_CONFIG with whatever is
+ *                           stored in Firestore, merging the nested
+ *                           prices/hours/lateBooking/payment objects too
+ *                           (so Firestore only needs to override the fields
+ *                           it cares about).
+ *   - getConfig()           Reads settings/reservations from Firestore and
+ *                           returns it merged with DEFAULT_CONFIG. Call this
+ *                           instead of reading DEFAULT_CONFIG directly.
+ *   - hm(s)                 Converts an "HH:MM" string to minutes since
+ *                           midnight (e.g. "10:30" -> 630).
+ *   - localParts(date)      Breaks a JS Date into { date, minutes, weekday }
+ *                           as seen in the TZ timezone (date = "YYYY-MM-DD",
+ *                           minutes = minutes since midnight, weekday =
+ *                           0=Sun..6=Sat). Used to know "now" in local time.
+ *   - dateDay(dateStr)      Returns the day-of-week (0=Sun..6=Sat) for a
+ *                           "YYYY-MM-DD" string, treated as a calendar date
+ *                           (not affected by timezone shifts).
+ *   - dateDiff(a, b)        Number of whole days between two "YYYY-MM-DD"
+ *                           dates (b - a).
+ *   - validateWhen(...)     The main booking-window validator: checks the
+ *                           date/time format, duration bounds, that the
+ *                           booking falls inside the allowed booking window
+ *                           (config.bookingWindowDays), that it fits within
+ *                           that day's opening hours, and that it's made
+ *                           far enough in advance (config.minLeadMinutes).
+ *                           Throws a `bad()` error (400) on any violation.
+ *                           Returns { start, end, lead } in minutes.
+ *   - bad(message, status)  Shorthand for creating an Error with an
+ *                           HTTP status attached, so api/_lib/http.js's
+ *                           fail() can turn it into the right response code.
+ *   - activePromotions(...) Reads Firestore's `promotions` collection and
+ *                           returns only the promotions that are active and
+ *                           apply to the given date/day-of-week and rig
+ *                           type(s).
+ *   - priceReservation(...) Computes { base, discount, penalty, total } for
+ *                           a reservation: base = sum of per-rig hourly
+ *                           price * duration, discount = sum of matching
+ *                           promotions (percent or fixed, capped at base),
+ *                           penalty = late-booking surcharge if the booking
+ *                           is made inside config.lateBooking.thresholdMinutes.
+ *   - slotIds(...)          Generates the list of per-30-minutes (or
+ *                           whatever slotMinutes is) lock document IDs for
+ *                           a rig over a date/time range. These IDs are used
+ *                           as Firestore document IDs in `reservationLocks`
+ *                           to prevent double-booking the same rig/slot.
+ *   - code()                Generates a short human-readable reservation
+ *                           code like "IN-240615-A1B2C3".
+ *   - expiresAt(date, time) Returns a Firestore Timestamp ~6 hours after the
+ *                           given local date/time, used to auto-expire
+ *                           stale/unconfirmed reservations.
+ */
+
 import crypto from 'node:crypto';
 import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin.js';

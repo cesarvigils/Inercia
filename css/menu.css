@@ -1,4 +1,10 @@
-
+/*
+ * css/menu.css
+ *
+ * Styles for the slide-out side navigation menu controlled by
+ * js/menu.js (hamburger button, overlay, panel). Loaded on every page
+ * (index.html, reservas.html, standings.html, contacto.html).
+ */
 
 .menu-overlay {
     position: fixed;

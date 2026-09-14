@@ -1,3 +1,31 @@
+/*
+ * api/_lib/firebase-admin.js
+ *
+ * Initializes the Firebase Admin SDK once per serverless instance and
+ * exports the admin services (Auth, Firestore, Storage, and optionally
+ * Realtime Database) used by every /api handler that needs privileged
+ * server-side access (bypassing Firestore security rules).
+ *
+ * Required environment variables (see .env.example):
+ *   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
+ *   (these three come from a Firebase service account JSON key).
+ *
+ * Optional environment variables:
+ *   FIREBASE_STORAGE_BUCKET  Enables adminStorage.
+ *   FIREBASE_DATABASE_URL    Enables adminRtdb (Realtime Database);
+ *                            adminRtdb is `null` if this isn't set, so
+ *                            callers must check before using it.
+ *
+ * Note on FIREBASE_PRIVATE_KEY: when this value comes from a hosting
+ * platform's env var UI (e.g. Vercel), newlines are usually stored as the
+ * two characters "\n" instead of real line breaks, and the value may be
+ * wrapped in extra quotes. The replace() calls below undo both of those
+ * so the key parses correctly.
+ *
+ * `getApps().length ? getApps()[0] : initializeApp(...)` guards against
+ * re-initializing the app on hot-reloads / repeated cold-start imports.
+ */
+
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';

@@ -1,3 +1,16 @@
+/*
+ * mantenimiento/style.css
+ *
+ * Styles for the maintenance-mode page (the fallback page shown while
+ * the main site is down/being worked on — "mantenimiento" is Spanish
+ * for "maintenance"). Not linked from any of the main pages (index,
+ * reservas, standings, contacto); check where a maintenance page/route
+ * actually references this before assuming it's live. References
+ * assets/fonts/Inercia-Regular.ttf and assets/fonts/Inercia-Bold.ttf,
+ * which — like in the orphaned root style.css — are not present in this
+ * repo.
+ */
+
 @font-face{
     font-family:'Inercia';
     src:url('assets/fonts/Inercia-Regular.ttf') format('truetype');

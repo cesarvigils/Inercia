@@ -1,3 +1,37 @@
+/*
+ * GET /api/standings
+ *
+ * Public endpoint that reads lap-time standings for the current month
+ * from a Google Sheet (not Firestore) and returns them as JSON for
+ * js/standings.js to render. This is a read-only proxy to the Google
+ * Sheets API, done server-side so the Google API key never reaches the
+ * browser.
+ *
+ * Required environment variables:
+ *   SPREADSHEET_ID          The Google Sheet ID containing the standings.
+ *   GOOGLE_SHEETS_API_KEY   A Google Cloud API key with the Sheets API
+ *                           enabled (read-only, tied to this spreadsheet
+ *                           being shared/public — there's no OAuth here).
+ *
+ * How it finds the right data:
+ *   1. findSheetTitleForMonth() lists all tabs (sheets) in the spreadsheet
+ *      and looks for one whose title starts with "<month number>. <month
+ *      name>" (e.g. "6. Junio") — this is a manual naming convention that
+ *      whoever maintains the spreadsheet needs to follow every month.
+ *   2. extractTrackName() strips that "N. Mes" prefix off the tab title to
+ *      get the track/circuit name shown in the UI.
+ *   3. fetchSheetRows() reads a fixed cell range (C15:H168, see
+ *      FIRST_ROW/LAST_ROW below) from that tab — if the spreadsheet's
+ *      layout changes (columns added/moved, header rows shifted), this
+ *      range and the column offsets in parseDrivers() need to be updated
+ *      to match.
+ *   4. parseDrivers() turns each row into a driver entry; see its own
+ *      comment below for the exact column meanings.
+ *
+ * Response is cached at the edge for 60s (with a 5 minute
+ * stale-while-revalidate) via the Cache-Control header, so changes to the
+ * sheet can take up to a minute to show up.
+ */
 
 const FIRST_ROW = 15;
 const LAST_ROW = 168;

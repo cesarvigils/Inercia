@@ -1,8 +1,36 @@
+/*
+ * POST /api/paypal/webhook
+ *
+ * Receives asynchronous event notifications directly from PayPal
+ * (configured in the PayPal developer dashboard to point at this URL).
+ * This exists as a safety net alongside api/paypal/capture-order.js:
+ * the frontend-driven capture is the normal path, but if the browser
+ * closes/crashes right after PayPal captures the payment but before the
+ * capture-order request completes, this webhook is what still marks the
+ * reservation 'approved' — otherwise the customer would be charged
+ * without a confirmed booking.
+ *
+ * Security: every event is verified with PayPal's signature-verification
+ * API (verifyPaypalWebhook) using headers PayPal sends with the request;
+ * unverified events are rejected with 401 and never touch Firestore.
+ *
+ * Idempotency: each PayPal event has a unique `id`. We record it in
+ * paypalWebhookEvents/<id> and skip processing if we've already seen it,
+ * because PayPal retries webhook deliveries and can send the same event
+ * more than once.
+ *
+ * Only PAYMENT.CAPTURE.COMPLETED is currently handled; other event types
+ * are acknowledged (200 OK) but otherwise ignored.
+ */
+
 import { FieldValue } from 'firebase-admin/firestore';
 import { method, json } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
 import { verifyPaypalWebhook } from '../_lib/paypal.js';
 
+// Reservations don't store PayPal's capture id until after our own
+// capture-order flow runs, so incoming webhooks match by the order id
+// that was stored back in api/paypal/create-order.js.
 async function findReservationByOrderId(orderId) {
     if (!orderId) return null;
     const snapshot = await adminDb

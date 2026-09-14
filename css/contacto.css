@@ -1,3 +1,10 @@
+/*
+ * css/contacto.css
+ *
+ * Styles specific to contacto.html (the contact page). Loaded alongside
+ * css/menu.css and css/auth.css there.
+ */
+
 @font-face {
     font-family: 'Kenyan Coffee';
 

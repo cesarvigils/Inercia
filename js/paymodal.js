@@ -1,3 +1,18 @@
+/*
+ * js/paymodal.js
+ *
+ * UI-only logic for the payment method selector inside the booking modal
+ * on reservas.html: switching between "transferencia" (bank transfer) and
+ * "tarjeta" (card, via PayPal Buttons — see js/paypal-checkout.js) toggles
+ * which panel (#transferPanel / #cardPanel) is visible, and handles
+ * picking/validating (client-side size check only) the bank-transfer
+ * receipt file input.
+ *
+ * This file does NOT upload the receipt or talk to any API — actually
+ * uploading the proof to Firebase Storage and building the reservation
+ * request happens in js/reservas.js. This just manages the form's visual
+ * state.
+ */
 const paymentOptions =
     document.querySelectorAll('.payment-option');
 

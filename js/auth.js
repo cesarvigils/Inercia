@@ -1,3 +1,31 @@
+/*
+ * js/auth.js
+ *
+ * Handles all client-side authentication UI and logic: builds the login/
+ * register/forgot-password modal markup and the logged-in profile menu
+ * (injectAuthMarkup, called immediately below), then wires up Firebase
+ * Auth (email/password, Google sign-in, password reset, sign-out).
+ *
+ * Firestore side effect: on successful register or Google sign-in, this
+ * writes/merges a profile document at Firestore `users/<uid>` (name,
+ * email, phone, provider, ...). This is the profile document that
+ * api/reservations/create.js and api/_lib/paypal-reservation.js read from
+ * later when creating a reservation — reservations always pull the
+ * customer's name/email/phone from Firestore, never from client input,
+ * so this write path is where those fields originate.
+ *
+ * No named exports — loaded as a <script type="module"> on every page
+ * that needs the login button / profile menu (it injects its own HTML,
+ * so the host page just needs an #authBtn / #authPfp element and to load
+ * this script).
+ *
+ * Hardcoded Firebase Storage URLs below (brand logo, default profile
+ * picture) point at files in this project's own Storage bucket
+ * (inerciaapp-e0cc4) with public download tokens — if those images are
+ * replaced in Storage, the token in the URL changes and these URLs need
+ * updating too.
+ */
+
 import { auth, db } from '../firebase-config.js';
 
 import {

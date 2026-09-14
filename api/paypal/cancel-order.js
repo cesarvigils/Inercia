@@ -1,3 +1,17 @@
+/*
+ * POST /api/paypal/cancel-order
+ *
+ * Called by the frontend when the user backs out of PayPal checkout
+ * (closes the popup, clicks cancel, etc). Only cancels a reservation
+ * that is still 'payment_pending' or 'payment_failed' and belongs to the
+ * logged-in user — an already-approved reservation cannot be cancelled
+ * this way. Delegates the actual state change (status update + freeing
+ * the reservationLocks) to releasePaypalReservation() in
+ * api/_lib/paypal-reservation.js.
+ *
+ * Body: { reservationId: string }
+ */
+
 import { method, json, fail, requireUser } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
 import { bad } from '../_lib/reservations.js';

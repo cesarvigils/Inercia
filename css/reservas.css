@@ -1,3 +1,18 @@
+/*
+ * css/reservas.css
+ *
+ * Main styles for the reservas.html booking page (layout, simulator
+ * cards, form fields, summary panel, etc). Loaded alongside css/style.css,
+ * css/menu.css, css/reservas-backend.css, css/auth.css, and css/paypal.css.
+ *
+ * NOTE: the @font-face src below points at "/fonts/Kenyan Coffee Rg.woff2"
+ * (with spaces in the filename), but the actual font files in this repo
+ * are fonts/KenyanCoffeeRg.woff and fonts/KenyanCoffeeRg.woff2 (no
+ * spaces) — compare with the matching @font-face rule in css/style.css or
+ * css/standings.css. This looks like it may not resolve to a real file;
+ * worth checking if this page's custom font is actually loading.
+ */
+
 @font-face {
     font-family: 'Kenyan Coffee';
     src: url('/fonts/Kenyan Coffee Rg.woff2') format('woff2');

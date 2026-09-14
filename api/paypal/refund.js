@@ -1,3 +1,21 @@
+/*
+ * POST /api/paypal/refund
+ *
+ * Admin-only endpoint (checked via requireAdmin below, which looks up
+ * adminUsers/<uid> in Firestore) to refund a PayPal-paid reservation,
+ * fully or partially. Supports multiple partial refunds over time by
+ * tracking payment.refundedHNL/refundedUSD and a payment.refunds[] log
+ * on the reservation document, so the same reservation can be refunded
+ * again later up to its remaining balance.
+ *
+ * Body: { reservationId: string, amountHNL?: number }
+ *   amountHNL omitted or empty -> refunds the full remaining balance.
+ *
+ * Note: refunds are always requested from PayPal in USD (amountUSD is
+ * derived from the HNL amount using the exchange rate that was recorded
+ * on the reservation at the time it was paid, NOT today's rate).
+ */
+
 import { FieldValue } from 'firebase-admin/firestore';
 import { method, json, fail, requireUser } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';

@@ -1,3 +1,27 @@
+/*
+ * js/standings.js
+ *
+ * Renders the lap-time leaderboard on standings.html. Fetches the raw
+ * driver list for the current month from /api/standings (see
+ * api/standings.js, which reads a Google Sheet server-side), then does
+ * ALL filtering/sorting/formatting here in the browser:
+ *   - category filter (todos / team / masculino / femenino) via the
+ *     #categorySelect dropdown — see filterByCategory().
+ *   - fastest-first sort with "NT" (no time) entries pushed to the
+ *     bottom — see buildStandings().
+ *   - the "MI TIEMPO" card, which matches the signed-in Firebase user's
+ *     display name against the Sheet's driver names (see
+ *     normalizeDriverName/updateMyTime) to highlight their own result.
+ *     This is a best-effort NAME match (case/accent-insensitive, ignores
+ *     a trailing "(S)" team marker) — there's no other link between a
+ *     Firebase account and a Sheet row, so a typo'd/different name in the
+ *     Sheet vs. the account's display name will show "SIN REGISTRO" even
+ *     if that person is actually on the sheet.
+ *
+ * Also loads /data/tracks.json (a plain "month number" -> track image URL
+ * map) to swap in the correct circuit image for the current month.
+ */
+
 import {
     auth,
     db

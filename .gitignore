@@ -1,5 +1,13 @@
+# .vercel: local Vercel CLI project-link metadata, machine-specific, never needed in version control.
 .vercel
+# .env*: real environment files with actual secrets/config — never commit these; see .env.example
+# for the documented template of every variable the app expects.
 .env*
 !.env.example
+# preview.txt: see the comment inside that file — a personal workflow cheat sheet, not app config.
+# Note: this file was already tracked in git before this ignore rule was added, so `git status` will
+# still show it as tracked/unmodified; adding a rule here does not untrack an already-committed file
+# (that would need `git rm --cached preview.txt`).
 preview.txt
+# node_modules: installed dependencies, reproducible from package.json/package-lock.json — never commit.
 node_modules
