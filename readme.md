@@ -320,7 +320,7 @@ RESERVATIONS        ██████████  ONLINE
 ADMIN               ██████████  ONLINE
 PAYPAL              ██████████  ONLINE
 STANDINGS           ██████████  ONLINE
-WHATSAPP             ██████████  ONLINE
+WHATSAPP            ██████████  ONLINE
 ```
 
 El proyecto continúa en desarrollo activo.
