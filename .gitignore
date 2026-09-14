@@ -1,4 +1,5 @@
 .vercel
 .env*
+!.env.example
 preview.txt
 node_modules
