@@ -1,20 +1,15 @@
 {
-  "name": "simuladores-inercia",
+  "name": "inercia-pc-fleet",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.1",
+  "description": "Lightweight LAN-only monitoring and shutdown dashboard for Simuladores Inercia",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "seed:reservas": "node scripts/seed-reservas.js"
-  },
-  "dependencies": {
-    "dotenv": "^17.4.2",
-    "firebase": "^11.0.0",
-    "firebase-admin": "^13.0.0"
-  },
-  "devDependencies": {
-    "vite": "^6.0.0"
+    "start": "node server.js",
+    "demo": "node tools/mock-fleet.mjs",
+    "test": "node --test tests/*.test.mjs"
   }
 }

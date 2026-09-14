@@ -1,0 +1,21 @@
+{
+  "port": 8787,
+  "host": "0.0.0.0",
+  "adminPin": "CHANGE-ME",
+  "agentToken": "CHANGE-ME",
+  "offlineAfterSeconds": 25,
+  "siteName": "Inercia Control",
+  "fleet": [
+    { "id": "sim-01", "name": "Simulador 01", "station": "Standard 1" },
+    { "id": "sim-02", "name": "Simulador 02", "station": "Standard 2" },
+    { "id": "sim-03", "name": "Simulador 03", "station": "Standard 3" },
+    { "id": "sim-04", "name": "Simulador 04", "station": "Standard 4" },
+    { "id": "sim-05", "name": "Simulador 05", "station": "Standard 5" },
+    { "id": "sim-06", "name": "Simulador 06", "station": "Standard 6" },
+    { "id": "sim-07", "name": "Simulador 07", "station": "Standard 7" },
+    { "id": "sim-08", "name": "Simulador 08", "station": "Standard 8" },
+    { "id": "sim-09", "name": "Simulador 09", "station": "Premium 1" },
+    { "id": "sim-10", "name": "Simulador 10", "station": "Premium 2" },
+    { "id": "admin", "name": "Administración", "station": "Front desk", "protected": true }
+  ]
+}

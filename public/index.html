@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111214">
+  <title>Inercia Control</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <section class="login-shell" id="loginShell" aria-labelledby="loginTitle">
+    <div class="login-card">
+      <div class="brand-mark" aria-hidden="true"><span>I</span></div>
+      <p class="eyebrow">OPERACIONES · RED LOCAL</p>
+      <h1 id="loginTitle">Inercia Control</h1>
+      <p class="login-copy">Estado y control de las estaciones, en un solo lugar.</p>
+      <form id="loginForm" class="login-form">
+        <label for="pin">PIN de administración</label>
+        <div class="pin-row">
+          <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••" required autofocus>
+          <button class="primary-button" type="submit" aria-label="Entrar">
+            <span>Entrar</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/><path d="M4 12h11"/></svg>
+          </button>
+        </div>
+        <p class="form-error" id="loginError" role="alert"></p>
+      </form>
+      <div class="local-note">
+        <span class="pulse-dot"></span>
+        Acceso privado desde la red de Inercia
+      </div>
+    </div>
+  </section>
+
+  <div class="app" id="app" hidden>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Inercia Control, inicio">
+        <span class="brand-mark small" aria-hidden="true"><span>I</span></span>
+        <span class="brand-copy">
+          <strong>INERCIA</strong>
+          <small>FLEET CONTROL</small>
+        </span>
+      </a>
+      <div class="topbar-right">
+        <span class="connection-pill" id="connectionPill"><span></span> Conectando</span>
+        <button class="icon-button" id="logoutButton" type="button" title="Cerrar sesión" aria-label="Cerrar sesión">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="overview" aria-labelledby="overviewTitle">
+        <div class="overview-heading">
+          <div>
+            <p class="eyebrow">CENTRO DE OPERACIONES</p>
+            <h1 id="overviewTitle">Estado de la flota</h1>
+            <p class="subtle">Información en vivo de todas las estaciones de Inercia.</p>
+          </div>
+          <div class="overview-actions">
+            <span class="updated" id="updatedAt">Esperando datos…</span>
+            <button class="danger-button" id="shutdownAllButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>
+              Apagar PCs
+            </button>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <article class="summary-card primary-summary">
+            <div class="summary-icon orange">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            </div>
+            <div><span>Total</span><strong id="totalCount">—</strong></div>
+            <small>ESTACIONES</small>
+          </article>
+          <article class="summary-card">
+            <div class="summary-icon green">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+            </div>
+            <div><span>En línea</span><strong id="onlineCount">—</strong></div>
+            <small>DISPONIBLES</small>
+          </article>
+          <article class="summary-card">
+            <div class="summary-icon muted">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.4 6.6a9 9 0 1 1-12.8 0M12 2v10"/></svg>
+            </div>
+            <div><span>Fuera de línea</span><strong id="offlineCount">—</strong></div>
+            <small>SIN CONEXIÓN</small>
+          </article>
+          <article class="summary-card">
+            <div class="summary-icon amber">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.7 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z"/></svg>
+            </div>
+            <div><span>Carga alta</span><strong id="highLoadCount">—</strong></div>
+            <small>REQUIEREN REVISIÓN</small>
+          </article>
+        </div>
+      </section>
+
+      <section class="fleet-section" aria-labelledby="fleetTitle">
+        <div class="section-toolbar">
+          <div>
+            <h2 id="fleetTitle">Estaciones</h2>
+            <p id="fleetCaption">Cargando inventario…</p>
+          </div>
+          <div class="filters" role="group" aria-label="Filtros de estaciones">
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <span class="sr-only">Buscar</span>
+              <input id="searchInput" type="search" placeholder="Buscar estación…" autocomplete="off">
+            </label>
+            <div class="filter-tabs" id="filterTabs">
+              <button type="button" data-filter="all" class="active">Todas</button>
+              <button type="button" data-filter="online">En línea</button>
+              <button type="button" data-filter="offline">Sin conexión</button>
+            </div>
+          </div>
+        </div>
+        <div class="fleet-grid" id="fleetGrid" aria-live="polite"></div>
+      </section>
+
+      <section class="activity-section" aria-labelledby="activityTitle">
+        <div class="section-toolbar compact">
+          <div>
+            <h2 id="activityTitle">Actividad reciente</h2>
+            <p>Accesos y acciones administrativas</p>
+          </div>
+        </div>
+        <div class="activity-list" id="activityList"></div>
+      </section>
+    </main>
+
+    <footer>
+      <span>INERCIA CONTROL · LAN</span>
+      <span id="serverClock">—</span>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop" id="shutdownModal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDescription">
+      <button class="modal-close" id="modalClose" type="button" aria-label="Cerrar">×</button>
+      <div class="modal-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>
+      </div>
+      <p class="eyebrow" id="modalEyebrow">CONTROL REMOTO</p>
+      <h2 id="modalTitle">Apagar estación</h2>
+      <p id="modalDescription">La PC recibirá una orden de apagado con 20 segundos de aviso.</p>
+      <div class="confirm-field" id="confirmField" hidden>
+        <label for="confirmInput">Escribí <strong>APAGAR TODO</strong> para continuar</label>
+        <input id="confirmInput" type="text" autocomplete="off" spellcheck="false" placeholder="APAGAR TODO">
+      </div>
+      <div class="modal-actions">
+        <button class="secondary-button" id="modalCancel" type="button">Cancelar</button>
+        <button class="danger-button solid" id="modalConfirm" type="button">Programar apagado</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+</body>
+</html>
