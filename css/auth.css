@@ -1,4 +1,12 @@
-
+/*
+ * css/auth.css
+ *
+ * Styles for the login/register/forgot-password modal and the logged-in
+ * profile menu, both injected into the page at runtime by js/auth.js
+ * (see injectAuthMarkup() there for the HTML structure these rules
+ * target). Loaded on index.html, reservas.html, standings.html, and
+ * contacto.html — anywhere the auth button/modal can appear.
+ */
 
 :root {
   --orange: #ff8b00;

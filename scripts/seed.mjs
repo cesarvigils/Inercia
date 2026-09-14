@@ -1,3 +1,18 @@
+// scripts/seed.mjs
+//
+// One-off, manually-run Firestore seeding script (not called by the app or any API route) — run it by
+// hand (e.g. `node scripts/seed.mjs`) to (re)populate a fresh/empty Firestore project with the baseline
+// data the app expects: 8 "standard" rigs, 2 "premium" rigs (under the `rigs` collection, matching what
+// api/reservations/config.js and api/_lib/reservations.js read), and the settings/reservations document
+// (booking window, hours, durations, prices, late-booking rule, and payment method / bank transfer info —
+// this is the same document api/_lib/reservations.js's getConfig() merges with its own DEFAULT_CONFIG).
+// Uses `{ merge: true }` on settings/reservations, so re-running this is safe and won't wipe fields that
+// were changed manually since.
+//
+// Requires a GOOGLE_CREDENTIALS environment variable containing a full Firebase service account JSON
+// (as a string) — this is a different env var name than api/_lib/firebase-admin.js's
+// FIREBASE_PROJECT_ID/FIREBASE_CLIENT_EMAIL/FIREBASE_PRIVATE_KEY trio, since this script is only ever run
+// locally/manually and isn't part of the deployed API.
 import { initializeApp, cert } from 'firebase-admin/app'; import { getFirestore } from 'firebase-admin/firestore';
 const service=JSON.parse(process.env.GOOGLE_CREDENTIALS); service.private_key=service.private_key.replace(/\\n/g,'\n'); initializeApp({credential:cert(service)}); const db=getFirestore();
 const batch=db.batch();

@@ -1,3 +1,15 @@
+/*
+ * GET/POST /api/paypal/settings
+ *
+ * Admin-only endpoint to read or update the settings/payments Firestore
+ * document, which controls whether PayPal checkout is enabled and what
+ * HNL-per-USD exchange rate to quote customers (this is the same document
+ * api/_lib/paypal.js's getPaypalRate() reads at checkout time). GET is
+ * used by an admin settings page to show current values; POST updates
+ * them. Access is restricted via requireAdmin() below, same check as
+ * api/paypal/refund.js.
+ */
+
 import { FieldValue } from 'firebase-admin/firestore';
 import { method, json, fail, requireUser } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';

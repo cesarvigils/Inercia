@@ -1,9 +1,28 @@
+/*
+ * POST /api/paypal/capture-order
+ *
+ * Called by the frontend right after the buyer approves the PayPal order
+ * in the popup (PayPal Buttons onApprove). This is the step that actually
+ * takes the buyer's money: it calls PayPal's "capture" endpoint, verifies
+ * the captured amount/currency matches what the reservation expects
+ * (protects against a tampered or stale order on the client), and if
+ * everything checks out, flips the reservation to 'approved' inside a
+ * Firestore transaction (re-reading the doc first, in case it changed —
+ * e.g. was already captured by a retried request or by the webhook in
+ * api/paypal/webhook.js, which can race with this endpoint).
+ *
+ * Body: { reservationId: string, orderID: string }  (orderID is PayPal's
+ * order id, expected to already be saved on the reservation document by
+ * api/paypal/create-order.js).
+ */
+
 import { FieldValue } from 'firebase-admin/firestore';
 import { method, json, fail, requireUser } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
 import { bad } from '../_lib/reservations.js';
 import { paypalRequest } from '../_lib/paypal.js';
 
+// Digs the actual capture record out of PayPal's nested order response shape.
 function captureFromOrder(order) {
     return order?.purchase_units?.[0]?.payments?.captures?.[0] || null;
 }

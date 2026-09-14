@@ -1,3 +1,29 @@
+/*
+ * js/paypal-checkout.js
+ *
+ * Drives the PayPal card-payment option on the booking modal in
+ * reservas.html: loads the PayPal SDK, renders the PayPal Buttons, and
+ * calls this project's own /api/paypal/* endpoints (not PayPal's REST API
+ * directly) at each step:
+ *   createOrder  -> POST /api/paypal/create-order   (creates the pending
+ *                   reservation + PayPal order, see api/paypal/create-order.js)
+ *   onApprove    -> POST /api/paypal/capture-order  (captures payment and
+ *                   approves the reservation, see api/paypal/capture-order.js)
+ *   onCancel     -> POST /api/paypal/cancel-order   (frees the held slot)
+ *   onError      -> POST /api/paypal/cancel-order   (same, marked payment_failed)
+ *
+ * This only handles the "tarjeta"/PayPal payment path; the bank-transfer
+ * path is handled separately in js/reservas.js + api/reservations/create.js.
+ *
+ * safeAlert() exists instead of a plain window.alert() specifically so
+ * that a successful payment is never hidden behind a blocked/ignored
+ * native alert dialog: the reservation is already confirmed server-side
+ * by the time this shows anything, so the on-screen success message
+ * (reservationMessage) is set FIRST, and this modal (with an 8s auto-
+ * close fallback) is just a friendlier way to prompt the page reload —
+ * it deliberately cannot make a successful payment look like it failed.
+ */
+
 import { auth } from '../firebase-config.js';
 
 const $ = (id) => document.getElementById(id);

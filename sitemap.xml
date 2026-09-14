@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--
+  sitemap.xml — Static, hand-maintained sitemap for inerciahn.com (referenced from robots.txt).
+  Lists the 4 real pages of the site (home, reservas, standings, contacto — matching the Vite entry
+  points in vite.config.js). This is NOT generated automatically: if a new top-level page is ever added,
+  it needs to be added here by hand too, or it won't be included for search engines.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     <url>

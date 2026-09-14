@@ -1,3 +1,13 @@
+/*
+ * GET /api/reservations/config?date=YYYY-MM-DD
+ *
+ * Public bootstrap endpoint for the booking page: returns the current
+ * booking rules (getConfig() — hours, prices, booking window, etc, see
+ * api/_lib/reservations.js), the list of active rigs sorted for display,
+ * and any promotions active on the given date (defaults to today). The
+ * frontend calls this once on page load to render the booking form.
+ */
+
 import { method, json, fail } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
 import { getConfig, activePromotions } from '../_lib/reservations.js';

@@ -1,3 +1,23 @@
+/*
+ * GET /api/reservations/availability?date=YYYY-MM-DD&time=HH:MM&duration=N
+ *
+ * Given a requested date/time/duration, returns every active, non-maintenance
+ * rig with an `available: boolean` flag for that specific slot. Used by the
+ * frontend booking UI to grey out rigs that are already taken.
+ *
+ * Two independent things can make a rig unavailable for the requested
+ * window:
+ *   1. An admin "lockdown" (collection `availabilityLockdowns`) — a manually
+ *      configured date/time range where booking is blocked, e.g. for
+ *      maintenance or a private event. getActiveLockdowns() below loads
+ *      lockdowns for the date, findOverlappingLockdown() checks if the
+ *      requested window overlaps one of them; if so, the whole request is
+ *      rejected with a 409 (no rigs are even considered available).
+ *   2. An existing reservationLocks/<slotId> document for a rig+timeslot
+ *      (see slotIds() in api/_lib/reservations.js) — this is what actually
+ *      marks a specific rig as booked for that window.
+ */
+
 import {
     method,
     json,

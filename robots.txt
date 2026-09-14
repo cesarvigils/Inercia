@@ -1,3 +1,7 @@
+# robots.txt — search engine crawling rules for inerciahn.com.
+# Everything is crawlable except /api/ (the backend endpoints), /admin/, and /auth/ (no page currently
+# lives at these last two paths in this repo, but they're blocked defensively in case they're added).
+# Keep the Sitemap URL below in sync with sitemap.xml's actual public URL if the domain ever changes.
 User-agent: *
 Allow: /
 

@@ -1,3 +1,70 @@
+/*
+ * js/reservas.js
+ *
+ * The main booking page controller for reservas.html. This is the
+ * largest and most stateful frontend file in the project (~3500 lines),
+ * driving the whole "pick a date/time/duration -> pick simulators ->
+ * pick a payment method -> submit" flow. js/paypal-checkout.js handles
+ * only the PayPal-specific button/checkout UI; everything else about the
+ * booking form lives here.
+ *
+ * Rough map (search for the ALL-CAPS section banners below to jump
+ * around; they already exist in the file, this is just an index):
+ *   HELPERS              money()/setValue()/setText() formatting utils.
+ *   ELEMENTS             Cached references to the form's DOM nodes.
+ *   STATE                In-memory state: selected rigs, current profile,
+ *                        current payment-access flags, etc.
+ *   API                  api() - authenticated fetch() wrapper, same
+ *                        pattern as js/paypal-checkout.js's api().
+ *   MESSAGE / MODAL DE ÉXITO / MODAL DE "INICIÁ SESIÓN"
+ *                        Inline status text + two custom modals (success,
+ *                        and "you must log in") used instead of
+ *                        window.alert()/confirm() for a consistent UI.
+ *   DATES / TIME HELPERS / TIMES / DURATIONS
+ *                        Builds the date and time-slot dropdowns
+ *                        (respecting the booking window, opening hours,
+ *                        and minimum lead time from getConfig() —
+ *                        mirrors the server-side rules in
+ *                        api/_lib/reservations.js so the UI doesn't offer
+ *                        slots the API would reject anyway).
+ *   CONFIG               loadConfig() - fetches
+ *                        /api/reservations/config on page load.
+ *   SIMULATOR CARD / RENDER RIGS / AVAILABILITY
+ *                        Renders the rig picker and checks
+ *                        /api/reservations/availability whenever the
+ *                        date/time/duration changes, to grey out rigs
+ *                        that are already booked.
+ *   LOCAL PRICE PREVIEW / SUMMARY
+ *                        Client-side price estimate shown before
+ *                        submitting (for UX only — the server always
+ *                        recomputes the authoritative price; see
+ *                        priceReservation() in api/_lib/reservations.js).
+ *   USER PROFILE / AUTH  Loads the signed-in user's Firestore profile
+ *                        (name/email/phone) and reacts to login/logout.
+ *   DATE CHANGE / TIME CHANGE / DURATION CHANGE
+ *                        Re-run availability/pricing when those fields change.
+ *   PAYMENT METHOD       Toggles the transfer-proof upload block, and
+ *                        updatePaymentAccess() enables/disables the
+ *                        "efectivo" (pay-in-cash) option based on
+ *                        paymentAccess.efectivo (an active-membership
+ *                        flag). NOTE: as of this writing,
+ *                        api/reservations/create.js's server-side
+ *                        `METHODS` set only accepts 'transferencia' — the
+ *                        'efectivo' option's actual booking submission
+ *                        path (if any) is not in api/reservations/create.js,
+ *                        so double-check the current server-side support
+ *                        before assuming "efectivo" fully works end to end.
+ *                        'paypal' is handled entirely separately via
+ *                        js/paypal-checkout.js and api/paypal/*.js.
+ *   (unlabeled form submit handler, ~line 2862 onward)
+ *                        The "transferencia" submit flow: uploads the
+ *                        proof file to Firebase Storage (see USER,
+ *                        DATE/TIME, RIG, PAYMENT, CUSTOMER, REQUEST BODY,
+ *                        CREATE, SUCCESS sub-sections), then POSTs to
+ *                        /api/reservations/create.
+ *   INITIALIZE           init() - kicks everything off on page load.
+ */
+
 import { auth, db } from '../firebase-config.js';
 
 import {

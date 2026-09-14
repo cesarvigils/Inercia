@@ -1,3 +1,7 @@
+# preview.txt — personal cheat-sheet for pushing changes to the "preview" branch (e.g. for a Vercel
+# preview deployment separate from production). Not read by any tooling; purely a manual reminder of
+# the git commands to run. Listed in .gitignore (see the note there), even though it's already tracked.
+
 git checkout preview
 
 # make changes

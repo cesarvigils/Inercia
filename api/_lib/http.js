@@ -1,3 +1,38 @@
+/*
+ * api/_lib/http.js
+ *
+ * Small shared HTTP helpers used by every serverless function under /api.
+ * These are plain Node request/response helpers (not a framework) built
+ * around Vercel's (req, res) function signature.
+ *
+ * Exports:
+ *   - json(res, status, data)   Send a JSON response and end it. Safe to
+ *                                call even if a response was already sent
+ *                                (it just no-ops in that case).
+ *   - method(req, res, allowed) Guard a handler to only accept certain
+ *                                HTTP methods. Sends a 405 + Allow header
+ *                                and returns false if the method doesn't
+ *                                match, so callers can `if (!method(...)) return;`.
+ *   - requireUser(req)          Verify the Firebase ID token from the
+ *                                Authorization: Bearer <token> header and
+ *                                return the decoded token (has .uid, .email,
+ *                                etc). Throws a 401 error if missing/invalid.
+ *   - fail(res, error)          Central error handler: logs the error server
+ *                                side, then responds with a safe status/message
+ *                                (4xx errors expose error.message to the client,
+ *                                5xx errors are masked in production).
+ *
+ * Typical usage in an /api handler:
+ *   if (!method(req, res, ['GET', 'POST'])) return;
+ *   try {
+ *     const user = await requireUser(req);
+ *     ...
+ *     return json(res, 200, { ok: true });
+ *   } catch (error) {
+ *     return fail(res, error);
+ *   }
+ */
+
 import { adminAuth } from './firebase-admin.js';
 
 

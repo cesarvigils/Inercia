@@ -1,3 +1,15 @@
+/*
+ * js/menu.js
+ *
+ * Controls the slide-out side navigation menu shared across pages
+ * (hamburger button -> overlay + panel). Expects these element ids to
+ * exist in the page's HTML: #menuBtn (the toggle button), #sideMenu (the
+ * panel), #menuOverlay (the dark backdrop), #menuClose (the close
+ * button/X inside the panel). No exports — this file just wires up event
+ * listeners when loaded as a <script type="module">, so it must be
+ * loaded on any page that includes that markup (see index.html,
+ * contacto.html, reservas.html, standings.html).
+ */
 const menuBtn = document.getElementById('menuBtn');
 const sideMenu = document.getElementById('sideMenu');
 const menuOverlay = document.getElementById('menuOverlay');

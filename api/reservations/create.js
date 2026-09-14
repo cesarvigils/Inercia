@@ -1,3 +1,32 @@
+/*
+ * POST /api/reservations/create
+ *
+ * Creates a reservation paid by bank transfer ("transferencia"). This is
+ * the non-PayPal counterpart to the flow in api/paypal/create-order.js +
+ * api/_lib/paypal-reservation.js — it's a single endpoint rather than a
+ * create/capture pair because there's no third-party payment step to wait
+ * on; the customer instead uploads a transfer proof (image/PDF) directly
+ * to Firebase Storage from the browser first, and this endpoint just
+ * verifies that upload and records the reservation as awaiting manual
+ * verification.
+ *
+ * Body: { date, time, duration, rigIds: string[], payment: 'transferencia',
+ *         proofPath: string }
+ *   proofPath must point at a file already uploaded under
+ *   `reservation-proofs/<uid>/...` in Firebase Storage (checked below —
+ *   see the PAYMENT PROOF section — for ownership, path traversal, size,
+ *   and MIME type before trusting it).
+ *
+ * Like the PayPal flow, pricing is always recalculated server-side
+ * (priceReservation()) and rig/time slots are locked inside a Firestore
+ * transaction to prevent double-booking — never trust a price or
+ * availability sent from the browser.
+ *
+ * Resulting reservation starts at status 'pending' with
+ * paymentVerification.status 'pending', to be manually approved by an
+ * admin after checking the uploaded proof.
+ */
+
 import { FieldValue } from 'firebase-admin/firestore';
 
 import {

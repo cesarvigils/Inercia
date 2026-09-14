@@ -1,3 +1,14 @@
+/*
+ * css/style.css
+ *
+ * The main sitewide stylesheet — base/reset rules, CSS custom properties
+ * (:root color variables), and the home page (index.html) layout. Also
+ * loaded (alongside page-specific stylesheets) on reservas.html for
+ * shared base styles/variables. NOT loaded on standings.html or
+ * contacto.html — those have their own self-contained stylesheets
+ * (css/standings.css, css/contacto.css) instead.
+ */
+
 @font-face {
   font-family: 'Kenyan Coffee';
   src: url('../fonts/KenyanCoffeeRg.woff2') format('woff2'),

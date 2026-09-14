@@ -1,3 +1,14 @@
+/*
+ * style.css (project root)
+ *
+ * This does not appear to be linked from any current HTML page — every page that needs the shared
+ * stylesheet links css/style.css instead (see index.html, reservas.html, contacto.html, standings.html).
+ * It also references font files (assets/fonts/Inercia-Regular.ttf, assets/fonts/Inercia-Bold.ttf) that
+ * are not present in this repo, so even if it were linked it would be missing its custom fonts. Looks
+ * like an older/orphaned stylesheet kept around from before css/style.css existed; worth confirming
+ * nothing still depends on it before deleting.
+ */
+
 @font-face{
     font-family:'Inercia';
     src:url('assets/fonts/Inercia-Regular.ttf') format('truetype');

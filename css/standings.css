@@ -1,3 +1,11 @@
+/*
+ * css/standings.css
+ *
+ * Styles for the standings.html leaderboard page (rendered rows, "MI
+ * TIEMPO" card, category selector, track map). Loaded alongside
+ * css/menu.css and css/auth.css there.
+ */
+
 @font-face {
     font-family: 'Kenyan Coffee';
     src:

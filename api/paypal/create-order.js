@@ -1,3 +1,23 @@
+/*
+ * POST /api/paypal/create-order
+ *
+ * First step of the PayPal checkout flow. Given the booking details in
+ * the request body (date, time, duration, rigIds, ...), this:
+ *   1. Validates and prices the reservation, then writes it to Firestore
+ *      as 'payment_pending' (and locks the requested rig/time slots) via
+ *      createPaypalPendingReservation() — see api/_lib/paypal-reservation.js
+ *      for the full transaction logic.
+ *   2. Creates a matching PayPal order (CAPTURE intent, amount in USD)
+ *      and stores its order id back onto the reservation.
+ *   3. Returns the PayPal orderID to the frontend, which uses it to render
+ *      the PayPal Buttons popup.
+ *
+ * If anything fails after the reservation was created but before this
+ * responds successfully, the catch block releases the reservation (marks
+ * it 'payment_failed' and frees its locks) so the slot doesn't stay stuck
+ * as reserved.
+ */
+
 import { FieldValue } from 'firebase-admin/firestore';
 import { method, json, fail, requireUser } from '../_lib/http.js';
 import { bad } from '../_lib/reservations.js';

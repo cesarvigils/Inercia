@@ -2,6 +2,18 @@
 <html lang="es">
 
 <head>
+    <!--
+      reservas.html — Booking page (the most complex page in the site).
+      Scripts (loaded further down the page, near the closing </body>): js/auth.js (login/profile UI),
+      js/menu.js (side nav), js/paymodal.js (payment-method panel toggle), js/reservas.js (the main
+      booking form controller — date/time/rig selection, availability, pricing, submit), and
+      js/paypal-checkout.js (PayPal button + checkout flow). See js/reservas.js's header comment for a
+      full map of the booking flow.
+      Styles: css/style.css (shared base), css/menu.css, css/reservas.css (this page's main layout),
+      css/reservas-backend.css (small overrides loaded after reservas.css), css/auth.css, css/paypal.css.
+      Backend: talks to /api/reservations/* and /api/paypal/* (see those files under api/).
+      Vite entry point: registered under `reservas` in vite.config.js.
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
