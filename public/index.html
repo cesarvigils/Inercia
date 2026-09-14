@@ -12,15 +12,11 @@
   <div class="noise" aria-hidden="true"></div>
 
   <section class="login-shell" id="loginShell" aria-labelledby="loginTitle">
-    <div class="login-card">
-      <div class="brand-mark" aria-hidden="true"><span>I</span></div>
-      <p class="eyebrow">OPERACIONES · RED LOCAL</p>
-      <h1 id="loginTitle">Inercia Control</h1>
-      <p class="login-copy">Estado y control de las estaciones, en un solo lugar.</p>
+    <div class="login-card login-card-minimal">
       <form id="loginForm" class="login-form">
-        <label for="pin">PIN de administración</label>
+        <label for="pin" id="loginTitle" class="sr-only">PIN de administración</label>
         <div class="pin-row">
-          <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••" required autofocus>
+          <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN" aria-label="PIN de administración" required autofocus>
           <button class="primary-button" type="submit" aria-label="Entrar">
             <span>Entrar</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/><path d="M4 12h11"/></svg>
@@ -28,22 +24,11 @@
         </div>
         <p class="form-error" id="loginError" role="alert"></p>
       </form>
-      <div class="local-note">
-        <span class="pulse-dot"></span>
-        Acceso privado desde la red de Inercia
-      </div>
     </div>
   </section>
 
   <div class="app" id="app" hidden>
     <header class="topbar">
-      <a class="brand" href="#" aria-label="Inercia Control, inicio">
-        <span class="brand-mark small" aria-hidden="true"><span>I</span></span>
-        <span class="brand-copy">
-          <strong>INERCIA</strong>
-          <small>FLEET CONTROL</small>
-        </span>
-      </a>
       <div class="topbar-right">
         <span class="connection-pill" id="connectionPill"><span></span> Conectando</span>
         <button class="icon-button" id="logoutButton" type="button" title="Cerrar sesión" aria-label="Cerrar sesión">
@@ -57,7 +42,7 @@
         <div class="overview-heading">
           <div>
             <p class="eyebrow">CENTRO DE OPERACIONES</p>
-            <h1 id="overviewTitle">Estado de la flota</h1>
+            <h1 id="overviewTitle">Estado de Simuladores</h1>
             <p class="subtle">Información en vivo de todas las estaciones de Inercia.</p>
           </div>
           <div class="overview-actions">
