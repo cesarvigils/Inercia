@@ -1,8 +1,8 @@
 param(
     [Parameter(Mandatory = $true)][string]$ServerUrl,
-    [Parameter(Mandatory = $true)][string]$AgentToken,
-    [Parameter(Mandatory = $true)][ValidatePattern('^[a-zA-Z0-9_-]+$')][string]$PcId,
-    [string]$DisplayName = $env:COMPUTERNAME,
+    [Parameter(Mandatory = $true)][string]$Pin,
+    [string]$PcId,
+    [string]$DisplayName,
     [int]$IntervalSeconds = 10
 )
 
@@ -16,7 +16,18 @@ if (-not $Principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 if ($ServerUrl -notmatch '^https?://[^/]+(?::\d+)?$') {
     throw 'ServerUrl debe verse como http://192.168.1.10:8787 (sin / al final).'
 }
+if ($Pin.Length -lt 4) { throw 'El PIN configurado en el servidor parece inválido.' }
 if ($IntervalSeconds -lt 5) { throw 'IntervalSeconds no puede ser menor que 5.' }
+
+# Sin PcId/DisplayName explícitos, el agente se identifica solo con el nombre de la
+# PC de Windows: nadie tiene que inventar ni tipear un identificador a mano.
+if (-not $DisplayName) { $DisplayName = $env:COMPUTERNAME }
+if (-not $PcId) {
+    $PcId = ($env:COMPUTERNAME).ToLowerInvariant() -replace '[^a-z0-9_-]', '-'
+    $PcId = $PcId.Trim('-')
+    if (-not $PcId) { $PcId = 'pc-' + (Get-Random -Maximum 99999) }
+}
+if ($PcId -notmatch '^[a-zA-Z0-9_-]+$') { throw 'PcId solo puede tener letras, números, guiones y guiones bajos.' }
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $SourceAgent = Join-Path $ProjectRoot 'agent\inercia-agent.ps1'
@@ -29,7 +40,7 @@ Copy-Item -LiteralPath $SourceAgent -Destination $InstalledAgent -Force
 
 @{
     serverUrl = $ServerUrl.TrimEnd('/')
-    agentToken = $AgentToken
+    pin = $Pin
     pcId = $PcId.ToLowerInvariant()
     displayName = $DisplayName
     intervalSeconds = [Math]::Max(5, $IntervalSeconds)
@@ -37,7 +48,7 @@ Copy-Item -LiteralPath $SourceAgent -Destination $InstalledAgent -Force
 & icacls.exe $ConfigPath /inheritance:r /grant:r '*S-1-5-18:(F)' '*S-1-5-32-544:(F)' | Out-Null
 
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $InstalledAgent -ConfigPath $ConfigPath -Once
-if ($LASTEXITCODE -ne 0) { throw 'La prueba de conexión del agente falló.' }
+if ($LASTEXITCODE -ne 0) { throw 'La prueba de conexión del agente falló. Revisá la URL del servidor y el PIN.' }
 
 $Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$InstalledAgent`" -ConfigPath `"$ConfigPath`""
 $Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $Arguments

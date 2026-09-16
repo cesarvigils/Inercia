@@ -2,7 +2,6 @@
   "port": 8787,
   "host": "0.0.0.0",
   "adminPin": "CHANGE-ME",
-  "agentToken": "CHANGE-ME",
   "offlineAfterSeconds": 25,
   "siteName": "Inercia Control",
   "fleet": [

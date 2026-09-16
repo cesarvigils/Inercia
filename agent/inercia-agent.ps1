@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$AgentVersion = '1.0.0'
+$AgentVersion = '2.0.0'
 
 if (-not (Test-Path -LiteralPath $ConfigPath)) {
     throw "No se encontró la configuración del agente: $ConfigPath"
@@ -12,16 +12,18 @@ if (-not (Test-Path -LiteralPath $ConfigPath)) {
 
 $Config = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
 $ServerUrl = ([string]$Config.serverUrl).TrimEnd('/')
-$AgentToken = [string]$Config.agentToken
+# El agente se autentica con el mismo PIN configurado en el panel de administración
+# del servidor: no hay un token separado que generar, copiar ni resincronizar.
+$Pin = [string]$Config.pin
 $PcId = [string]$Config.pcId
 $DisplayName = [string]$Config.displayName
 $IntervalSeconds = if ($Config.intervalSeconds) { [Math]::Max(5, [int]$Config.intervalSeconds) } else { 10 }
 
-if (-not $ServerUrl -or -not $AgentToken -or -not $PcId) {
-    throw 'La configuración requiere serverUrl, agentToken y pcId.'
+if (-not $ServerUrl -or -not $Pin -or -not $PcId) {
+    throw 'La configuración requiere serverUrl, pin y pcId.'
 }
 
-$Headers = @{ Authorization = "Bearer $AgentToken" }
+$Headers = @{ Authorization = "Bearer $Pin" }
 
 function Get-PrimaryIPv4 {
     try {

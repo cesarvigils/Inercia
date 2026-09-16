@@ -1,22 +1,26 @@
 import http from 'node:http';
 import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync, appendFile } from 'node:fs';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 
-const root = fileURLToPath(new URL('.', import.meta.url));
-const publicDir = join(root, 'public');
-const dataDir = join(root, '.data');
-const configPath = process.env.INERCIA_CONFIG || join(root, 'config.json');
+// Bajo pkg, __dirname/import.meta.url apuntan al snapshot embebido (solo lectura),
+// que es donde vive public/. Los datos que se escriben (config.json, .data/) tienen
+// que vivir junto al .exe real, no dentro del snapshot.
+const isPkg = typeof process.pkg !== 'undefined';
+const bundleRoot = fileURLToPath(new URL('.', import.meta.url));
+const dataRoot = isPkg ? dirname(process.execPath) : bundleRoot;
+const publicDir = join(bundleRoot, 'public');
+const dataDir = join(dataRoot, '.data');
+const configPath = process.env.INERCIA_CONFIG || join(dataRoot, 'config.json');
 
 function loadConfig() {
-  const source = existsSync(configPath) ? configPath : join(root, 'config.example.json');
+  const source = existsSync(configPath) ? configPath : join(bundleRoot, 'config.example.json');
   const file = JSON.parse(readFileSync(source, 'utf8').replace(/^\uFEFF/, ''));
   return {
     port: Number(process.env.PORT || file.port || 8787),
     host: process.env.HOST || file.host || '0.0.0.0',
     adminPin: process.env.ADMIN_PIN || file.adminPin,
-    agentToken: process.env.AGENT_TOKEN || file.agentToken,
     offlineAfterSeconds: Number(process.env.OFFLINE_AFTER_SECONDS || file.offlineAfterSeconds || 25),
     siteName: file.siteName || 'Inercia Control',
     fleet: Array.isArray(file.fleet) ? file.fleet : []
@@ -24,8 +28,8 @@ function loadConfig() {
 }
 
 const config = loadConfig();
-if (!config.adminPin || !config.agentToken || config.adminPin === 'CHANGE-ME' || config.agentToken === 'CHANGE-ME') {
-  console.error('Configuración incompleta. Ejecutá scripts/setup-server.ps1 o definí ADMIN_PIN y AGENT_TOKEN.');
+if (!config.adminPin || config.adminPin === 'CHANGE-ME') {
+  console.error('Configuración incompleta. Ejecutá el instalador de Inercia Fleet Server o definí ADMIN_PIN.');
   process.exit(1);
 }
 
@@ -109,9 +113,53 @@ function isAdmin(req) {
   return true;
 }
 
-function isAgent(req) {
+// El PIN de administración es también la credencial de los agentes, así que ambas
+// superficies comparten el mismo contador de intentos fallidos: si no lo hicieran,
+// el PIN (baja entropía, pensado para tipearse) se podría probar por fuerza bruta
+// contra /api/agent/check-in sin el límite de /api/login.
+function pinThrottled(ip) {
+  const attempts = loginAttempts.get(ip);
+  return Boolean(attempts && attempts.blockedUntil > Date.now());
+}
+
+function registerPinFailure(ip) {
+  const attempts = loginAttempts.get(ip) || { count: 0, blockedUntil: 0 };
+  attempts.count += 1;
+  if (attempts.count >= 5) {
+    attempts.count = 0;
+    attempts.blockedUntil = Date.now() + 60000;
+  }
+  loginAttempts.set(ip, attempts);
+}
+
+function registerPinSuccess(ip) {
+  loginAttempts.delete(ip);
+}
+
+function authenticateAgent(req) {
+  const ip = getClientIp(req);
+  if (pinThrottled(ip)) return 'throttled';
   const header = String(req.headers.authorization || '');
-  return header.startsWith('Bearer ') && equalSecret(header.slice(7), config.agentToken);
+  const provided = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!provided || !equalSecret(provided, config.adminPin)) {
+    registerPinFailure(ip);
+    return 'invalid';
+  }
+  registerPinSuccess(ip);
+  return 'ok';
+}
+
+function requireAgent(req, res) {
+  const auth = authenticateAgent(req);
+  if (auth === 'throttled') {
+    json(res, 429, { error: 'Esperá un minuto antes de intentar otra vez.' });
+    return false;
+  }
+  if (auth !== 'ok') {
+    json(res, 401, { error: 'PIN inválido.' });
+    return false;
+  }
+  return true;
 }
 
 async function readJson(req, limit = 64 * 1024) {
@@ -261,19 +309,13 @@ function securityHeaders(res) {
 async function handleApi(req, res, url) {
   if (req.method === 'POST' && url.pathname === '/api/login') {
     const ip = getClientIp(req);
-    const attempts = loginAttempts.get(ip) || { count: 0, blockedUntil: 0 };
-    if (attempts.blockedUntil > Date.now()) return json(res, 429, { error: 'Esperá un minuto antes de intentar otra vez.' });
+    if (pinThrottled(ip)) return json(res, 429, { error: 'Esperá un minuto antes de intentar otra vez.' });
     const body = await readJson(req);
     if (!equalSecret(body.pin, config.adminPin)) {
-      attempts.count += 1;
-      if (attempts.count >= 5) {
-        attempts.count = 0;
-        attempts.blockedUntil = Date.now() + 60000;
-      }
-      loginAttempts.set(ip, attempts);
+      registerPinFailure(ip);
       return json(res, 401, { error: 'PIN incorrecto.' });
     }
-    loginAttempts.delete(ip);
+    registerPinSuccess(ip);
     const token = randomBytes(32).toString('base64url');
     sessions.set(token, { ip, expiresAt: Date.now() + 12 * 60 * 60 * 1000 });
     logEvent('login', 'Sesión de administración iniciada', { ip });
@@ -295,7 +337,7 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'POST' && url.pathname === '/api/agent/check-in') {
-    if (!isAgent(req)) return json(res, 401, { error: 'Agent token inválido.' });
+    if (!requireAgent(req, res)) return;
     const body = await readJson(req);
     const id = cleanId(body.pcId);
     if (!id) return json(res, 400, { error: 'pcId requerido.' });
@@ -324,7 +366,7 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'GET' && url.pathname === '/api/agent/commands') {
-    if (!isAgent(req)) return json(res, 401, { error: 'Agent token inválido.' });
+    if (!requireAgent(req, res)) return;
     const pcId = cleanId(url.searchParams.get('pcId'));
     const machine = machines.get(pcId);
     if (!pcId || !machine) return json(res, 404, { error: 'PC desconocida.' });
@@ -337,7 +379,7 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'POST' && url.pathname === '/api/agent/command-result') {
-    if (!isAgent(req)) return json(res, 401, { error: 'Agent token inválido.' });
+    if (!requireAgent(req, res)) return;
     const body = await readJson(req);
     const pcId = cleanId(body.pcId);
     const queue = commands.get(pcId) || [];

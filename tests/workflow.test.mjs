@@ -11,13 +11,11 @@ const projectRoot = resolve(new URL('..', import.meta.url).pathname);
 const tempDir = mkdtempSync(join(tmpdir(), 'inercia-test-'));
 const configPath = join(tempDir, 'config.json');
 const adminPin = 'test-4268';
-const agentToken = 'test-agent-token-that-is-long';
 
 writeFileSync(configPath, JSON.stringify({
   port,
   host: '127.0.0.1',
   adminPin,
-  agentToken,
   offlineAfterSeconds: 25,
   fleet: [
     { id: 'sim-01', name: 'Simulador 01', station: 'Standard 1' },
@@ -42,7 +40,7 @@ async function waitForServer() {
 
 async function request(path, { agent = false, ...options } = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-  if (agent) headers.Authorization = `Bearer ${agentToken}`;
+  if (agent) headers.Authorization = `Bearer ${adminPin}`;
   if (cookie) headers.Cookie = cookie;
   return fetch(`${baseUrl}${path}`, { ...options, headers });
 }
@@ -60,7 +58,7 @@ test.after(() => {
   server?.kill('SIGTERM');
 });
 
-test('rechaza agentes sin token', async () => {
+test('rechaza agentes sin PIN válido', async () => {
   const response = await request('/api/agent/check-in', { method: 'POST', body: JSON.stringify({ pcId: 'sim-01' }) });
   assert.equal(response.status, 401);
 });

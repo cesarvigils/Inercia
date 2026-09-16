@@ -1,8 +1,8 @@
 const baseUrl = (process.env.SERVER_URL || 'http://127.0.0.1:8787').replace(/\/$/, '');
-const token = process.env.AGENT_TOKEN;
+const token = process.env.ADMIN_PIN;
 
 if (!token) {
-  console.error('Definí AGENT_TOKEN antes de iniciar la flota de demostración.');
+  console.error('Definí ADMIN_PIN (el mismo PIN del panel) antes de iniciar la flota de demostración.');
   process.exit(1);
 }
 
