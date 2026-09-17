@@ -234,49 +234,9 @@
                 </div>
 
 
-                <div class="date-grid">
+                <div class="date-grid date-grid--picker">
 
-                    <label class="reservation-field">
-
-                        <span>FECHA</span>
-
-                        <div class="select-wrap">
-
-                            <select
-                                id="reservationDate"
-                                required
-                            >
-                                <option value="">
-                                    Seleccioná una fecha
-                                </option>
-                            </select>
-
-                        </div>
-
-                    </label>
-
-
-                    <label class="reservation-field">
-
-                        <span>HORA</span>
-
-                        <div class="select-wrap">
-
-                            <select
-                                id="reservationTime"
-                                required
-                            >
-                                <option value="">
-                                    Seleccioná una hora
-                                </option>
-                            </select>
-
-                        </div>
-
-                    </label>
-
-
-                    <label class="reservation-field">
+                    <label class="reservation-field reservation-field--duration">
 
                         <span>DURACIÓN</span>
 
@@ -294,6 +254,67 @@
                         </div>
 
                     </label>
+
+
+                    <div class="reservation-field reservation-field--calendar">
+
+                        <span>FECHA</span>
+
+                        <div
+                            class="calendar-widget"
+                            id="calendarWidget"
+                            role="listbox"
+                            aria-label="Elegí una fecha"
+                        >
+                            <p class="picker-loading">
+                                Cargando calendario…
+                            </p>
+                        </div>
+
+                        <input
+                            type="hidden"
+                            id="reservationDate"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="reservation-field reservation-field--clock">
+
+                        <span>HORA</span>
+
+                        <div class="clock-widget">
+
+                            <div
+                                class="clock-face"
+                                id="clockFace"
+                                role="listbox"
+                                aria-label="Elegí una hora"
+                            >
+
+                                <div class="clock-ring"></div>
+
+                                <div class="clock-readout">
+                                    <strong id="clockReadoutTime">
+                                        --:--
+                                    </strong>
+                                    <small id="clockReadoutHint">
+                                        Elegí una fecha
+                                    </small>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <input
+                            type="hidden"
+                            id="reservationTime"
+                            required
+                        >
+
+                    </div>
 
                 </div>
 

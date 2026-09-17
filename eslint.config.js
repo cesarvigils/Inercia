@@ -80,6 +80,7 @@ export default [
         Intl: 'readonly',
         HTMLElement: 'readonly',
         Option: 'readonly',
+        Event: 'readonly',
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
         queueMicrotask: 'readonly',

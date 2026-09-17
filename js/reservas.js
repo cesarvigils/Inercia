@@ -20,13 +20,23 @@
  *                        Inline status text + two custom modals (success,
  *                        and "you must log in") used instead of
  *                        window.alert()/confirm() for a consistent UI.
- *   DATES / TIME HELPERS / TIMES / DURATIONS
- *                        Builds the date and time-slot dropdowns
- *                        (respecting the booking window, opening hours,
- *                        and minimum lead time from getConfig() —
- *                        mirrors the server-side rules in
- *                        api/_lib/reservations.js so the UI doesn't offer
- *                        slots the API would reject anyway).
+ *   CALENDAR + CLOCK / TIME HELPERS / DURATIONS
+ *                        Step 01's date and hour pickers: a calendar grid
+ *                        (dateSelect) and a circular clock face
+ *                        (timeSelect) — both are now hidden <input>s that
+ *                        these widgets keep in sync (.value + a dispatched
+ *                        'change' event), so every other function that
+ *                        reads/listens to them still works unchanged. All
+ *                        the data both need — which dates are open and
+ *                        which hours on the selected date are still
+ *                        bookable — comes from one loadCalendar() call to
+ *                        GET /api/reservations/calendar (see
+ *                        api/reservations/calendar.js), computed there
+ *                        from the same booking rules as
+ *                        api/_lib/reservations.js so the UI never offers a
+ *                        slot the API would reject anyway. Re-picking a
+ *                        date/hour afterward is a pure client-side
+ *                        re-render, no extra request.
  *   CONFIG               loadConfig() - fetches
  *                        /api/reservations/config on page load.
  *   SIMULATOR CARD / RENDER RIGS / AVAILABILITY
@@ -203,6 +213,16 @@ let currentProfile =
 
 let promos =
     [];
+
+/*
+ * Payload from GET /api/reservations/calendar — one row per date in the
+ * booking window, each with the full list of hourly start times and
+ * whether they're bookable. Fetched once (on load, and again whenever
+ * duration changes); clicking a different date or hour afterward is a pure
+ * re-render from this, no extra request.
+ */
+let calendarData =
+    null;
 
 let loadingAvailability =
     false;
@@ -873,181 +893,303 @@ function closeLoginRequiredModal() {
 
 
 /* =========================================================
-   DATES
+   CALENDAR + CLOCK (step 01)
+
+   dateSelect/timeSelect are now hidden inputs, not <select>s — the
+   calendar and clock below are custom widgets that just keep those two
+   inputs' .value in sync and dispatch a real 'change' event on them,
+   so every other function in this file that reads dateSelect.value /
+   timeSelect.value or listens for their 'change' event (loadConfig(),
+   makeTimes()'s old caller, availability(), summary(), ...) keeps
+   working completely unchanged.
+
+   All the data both widgets need — which dates are open at all, and
+   which specific hours on the selected date are still bookable — comes
+   from ONE call to /api/reservations/calendar (see loadCalendar()
+   below), instead of the old approach of assuming fixed hours/days
+   client-side and then querying /api/reservations/availability once per
+   candidate hour.
    ========================================================= */
 
-function dates() {
+const calendarWidget =
+    document.getElementById(
+        'calendarWidget'
+    );
 
-    if (!dateSelect) {
+const clockFace =
+    document.getElementById(
+        'clockFace'
+    );
+
+const clockReadoutTime =
+    document.getElementById(
+        'clockReadoutTime'
+    );
+
+const clockReadoutHint =
+    document.getElementById(
+        'clockReadoutHint'
+    );
+
+
+function setHiddenValue(
+    input,
+    value
+) {
+
+    if (!input) {
         return;
     }
 
-    dateSelect.innerHTML =
-        '<option value="">Seleccioná una fecha</option>';
+    input.value =
+        value;
+
+    input.dispatchEvent(
+        new Event(
+            'change',
+            { bubbles: true }
+        )
+    );
+}
 
 
-    const displayFormatter =
-        new Intl.DateTimeFormat(
-            'es-HN',
-            {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-                timeZone: 'America/Tegucigalpa'
-            }
+async function loadCalendar() {
+
+    if (!calendarWidget) {
+        return;
+    }
+
+    const duration =
+        durationSelect?.value ||
+        1;
+
+    try {
+
+        calendarData =
+            await api(
+                `/api/reservations/calendar?duration=${encodeURIComponent(
+                    duration
+                )}`
+            );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            '[RESERVAS] Error cargando calendario:',
+            error
         );
 
+        calendarWidget.innerHTML =
+            '<p class="picker-loading">No se pudo cargar el calendario.</p>';
 
-    const valueFormatter =
-        new Intl.DateTimeFormat(
-            'en-CA',
-            {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                timeZone: 'America/Tegucigalpa'
-            }
-        );
+        return;
+    }
+
+    renderCalendar();
 
 
     /*
-     * Mostramos los próximos 7 DÍAS DISPONIBLES.
-     *
-     * LUNES NO SE AGREGA.
+     * La duración pudo cambiar la disponibilidad
+     * de la fecha/hora ya elegidas — si esa hora
+     * ya no está disponible, se limpia.
      */
 
-    let added = 0;
-    let offset = 0;
-
-
-    while (added < 7) {
-
-        const date =
-            new Date(
-                Date.now() +
-                offset * 86400000
-            );
-
-
-        offset++;
-
-
-        /*
-         * Sacamos el día de semana usando
-         * explícitamente Honduras.
-         */
-
-        const weekday =
-            new Intl.DateTimeFormat(
-                'en-US',
-                {
-                    weekday: 'short',
-                    timeZone: 'America/Tegucigalpa'
-                }
-            )
-                .format(date);
-
-
-        /*
-         * Lunes cerrado.
-         */
-
-        if (weekday === 'Mon') {
-            continue;
-        }
-
-
-        const value =
-            valueFormatter.format(date);
-
-
-        const todayValue =
-            valueFormatter.format(
-                new Date()
-            );
-
-
-        const tomorrowValue =
-            valueFormatter.format(
-                new Date(
-                    Date.now() +
-                    86400000
-                )
-            );
-
-
-        let prefix = '';
-
-
-        if (
-            value ===
-            todayValue
-        ) {
-
-            prefix =
-                'HOY · ';
-
-        } else if (
-            value ===
-            tomorrowValue
-        ) {
-
-            prefix =
-                'MAÑANA · ';
-        }
-
-
-        const label =
+    const currentDay =
+        calendarData.days.find(
             (
-                prefix +
-                displayFormatter.format(
-                    date
-                )
-            )
-                .toUpperCase();
+                day
+            ) =>
+                day.date ===
+                dateSelect?.value
+        );
+
+    if (
+        !currentDay ||
+        currentDay.status !==
+            'available'
+    ) {
+
+        setHiddenValue(
+            dateSelect,
+            ''
+        );
+    }
+
+    makeTimes();
+}
 
 
-        dateSelect.add(
-            new Option(
-                label,
-                value
+function calendarDayLabel(
+    day,
+    index
+) {
+
+    if (index === 0) {
+        return 'HOY';
+    }
+
+    if (index === 1) {
+        return 'MAÑANA';
+    }
+
+    const [
+        year,
+        month,
+        dayNumber
+    ] =
+        day.date
+            .split('-')
+            .map(Number);
+
+    const asDate =
+        new Date(
+            Date.UTC(
+                year,
+                month - 1,
+                dayNumber,
+                12
             )
         );
 
-
-        added++;
-    }
+    return new Intl.DateTimeFormat(
+        'es-HN',
+        { weekday: 'short', timeZone: 'UTC' }
+    )
+        .format(asDate)
+        .replace('.', '')
+        .toUpperCase();
 }
+
+
+function renderCalendar() {
+
+    if (
+        !calendarWidget ||
+        !calendarData
+    ) {
+        return;
+    }
+
+    calendarWidget.innerHTML =
+        '';
+
+    calendarData.days.forEach(
+        (
+            day,
+            index
+        ) => {
+
+            const [
+                ,
+                ,
+                dayNumber
+            ] =
+                day.date
+                    .split('-');
+
+            const button =
+                document.createElement(
+                    'button'
+                );
+
+            button.type =
+                'button';
+
+            button.className =
+                'calendar-day';
+
+            button.dataset.date =
+                day.date;
+
+            button.setAttribute(
+                'role',
+                'option'
+            );
+
+            const isAvailable =
+                day.status ===
+                'available';
+
+            if (!isAvailable) {
+
+                button.classList.add(
+                    'unavailable'
+                );
+
+                button.disabled =
+                    true;
+
+                button.title =
+                    day.status ===
+                    'closed'
+                        ? 'Cerrado este día'
+                        : 'Sin horarios disponibles';
+            }
+
+            if (
+                day.date ===
+                dateSelect?.value
+            ) {
+
+                button.classList.add(
+                    'selected'
+                );
+            }
+
+            button.innerHTML = `
+                <span class="calendar-day-weekday">${calendarDayLabel(day, index)}</span>
+                <span class="calendar-day-number">${Number(dayNumber)}</span>
+                ${!isAvailable ? `<span class="calendar-day-tag">${day.status === 'closed' ? 'Cerrado' : 'Completo'}</span>` : ''}
+            `;
+
+            calendarWidget.appendChild(
+                button
+            );
+        }
+    );
+}
+
+
+calendarWidget
+    ?.addEventListener(
+        'click',
+
+        (
+            event
+        ) => {
+
+            const button =
+                event.target.closest(
+                    '.calendar-day'
+                );
+
+            if (
+                !button ||
+                button.disabled
+            ) {
+                return;
+            }
+
+            renderCalendar
+                .lastSelected =
+                button.dataset.date;
+
+            setHiddenValue(
+                dateSelect,
+                button.dataset.date
+            );
+
+            renderCalendar();
+        }
+    );
+
 
 
 /* =========================================================
    TIME HELPERS
    ========================================================= */
-
-function toMinutes(
-    value
-) {
-
-    if (!value) {
-        return 0;
-    }
-
-
-    const [
-        hours,
-        minutes
-    ] =
-        value
-            .split(':')
-            .map(Number);
-
-
-    return (
-        hours * 60 +
-        minutes
-    );
-}
-
 
 function formatTime(
     hours,
@@ -1076,482 +1218,328 @@ function formatTime(
     )
         .format(date);
 }
-
-
 /* =========================================================
-   TIMES
+   CLOCK
 
-   IMPORTANTE:
-
-   - Oculta horas pasadas.
-   - Respeta anticipación mínima.
-   - Respeta hora de cierre.
-   - Respeta duración seleccionada.
-   - Consulta disponibilidad real.
-   - Si ningún rig está disponible, esa hora NO aparece.
-   - Si el backend no trae horario para el día, usa
-     DEFAULT_HOURS como respaldo (martes-viernes 2-9pm,
-     sábado-domingo 12-9pm, lunes cerrado).
+   Renders the hour markers on the circular clock face from
+   calendarData (see loadCalendar() above) — no network call here,
+   this is a pure re-render for whichever date is currently selected.
+   Hours the backend marked unavailable (already booked on every rig,
+   or inside an admin lockdown) render disabled/greyed, matching the
+   .simulator-card.unavailable treatment elsewhere on this page.
    ========================================================= */
 
-async function makeTimes() {
+function clockPosition(
+    time
+) {
 
-    if (!timeSelect) {
-        return;
-    }
+    const hour =
+        Number(
+            time.split(':')[0]
+        ) % 12;
 
+    /*
+     * 12 arriba, avanza en sentido horario cada 30°
+     * (como un reloj analógico real).
+     */
 
-    timeSelect.disabled =
-        true;
+    const angleRad =
+        (
+            hour * 30 -
+            90
+        ) *
+        (Math.PI / 180);
 
+    const radius =
+        37;
 
-    timeSelect.innerHTML =
-        '<option value="">Cargando horarios...</option>';
+    return {
+        left:
+            50 +
+            radius *
+            Math.cos(
+                angleRad
+            ),
 
-
-    if (
-        !dateSelect?.value ||
-        !appConfig
-    ) {
-
-        timeSelect.innerHTML =
-            '<option value="">Seleccioná una hora</option>';
-
-
-        timeSelect.disabled =
-            false;
-
-
-        return;
-    }
-
-
-    const [
-        year,
-        month,
-        dayNumber
-    ] =
-        dateSelect.value
-            .split('-')
-            .map(Number);
-
-
-    const selectedDate =
-        new Date(
-            Date.UTC(
-                year,
-                month - 1,
-                dayNumber,
-                12
+        top:
+            50 +
+            radius *
+            Math.sin(
+                angleRad
             )
-        );
-
-
-    const day =
-        selectedDate
-            .getUTCDay();
-
-
-let hoursConfig;
-
-
-switch (day) {
-
-    case 0:
-        hoursConfig =
-            ['12:00', '21:00'];
-        break;
-
-
-    case 1:
-        hoursConfig =
-            null;
-        break;
-
-
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-        hoursConfig =
-            ['14:00', '21:00'];
-        break;
-
-
-    case 6:
-        hoursConfig =
-            ['12:00', '21:00'];
-        break;
-
-
-    default:
-        hoursConfig =
-            null;
+    };
 }
 
 
-    /*
-     * Día cerrado.
-     */
+function updateClockReadout() {
 
-    if (
-        !hoursConfig ||
-        !Array.isArray(
-            hoursConfig
-        )
-    ) {
+    if (!clockReadoutTime) {
+        return;
+    }
 
-        timeSelect.innerHTML =
-            '<option value="">Cerrado este día</option>';
+    if (!timeSelect?.value) {
 
+        clockReadoutTime.textContent =
+            '--:--';
 
-        timeSelect.disabled =
-            true;
-
+        clockReadoutHint.textContent =
+            dateSelect?.value
+                ? 'Elegí una hora'
+                : 'Elegí una fecha';
 
         return;
     }
 
+    const [
+        hh,
+        mm
+    ] =
+        timeSelect.value
+            .split(':')
+            .map(Number);
 
-    const open =
-        toMinutes(
-            hoursConfig[0]
+    clockReadoutTime.textContent =
+        formatTime(
+            hh,
+            mm
         );
 
-
-    const close =
-        toMinutes(
-            hoursConfig[1]
-        );
+    clockReadoutHint.textContent =
+        'Hora seleccionada';
+}
 
 
-    const duration =
-        Number(
-            durationSelect?.value ||
-            1
-        );
+function renderClock(
+    hours
+) {
 
+    if (!clockFace) {
+        return;
+    }
 
-    /* =====================================================
-       HORA ACTUAL EN HONDURAS
-       ===================================================== */
-
-    const hnParts =
-        new Intl.DateTimeFormat(
-            'en-CA',
-            {
-                timeZone:
-                    'America/Tegucigalpa',
-
-                year:
-                    'numeric',
-
-                month:
-                    '2-digit',
-
-                day:
-                    '2-digit',
-
-                hour:
-                    '2-digit',
-
-                minute:
-                    '2-digit',
-
-                hourCycle:
-                    'h23'
-            }
+    clockFace
+        .querySelectorAll(
+            '.clock-hour'
         )
-            .formatToParts(
-                new Date()
-            )
-            .reduce(
-                (
-                    result,
-                    part
-                ) => {
+        .forEach(
+            (
+                el
+            ) =>
+                el.remove()
+        );
 
-                    result[
-                        part.type
-                    ] =
-                        part.value;
+    hours.forEach(
+        (
+            hour
+        ) => {
 
+            const position =
+                clockPosition(
+                    hour.time
+                );
 
-                    return result;
-                },
-                {}
+            const button =
+                document.createElement(
+                    'button'
+                );
+
+            button.type =
+                'button';
+
+            button.className =
+                'clock-hour';
+
+            button.dataset.time =
+                hour.time;
+
+            button.style.left =
+                `${position.left}%`;
+
+            button.style.top =
+                `${position.top}%`;
+
+            button.setAttribute(
+                'role',
+                'option'
             );
 
+            const [
+                hh
+            ] =
+                hour.time
+                    .split(':')
+                    .map(Number);
 
-    const todayHN =
-        `${hnParts.year}-${hnParts.month}-${hnParts.day}`;
+            button.textContent =
+                String(
+                    hh % 12 ||
+                    12
+                );
 
+            if (!hour.available) {
 
-    const currentMinutes =
-        Number(
-            hnParts.hour
-        ) * 60 +
-        Number(
-            hnParts.minute
-        );
+                button.classList.add(
+                    'unavailable'
+                );
 
+                button.disabled =
+                    true;
 
-    const minimumAdvanceMinutes =
-        Number(
-            appConfig
-                .minimumAdvanceMinutes ??
-
-            appConfig
-                .minAdvanceMinutes ??
-
-            30
-        );
-
-
-    /* =====================================================
-       CREAR CANDIDATOS
-       ===================================================== */
-
-    const candidates =
-        [];
-
-
-    for (
-        let minutes = open;
-        minutes < close;
-        minutes += 60
-    ) {
-
-        /*
-         * La reserva completa tiene que
-         * terminar antes del cierre.
-         */
-
-        if (
-            minutes +
-            duration * 60 >
-            close
-        ) {
-
-            continue;
-        }
-
-
-        /*
-         * Si es HOY:
-         *
-         * ocultamos cualquier horario
-         * pasado o demasiado cercano.
-         */
-
-        if (
-            dateSelect.value ===
-            todayHN
-        ) {
-
-            const minimumAllowed =
-                currentMinutes +
-                minimumAdvanceMinutes;
-
+                button.title =
+                    'Ya reservado';
+            }
 
             if (
-                minutes <
-                minimumAllowed
+                hour.time ===
+                timeSelect?.value
             ) {
 
-                continue;
+                button.classList.add(
+                    'selected'
+                );
             }
+
+            clockFace.appendChild(
+                button
+            );
         }
+    );
+
+    updateClockReadout();
+}
 
 
-        const hh =
-            Math.floor(
-                minutes / 60
+clockFace
+    ?.addEventListener(
+        'click',
+
+        (
+            event
+        ) => {
+
+            const button =
+                event.target.closest(
+                    '.clock-hour'
+                );
+
+            if (
+                !button ||
+                button.disabled
+            ) {
+                return;
+            }
+
+            setHiddenValue(
+                timeSelect,
+                button.dataset.time
             );
 
+            const day =
+                calendarData?.days?.find(
+                    (
+                        d
+                    ) =>
+                        d.date ===
+                        dateSelect?.value
+                );
 
-        const mm =
-            minutes % 60;
+            if (day) {
+
+                renderClock(
+                    day.hours
+                );
+            }
+        }
+    );
 
 
-        const value =
-            `${String(hh)
-                .padStart(
-                    2,
-                    '0'
-                )}:${String(mm)
-                    .padStart(
-                        2,
-                        '0'
-                    )}`;
+/*
+ * Re-render puro desde calendarData — no hace ningún
+ * request. El fetch real pasa una sola vez en
+ * loadCalendar(), disparado al cargar la página y
+ * cuando cambia la duración.
+ */
 
+function makeTimes() {
 
-        candidates.push({
-            value,
-
-            label:
-                formatTime(
-                    hh,
-                    mm
-                )
-        });
+    if (!clockFace) {
+        return;
     }
 
-
-    /* =====================================================
-       DISPONIBILIDAD REAL
-
-       Consultamos el backend para CADA hora.
-
-       Si para una hora no queda ni un Standard
-       ni un Premium disponible, NO se muestra.
-       ===================================================== */
-
-    const checks =
-        await Promise.all(
-
-            candidates.map(
-
-                async (
-                    slot
-                ) => {
-
-                    try {
-
-                        const params =
-                            new URLSearchParams({
-                                date:
-                                    dateSelect.value,
-
-                                time:
-                                    slot.value,
-
-                                duration:
-                                    String(
-                                        duration
-                                    )
-                            });
-
-
-                        const data =
-                            await api(
-                                `/api/reservations/availability?${params.toString()}`
-                            );
-
-
-                        const hasAvailableRig =
-                            Array.isArray(
-                                data.rigs
-                            ) &&
-                            data.rigs.some(
-                                (
-                                    rig
-                                ) =>
-                                    rig.available
-                            );
-
-
-                        /*
-                         * Ningún simulador
-                         * disponible a esa hora.
-                         */
-
-                        if (
-                            !hasAvailableRig
-                        ) {
-
-                            console.log(
-                                `[RESERVAS] ${slot.value} oculta: no quedan rigs disponibles.`
-                            );
-
-
-                            return null;
-                        }
-
-
-                        return slot;
-
-
-                    } catch (
-                        error
-                    ) {
-
-                        /*
-                         * Si backend devuelve:
-                         *
-                         * - 400
-                         * - horario inválido
-                         * - anticipación
-                         * - cerrado
-                         * - etc.
-                         *
-                         * tampoco la mostramos.
-                         */
-
-                        console.log(
-                            `[RESERVAS] ${slot.value} oculta:`,
-                            error.message
-                        );
-
-
-                        return null;
-                    }
-                }
-            )
+    const day =
+        calendarData?.days?.find(
+            (
+                d
+            ) =>
+                d.date ===
+                dateSelect?.value
         );
-
-
-    const availableTimes =
-        checks.filter(
-            Boolean
-        );
-
-
-    /* =====================================================
-       RENDER DROPDOWN
-       ===================================================== */
-
-    timeSelect.innerHTML =
-        '<option value="">Seleccioná una hora</option>';
-
-
-    for (
-        const slot
-        of availableTimes
-    ) {
-
-        timeSelect.add(
-            new Option(
-                slot.label,
-                slot.value
-            )
-        );
-    }
-
-
-    /*
-     * Sin horarios.
-     */
 
     if (
-        availableTimes.length ===
-        0
+        !dateSelect?.value ||
+        !day
     ) {
 
-        timeSelect.innerHTML =
-            '<option value="">No hay horarios disponibles</option>';
+        clockFace.classList.add(
+            'is-empty'
+        );
 
+        clockFace
+            .querySelectorAll(
+                '.clock-hour'
+            )
+            .forEach(
+                (
+                    el
+                ) =>
+                    el.remove()
+            );
 
-        timeSelect.disabled =
-            true;
+        setHiddenValue(
+            timeSelect,
+            ''
+        );
 
+        updateClockReadout();
 
         return;
     }
 
+    clockFace.classList.remove(
+        'is-empty'
+    );
 
-    timeSelect.disabled =
-        false;
+
+    /*
+     * Si la hora ya elegida dejó de estar
+     * disponible (cambió la duración, o alguien
+     * más reservó ese cupo), se limpia.
+     */
+
+    const stillAvailable =
+        day.hours.some(
+            (
+                hour
+            ) =>
+                hour.time ===
+                    timeSelect?.value &&
+                hour.available
+        );
+
+    if (
+        timeSelect?.value &&
+        !stillAvailable
+    ) {
+
+        setHiddenValue(
+            timeSelect,
+            ''
+        );
+    }
+
+    renderClock(
+        day.hours
+    );
 }
 
 
@@ -2755,18 +2743,20 @@ durationSelect
              *
              * Una hora puede servir para
              * una reserva de 1 hora pero
-             * no para una de 3 horas.
-             *
-             * Por eso reconstruimos las horas.
+             * no para una de 3 horas, y un
+             * día completo para 1 hora puede
+             * no tener espacio para 3 —
+             * por eso recargamos el calendario
+             * entero, no solo el reloj.
              */
 
-            await makeTimes();
+            await loadCalendar();
 
 
             /*
-             * Como makeTimes deja la hora
-             * sin seleccionar, mostramos todos
-             * los rigs hasta escoger otra hora.
+             * Como loadCalendar/makeTimes dejan
+             * la hora sin seleccionar, mostramos
+             * todos los rigs hasta escoger otra hora.
              */
 
             render(
@@ -3540,12 +3530,13 @@ async function init() {
     }
 
 
-    dates();
-updatePaymentAccess();
+    updatePaymentAccess();
 
     try {
 
         await loadConfig();
+
+        await loadCalendar();
 
 
         console.log(

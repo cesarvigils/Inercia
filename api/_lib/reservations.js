@@ -83,6 +83,15 @@
  *                           a rig over a date/time range. These IDs are used
  *                           as Firestore document IDs in `reservationLocks`
  *                           to prevent double-booking the same rig/slot.
+ *   - getLockedSlotIds(date) All reservationLocks doc IDs for one date, in a
+ *                           single range query on the document ID itself
+ *                           (IDs are `${date}_${HHMM}_${rigId}`), instead of
+ *                           one getAll() per candidate hour/rig. Used by
+ *                           api/reservations/calendar.js to build a whole
+ *                           booking window's per-day/per-hour availability
+ *                           in one pass instead of N Firestore round trips.
+ *   - minutesToTime(minutes) Inverse of hm(): 630 -> "10:30".
+ *   - addDays(dateStr, n)   "YYYY-MM-DD" + n days -> "YYYY-MM-DD".
  *   - code()                Generates a short human-readable reservation
  *                           code like "IN-240615-A1B2C3".
  *   - expiresAt(date, time) Returns a Firestore Timestamp ~6 hours after the
@@ -91,7 +100,7 @@
  */
 
 import crypto from 'node:crypto';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldPath } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin.js';
 
 export const TZ = 'America/Tegucigalpa';
@@ -202,7 +211,29 @@ export async function getActiveLockdowns(date){
 export function findOverlappingLockdown(lockdowns, start, end){
   return lockdowns.find(l => start < hm(l.end) && end > hm(l.start));
 }
+
+/*
+ * All reservationLocks doc IDs for one date in a single query, using a
+ * range scan on the document ID itself (IDs are `${date}_${HHMM}_${rigId}`,
+ * see slotIds() below) rather than fetching one specific ref per candidate
+ * hour/rig combination. Short TTL (15s, vs the default 60s) because this
+ * reflects live booking activity — staleness here directly means showing a
+ * customer a slot as open that just got taken.
+ */
+export async function getLockedSlotIds(date){
+  return cached(`locks:${date}`, async () => {
+    const snap = await adminDb.collection('reservationLocks')
+      .orderBy(FieldPath.documentId())
+      .startAt(`${date}_`)
+      .endAt(`${date}_`)
+      .get();
+    return new Set(snap.docs.map(d => d.id));
+  }, 15_000);
+}
+
 export function hm(s){ const [h,m]=String(s).split(':').map(Number); return h*60+m; }
+export function minutesToTime(minutes){ return `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`; }
+export function addDays(dateStr, days){ const [y,m,d]=dateStr.split('-').map(Number); const dt=new Date(Date.UTC(y,m-1,d)); dt.setUTCDate(dt.getUTCDate()+days); return dt.toISOString().slice(0,10); }
 export function localParts(date=new Date()) { const p=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23',weekday:'short'}).formatToParts(date); const o=Object.fromEntries(p.map(x=>[x.type,x.value])); return { date:`${o.year}-${o.month}-${o.day}`, minutes:+o.hour*60 + +o.minute, weekday:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(o.weekday) }; }
 export function dateDay(dateStr){ const [y,m,d]=dateStr.split('-').map(Number); return new Date(Date.UTC(y,m-1,d,12)).getUTCDay(); }
 function dateDiff(a,b){ const [ay,am,ad]=a.split('-').map(Number),[by,bm,bd]=b.split('-').map(Number); return Math.round((Date.UTC(by,bm-1,bd)-Date.UTC(ay,am-1,ad))/86400000); }

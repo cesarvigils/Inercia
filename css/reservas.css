@@ -422,6 +422,295 @@ body {
 
 
 /* =========================================================
+   DATE / CLOCK PICKER (step 01)
+
+   Replaces what used to be two more <select> elements here. Reuses the
+   same visual language as .simulator-card below (dark gradient tile,
+   3px radius, thin border, orange hover/selected states, grayscale +
+   32% opacity for anything unavailable) so this doesn't read as a
+   bolted-on widget.
+   ========================================================= */
+
+.date-grid--picker {
+    grid-template-columns: 150px 1fr 260px;
+
+    align-items: start;
+}
+
+
+.reservation-field--duration,
+.reservation-field--calendar,
+.reservation-field--clock {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.picker-loading {
+    margin: 0;
+    padding: 18px;
+
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+/* ---- CALENDAR ---- */
+
+.calendar-widget {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(74px, 1fr));
+
+    gap: 8px;
+}
+
+
+.calendar-day {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    min-height: 74px;
+    padding: 10px 6px;
+
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 3px;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.95),
+            rgba(0,0,0,.25)
+        ),
+        #171717;
+
+    color: #fff;
+
+    cursor: pointer;
+
+    transition:
+        border-color .16s ease,
+        transform .16s ease;
+}
+
+
+.calendar-day:hover {
+    border-color: rgba(255,139,0,.6);
+
+    transform: translateY(-2px);
+}
+
+
+.calendar-day .calendar-day-weekday {
+    color: var(--orange);
+
+    font-family: var(--display);
+    font-size: 11px;
+    letter-spacing: .04em;
+}
+
+
+.calendar-day .calendar-day-number {
+    font-family: var(--display);
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+
+.calendar-day .calendar-day-tag {
+    color: var(--muted);
+
+    font-size: 9px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+
+.calendar-day.selected {
+    border-color: var(--orange);
+
+    box-shadow: inset 0 0 0 1px var(--orange);
+}
+
+
+.calendar-day.selected .calendar-day-weekday,
+.calendar-day.selected .calendar-day-number {
+    color: var(--orange);
+}
+
+
+.calendar-day.unavailable {
+    opacity: .32;
+
+    cursor: not-allowed;
+
+    filter: grayscale(1);
+}
+
+
+.calendar-day.unavailable:hover {
+    transform: none;
+
+    border-color: rgba(255,255,255,.13);
+}
+
+
+/* ---- CLOCK ---- */
+
+.clock-widget {
+    display: flex;
+    justify-content: center;
+}
+
+
+.clock-face {
+    position: relative;
+
+    width: 100%;
+    max-width: 220px;
+    aspect-ratio: 1;
+
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255,139,0,.05),
+            transparent 68%
+        ),
+        #171717;
+}
+
+
+.clock-ring {
+    position: absolute;
+
+    inset: 14px;
+
+    border: 1px dashed rgba(255,255,255,.13);
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+.clock-readout {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    pointer-events: none;
+}
+
+
+.clock-readout strong {
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+
+.clock-readout small {
+    margin-top: 4px;
+
+    max-width: 110px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+
+.clock-hour {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: 34px;
+    height: 34px;
+    margin: -17px;
+
+    display: grid;
+    place-items: center;
+
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 50%;
+
+    background: #111;
+
+    color: #fff;
+
+    font-family: var(--body);
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        border-color .16s ease,
+        background .16s ease,
+        transform .16s ease;
+}
+
+
+.clock-hour:hover {
+    border-color: var(--orange);
+
+    transform: scale(1.12);
+}
+
+
+.clock-hour.selected {
+    border-color: var(--orange);
+
+    background: var(--orange);
+
+    color: #111;
+}
+
+
+.clock-hour.unavailable {
+    border-color: rgba(255,255,255,.08);
+
+    color: rgba(255,255,255,.28);
+
+    cursor: not-allowed;
+}
+
+
+.clock-hour.unavailable:hover {
+    border-color: rgba(255,255,255,.08);
+
+    transform: none;
+}
+
+
+.clock-face.is-empty .clock-hour {
+    display: none;
+}
+
+
+/* =========================================================
    AVAILABILITY
    ========================================================= */
 
@@ -967,6 +1256,16 @@ body {
 
     .date-grid {
         grid-template-columns: 1fr;
+    }
+
+
+    .date-grid--picker {
+        grid-template-columns: 1fr;
+    }
+
+
+    .clock-face {
+        max-width: 260px;
     }
 
 
