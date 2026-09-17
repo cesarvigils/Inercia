@@ -50,6 +50,7 @@ import {
     applyTuesdayPromotion,
     getActiveLockdowns,
     findOverlappingLockdown,
+    isRigBookable,
     slotIds,
     code,
     expiresAt,
@@ -469,11 +470,10 @@ export default async function handler(req, res) {
                                 data.order
                             ),
 
-                        active:
-                            data.active === true,
-
-                        maintenance:
-                            data.maintenance === true
+                        bookable:
+                            isRigBookable(
+                                data
+                            )
                     };
                 }
             );
@@ -486,25 +486,12 @@ export default async function handler(req, res) {
         if (
             rigs.some(
                 (rig) =>
-                    !rig.active
+                    !rig.bookable
             )
         ) {
 
             throw bad(
-                'Uno de los simuladores seleccionados ya no está activo.'
-            );
-        }
-
-
-        if (
-            rigs.some(
-                (rig) =>
-                    rig.maintenance
-            )
-        ) {
-
-            throw bad(
-                'Uno de los simuladores seleccionados está en mantenimiento.'
+                'Uno de los simuladores seleccionados no está disponible.'
             );
         }
 

@@ -146,13 +146,44 @@ export function __clearCacheForTests() { cache.clear(); }
 export async function getConfig(){ return cached('config', async () => { const s=await adminDb.doc('settings/reservations').get(); return merge(DEFAULT_CONFIG, s.exists ? s.data() : {}); }); }
 
 /*
+ * Whether a `rigs/{id}` document should be bookable right now. This used to
+ * be three different, inconsistent checks in three different files:
+ *   - getActiveRigs() below (used by the public rig list) only looked at
+ *     the boolean `active`/`maintenance` fields via a Firestore `where`
+ *     query, with no awareness of a `status` field at all.
+ *   - api/_lib/paypal-reservation.js checked the booleans OR
+ *     status==='active'/'maintenance', but not status==='disabled'.
+ *   - api/reservations/create.js checked only the booleans, no `status`
+ *     fallback at all.
+ * The admin rig editor (separate `admin` branch) writes a single `status`
+ * string field (active/maintenance/disabled) rather than toggling the
+ * legacy `active`/`maintenance` booleans, which are only ever set once at
+ * rig creation (see scripts/seed.mjs) and never updated afterward. Because
+ * getActiveRigs() never looked at `status`, a rig an admin marked as
+ * maintenance/disabled kept showing as bookable on the public site
+ * indefinitely — this is what actually fixes that, by making `status` (when
+ * present) the single source of truth everywhere, with the old booleans
+ * only as a fallback for rigs that predate the `status` field.
+ */
+export function isRigBookable(data){
+  if (typeof data.status === 'string') return data.status === 'active';
+  return data.active === true && data.maintenance !== true;
+}
+
+/*
  * Shared by api/reservations/availability.js and api/reservations/config.js,
- * which used to each run their own near-identical `rigs` query.
+ * which used to each run their own near-identical `rigs` query. Fetches the
+ * whole (small — a handful of simulators) collection rather than filtering
+ * server-side with `where('active','==',true)`, precisely because that
+ * boolean field can't be trusted alone (see isRigBookable's comment) — a
+ * rig admin-created without ever setting it would otherwise never appear at
+ * all, on top of the opposite problem of maintenance/disabled rigs that
+ * still have it stuck at `true`.
  */
 export async function getActiveRigs(){
   return cached('activeRigs', async () => {
-    const snap = await adminDb.collection('rigs').where('active','==',true).get();
-    return snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.maintenance!==true);
+    const snap = await adminDb.collection('rigs').get();
+    return snap.docs.map(d=>({id:d.id,...d.data()})).filter(isRigBookable);
   });
 }
 

@@ -10,6 +10,7 @@ import {
   priceReservation,
   applyTuesdayPromotion,
   findOverlappingLockdown,
+  isRigBookable,
   slotIds,
   hm,
   dateDay,
@@ -192,4 +193,32 @@ test('bad(): attaches the given status, defaults to 400', () => {
   assert.equal(err.status, 400);
   const err2 = bad('conflict', 409);
   assert.equal(err2.status, 409);
+});
+
+// isRigBookable: this is the actual fix for "maintenance/disabled rigs still
+// show as bookable on the site". The admin rig editor writes a `status`
+// string field, but the code that builds the public rig list used to only
+// check separate `active`/`maintenance` booleans that are set once at rig
+// creation (see scripts/seed.mjs) and never touched again afterward — so
+// toggling a rig's status in the admin panel had no effect on what
+// customers could book.
+test('isRigBookable: status field is authoritative when present', () => {
+  assert.equal(isRigBookable({ status: 'active' }), true);
+  assert.equal(isRigBookable({ status: 'maintenance' }), false);
+  assert.equal(isRigBookable({ status: 'disabled' }), false);
+});
+
+test('isRigBookable: status wins even if the legacy active boolean says otherwise', () => {
+  // This is exactly the bug: a rig created with active:true (from the seed
+  // script) that an admin later marks unavailable via `status`, without the
+  // `active` boolean ever being touched again.
+  assert.equal(isRigBookable({ status: 'maintenance', active: true }), false);
+  assert.equal(isRigBookable({ status: 'disabled', active: true }), false);
+});
+
+test('isRigBookable: falls back to legacy booleans when there is no status field', () => {
+  assert.equal(isRigBookable({ active: true }), true);
+  assert.equal(isRigBookable({ active: true, maintenance: true }), false);
+  assert.equal(isRigBookable({}), false); // no active flag at all -> not bookable
+  assert.equal(isRigBookable({ maintenance: false }), false); // active still missing
 });

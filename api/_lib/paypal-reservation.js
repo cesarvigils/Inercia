@@ -35,6 +35,7 @@ import {
     applyTuesdayPromotion,
     getActiveLockdowns,
     findOverlappingLockdown,
+    isRigBookable,
     slotIds,
     code,
     bad
@@ -95,16 +96,12 @@ export async function buildPaypalReservationData(user, body) {
             name: String(data.name || '').trim(),
             type: String(data.type || '').trim().toLowerCase(),
             order: Number(data.order),
-            active: data.active === true || data.status === 'active',
-            maintenance: data.maintenance === true || data.status === 'maintenance'
+            bookable: isRigBookable(data)
         };
     });
 
-    if (rigs.some((rig) => !rig.active)) {
-        throw bad('Uno de los simuladores seleccionados ya no está activo.');
-    }
-    if (rigs.some((rig) => rig.maintenance)) {
-        throw bad('Uno de los simuladores seleccionados está en mantenimiento.');
+    if (rigs.some((rig) => !rig.bookable)) {
+        throw bad('Uno de los simuladores seleccionados no está disponible.');
     }
     if (rigs.some((rig) => !['standard', 'premium'].includes(rig.type))) {
         throw bad('Uno de los simuladores tiene una configuración inválida.');
