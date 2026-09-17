@@ -33,7 +33,8 @@ import {
     method,
     json,
     fail,
-    requireUser
+    requireUser,
+    rateLimit
 } from '../_lib/http.js';
 
 import {
@@ -46,6 +47,9 @@ import {
     validateWhen,
     activePromotions,
     priceReservation,
+    applyTuesdayPromotion,
+    getActiveLockdowns,
+    findOverlappingLockdown,
     slotIds,
     code,
     expiresAt,
@@ -114,6 +118,25 @@ export default async function handler(req, res) {
         }
 
 
+        /* =================================================
+           RATE LIMIT
+
+           Por uid (no por IP) porque el endpoint ya exige
+           sesión: así un wifi compartido en el local no
+           frena a otros clientes.
+           ================================================= */
+
+        if (
+            !rateLimit(req, res, {
+                key: `create:${user.uid}`,
+                limit: 5,
+                windowMs: 60_000
+            })
+        ) {
+            return;
+        }
+
+
         const body =
             req.body || {};
 
@@ -133,6 +156,36 @@ export default async function handler(req, res) {
                 body.duration,
                 config
             );
+
+
+        /* =================================================
+           ADMIN LOCKDOWNS
+
+           Antes solo se comprobaba en
+           api/reservations/availability.js (la UI se ponía
+           gris), pero nunca acá — así que un lockdown nunca
+           bloqueaba de verdad una reserva creada directamente.
+           ================================================= */
+
+        const lockdowns =
+            await getActiveLockdowns(body.date);
+
+        const overlappingLockdown =
+            findOverlappingLockdown(
+                lockdowns,
+                when.start,
+                when.end
+            );
+
+        if (overlappingLockdown) {
+
+            throw bad(
+                overlappingLockdown.reason
+                    ? `Horario no disponible: ${overlappingLockdown.reason}.`
+                    : 'Este horario no está disponible temporalmente.',
+                409
+            );
+        }
 
 
         /* =================================================
@@ -495,7 +548,7 @@ export default async function handler(req, res) {
            por el navegador.
            ================================================= */
 
-        const pricing =
+        let pricing =
             priceReservation(
                 rigs,
                 Number(
@@ -504,6 +557,15 @@ export default async function handler(req, res) {
                 config,
                 promotions,
                 when.lead
+            );
+
+        // Antes esta promoción solo se aplicaba en el flujo de PayPal
+        // (api/_lib/paypal-reservation.js), así que pagar por transferencia
+        // un martes no daba el 50% de descuento. Ahora es la misma función.
+        pricing =
+            applyTuesdayPromotion(
+                pricing,
+                body.date
             );
 
 

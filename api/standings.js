@@ -33,6 +33,8 @@
  * sheet can take up to a minute to show up.
  */
 
+import { rateLimit } from './_lib/http.js';
+
 const FIRST_ROW = 15;
 const LAST_ROW = 168;
 
@@ -43,6 +45,8 @@ const MONTHS_ES = [
 ];
 
 export default async function handler(req, res) {  try {
+    if (!rateLimit(req, res, { limit: 30, windowMs: 60_000 })) return;
+
     const { SPREADSHEET_ID, GOOGLE_SHEETS_API_KEY } = process.env;
 
     if (!SPREADSHEET_ID || !GOOGLE_SHEETS_API_KEY) {

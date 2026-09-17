@@ -52,6 +52,7 @@
      */
 
     import { adminDb } from './firebase-admin.js';
+    import { cached } from './reservations.js';
 
     function required(name) {
         const value = String(process.env[name] || '').trim();
@@ -134,22 +135,34 @@
 
     export async function getPaypalRate() {
         let rate = 0;
+        let settings = null;
 
+        // Only the Firestore READ is allowed to fail soft (falls back to the
+        // env var below). The admin's paypal.enabled=false kill switch is a
+        // deliberate decision, not a read error — it used to be thrown INSIDE
+        // this same try block, where this catch swallowed it as if it were a
+        // connectivity hiccup, so turning PayPal off in Firestore never
+        // actually blocked a payment. It's evaluated after the try now, so it
+        // always propagates.
         try {
-            const snapshot = await adminDb.doc('settings/payments').get();
-            if (snapshot.exists) {
-                const paypal = snapshot.data()?.paypal || {};
-
-                if (paypal.enabled === false) {
-                    const error = new Error('PayPal está desactivado temporalmente.');
-                    error.status = 503;
-                    throw error;
-                }
-
-                rate = Number(paypal.hnlPerUsd || 0);
-            }
+            settings = await cached('paypalSettings', async () => {
+                const snapshot = await adminDb.doc('settings/payments').get();
+                return snapshot.exists ? snapshot.data() : null;
+            });
         } catch (error) {
             console.warn('[PAYPAL RATE] No se pudo leer settings/payments:', error.message);
+        }
+
+        if (settings) {
+            const paypal = settings.paypal || {};
+
+            if (paypal.enabled === false) {
+                const error = new Error('PayPal está desactivado temporalmente.');
+                error.status = 503;
+                throw error;
+            }
+
+            rate = Number(paypal.hnlPerUsd || 0);
         }
 
         if (!rate) {

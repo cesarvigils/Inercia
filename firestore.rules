@@ -1,0 +1,43 @@
+// Firestore security rules for the Simuladores Inercia customer site
+// (preview/main branch — the public booking site, not the separate `admin`
+// branch's admin panel, which has its own rules file).
+//
+// This did not exist as a file in this branch before — there was no
+// firestore.rules at all, meaning whatever rules are actually live in the
+// Firebase console were undocumented and unreviewed here. IMPORTANT: adding
+// this file to the repo does NOT change anything live by itself — it has to
+// be deployed with `firebase deploy --only firestore:rules` (requires the
+// Firebase CLI logged into the real project) or pasted into Firebase Console
+// > Firestore Database > Rules. Review it against whatever is currently
+// live before deploying, in case the live rules already differ from this.
+//
+// Why this can be this restrictive: every privileged read/write in this
+// branch's app goes through the /api/* serverless functions using the
+// Admin SDK, which bypasses these rules entirely (see api/_lib/
+// firebase-admin.js). The ONLY direct Firestore access from the browser
+// client SDK in this branch is a user reading/writing their OWN
+// `users/{uid}` profile document (js/auth.js on signup, js/reservas.js and
+// js/standings.js reading it back for display) — confirmed by searching the
+// whole js/ folder for getDoc/setDoc/addDoc/updateDoc/onSnapshot calls.
+// Everything else (reservations, rigs, promotions, settings,
+// availabilityLockdowns, adminUsers, reservationLocks, paypalWebhookEvents)
+// is never touched by the client SDK today, so it's default-denied below.
+// If a future frontend change needs direct client reads of one of those
+// collections, add an explicit rule for it here at that time — don't widen
+// the catch-all.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Each signed-in user can read and write only their own profile.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Default deny. No rule above needs a get()/exists() lookup, so this
+    // costs nothing extra in reads either way.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

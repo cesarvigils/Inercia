@@ -21,7 +21,8 @@
 import {
     method,
     json,
-    fail
+    fail,
+    rateLimit
 } from '../_lib/http.js';
 
 import {
@@ -32,111 +33,16 @@ import {
     getConfig,
     validateWhen,
     slotIds,
-    bad
+    bad,
+    getActiveRigs,
+    getActiveLockdowns,
+    findOverlappingLockdown
 } from '../_lib/reservations.js';
 
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
-function toMinutes(value) {
-
-    if (!value) {
-        return 0;
-    }
-
-    const [
-        hours,
-        minutes
-    ] =
-        String(value)
-            .split(':')
-            .map(Number);
-
-    return (
-        hours * 60 +
-        minutes
-    );
-}
-
-
-/* =========================================================
-   CHECK AVAILABILITY LOCKDOWNS
-   ========================================================= */
-
-async function getActiveLockdowns(
-    date
-) {
-
-    const snapshot =
-        await adminDb
-            .collection(
-                'availabilityLockdowns'
-            )
-            .where(
-                'date',
-                '==',
-                date
-            )
-            .get();
-
-
-    return snapshot.docs
-        .map(document => ({
-            id:
-                document.id,
-
-            ...document.data()
-        }))
-        .filter(lockdown =>
-            lockdown.active !== false
-        );
-}
-
-
-function findOverlappingLockdown(
-    lockdowns,
-    reservationStart,
-    reservationEnd
-) {
-
-    return lockdowns.find(
-        lockdown => {
-
-            const lockdownStart =
-                toMinutes(
-                    lockdown.start
-                );
-
-            const lockdownEnd =
-                toMinutes(
-                    lockdown.end
-                );
-
-
-            /*
-             * OVERLAP:
-             *
-             * Reserva empieza antes de que
-             * termine el lockdown
-             *
-             * Y
-             *
-             * Reserva termina después de que
-             * empezó el lockdown.
-             */
-
-            return (
-                reservationStart <
-                    lockdownEnd
-                &&
-                reservationEnd >
-                    lockdownStart
-            );
-        }
-    );
-}
+// getActiveLockdowns/findOverlappingLockdown used to be defined only in this
+// file. They now live in ../_lib/reservations.js, shared with
+// api/reservations/create.js and api/_lib/paypal-reservation.js, so a
+// lockdown is enforced at booking-creation time too, not just here.
 
 
 /* =========================================================
@@ -156,6 +62,16 @@ export default async function handler(
                 res,
                 ['GET']
             )
+        ) {
+            return;
+        }
+
+
+        if (
+            !rateLimit(req, res, {
+                limit: 60,
+                windowMs: 60_000
+            })
         ) {
             return;
         }
@@ -250,32 +166,8 @@ export default async function handler(
            ACTIVE RIGS
            ================================================= */
 
-        const rigsSnapshot =
-            await adminDb
-                .collection(
-                    'rigs'
-                )
-                .where(
-                    'active',
-                    '==',
-                    true
-                )
-                .get();
-
-
         const rigs =
-            rigsSnapshot.docs
-                .map(document => ({
-                    id:
-                        document.id,
-
-                    ...document.data()
-                }))
-                .filter(
-                    rig =>
-                        rig.maintenance !==
-                        true
-                );
+            await getActiveRigs();
 
 
         /* =================================================

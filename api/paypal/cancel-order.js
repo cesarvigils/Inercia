@@ -12,7 +12,7 @@
  * Body: { reservationId: string }
  */
 
-import { method, json, fail, requireUser } from '../_lib/http.js';
+import { method, json, fail, requireUser, rateLimit } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
 import { bad } from '../_lib/reservations.js';
 import { releasePaypalReservation } from '../_lib/paypal-reservation.js';
@@ -22,6 +22,9 @@ export default async function handler(req, res) {
         if (!method(req, res, ['POST'])) return;
 
         const user = await requireUser(req);
+
+        if (!rateLimit(req, res, { key: `paypal-cancel:${user.uid}`, limit: 10, windowMs: 60_000 })) return;
+
         const reservationId = String(req.body?.reservationId || '').trim();
 
         if (!reservationId) throw bad('Reserva inválida.');

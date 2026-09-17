@@ -57,6 +57,27 @@
  *                           promotions (percent or fixed, capped at base),
  *                           penalty = late-booking surcharge if the booking
  *                           is made inside config.lateBooking.thresholdMinutes.
+ *   - applyTuesdayPromotion(pricing, date)
+ *                           Applies the permanent "every Tuesday = 50% off"
+ *                           business rule on top of whatever priceReservation()
+ *                           already computed. This used to be duplicated (and
+ *                           only applied to the PayPal path, never the bank
+ *                           transfer path — see git history) — it now lives
+ *                           here once and both api/reservations/create.js and
+ *                           api/_lib/paypal-reservation.js call it, so the
+ *                           discount is consistent across payment methods.
+ *   - getActiveRigs()       Reads the `rigs` collection (active, non-maintenance
+ *                           only), cached briefly — see CACHE below.
+ *   - getActiveLockdowns(date), findOverlappingLockdown(lockdowns, start, end)
+ *                           Admin-configured booking blackout windows
+ *                           (collection `availabilityLockdowns`). Previously
+ *                           only enforced in the read-only availability
+ *                           endpoint (api/reservations/availability.js), which
+ *                           meant a lockdown never actually stopped a booking
+ *                           from being created directly — it only made the UI
+ *                           grey out the slot. Both reservation-creation paths
+ *                           now call these too, so a lockdown is enforced at
+ *                           the one place that actually matters: the write.
  *   - slotIds(...)          Generates the list of per-30-minutes (or
  *                           whatever slotMinutes is) lock document IDs for
  *                           a rig over a date/time range. These IDs are used
@@ -82,7 +103,74 @@ const DEFAULT_CONFIG = {
   payment: { bankTransfer: true, card: true, paypal: false, bank: 'BAC', currency: 'HNL', account: '758-610-001', beneficiary: 'Inercia S.A.' }
 };
 function merge(a,b){ return { ...a, ...b, prices:{...a.prices,...b?.prices}, hours:{...a.hours,...b?.hours}, lateBooking:{...a.lateBooking,...b?.lateBooking}, payment:{...a.payment,...b?.payment} }; }
-export async function getConfig(){ const s=await adminDb.doc('settings/reservations').get(); return merge(DEFAULT_CONFIG, s.exists ? s.data() : {}); }
+
+/*
+ * Tiny in-process cache, keyed by string, TTL in ms. Config/rigs/promotions/
+ * lockdowns rarely change, but every page load and every availability poll
+ * used to re-read them from Firestore on every single request. A warm
+ * serverless instance handles many requests before it's recycled, so this
+ * cuts most of that repeat-read cost for free — no extra service, no extra
+ * moving parts.
+ *
+ * Important caveat on Vercel specifically: each api/*.js file is bundled and
+ * deployed as its OWN isolated serverless function, so this Map is only
+ * shared across requests handled by the SAME warm instance of the SAME
+ * endpoint — it is NOT a cross-endpoint shared cache (create.js's copy of
+ * this module and availability.js's copy each have their own Map). That's
+ * still a real, meaningful reduction in reads for any single hot endpoint;
+ * just don't expect writing through one endpoint to instantly invalidate
+ * another endpoint's cached copy in production (invalidateCache() below IS
+ * effective for same-process usage — local dev, tests, or a non-Vercel
+ * deploy). Cleared automatically on failure so a transient Firestore error
+ * doesn't get cached.
+ */
+const CACHE_TTL_MS = 60_000;
+const cache = new Map();
+export function cached(key, loader, ttlMs = CACHE_TTL_MS) {
+  const hit = cache.get(key);
+  if (hit && hit.expiresAt > Date.now()) return hit.promise;
+  const promise = Promise.resolve().then(loader).catch(error => { cache.delete(key); throw error; });
+  cache.set(key, { promise, expiresAt: Date.now() + ttlMs });
+  return promise;
+}
+
+// So an admin write (e.g. api/paypal/settings.js flipping the PayPal kill
+// switch) takes effect immediately instead of waiting out CACHE_TTL_MS.
+export function invalidateCache(key) { cache.delete(key); }
+
+// Test-only: wipes the whole cache so one test's seeded fake Firestore data
+// can't leak into the next test via a still-warm cache entry. Not used by
+// any production code path.
+export function __clearCacheForTests() { cache.clear(); }
+
+export async function getConfig(){ return cached('config', async () => { const s=await adminDb.doc('settings/reservations').get(); return merge(DEFAULT_CONFIG, s.exists ? s.data() : {}); }); }
+
+/*
+ * Shared by api/reservations/availability.js and api/reservations/config.js,
+ * which used to each run their own near-identical `rigs` query.
+ */
+export async function getActiveRigs(){
+  return cached('activeRigs', async () => {
+    const snap = await adminDb.collection('rigs').where('active','==',true).get();
+    return snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.maintenance!==true);
+  });
+}
+
+/*
+ * Admin-configured booking blackouts (collection `availabilityLockdowns`,
+ * one document per date). See the file header for why every reservation
+ * creation path needs to call this, not just the availability check.
+ */
+export async function getActiveLockdowns(date){
+  return cached(`lockdowns:${date}`, async () => {
+    const snap = await adminDb.collection('availabilityLockdowns').where('date','==',date).get();
+    return snap.docs.map(d=>({id:d.id,...d.data()})).filter(l=>l.active!==false);
+  });
+}
+
+export function findOverlappingLockdown(lockdowns, start, end){
+  return lockdowns.find(l => start < hm(l.end) && end > hm(l.start));
+}
 export function hm(s){ const [h,m]=String(s).split(':').map(Number); return h*60+m; }
 export function localParts(date=new Date()) { const p=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23',weekday:'short'}).formatToParts(date); const o=Object.fromEntries(p.map(x=>[x.type,x.value])); return { date:`${o.year}-${o.month}-${o.day}`, minutes:+o.hour*60 + +o.minute, weekday:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(o.weekday) }; }
 export function dateDay(dateStr){ const [y,m,d]=dateStr.split('-').map(Number); return new Date(Date.UTC(y,m-1,d,12)).getUTCDay(); }
@@ -98,7 +186,15 @@ export function validateWhen(date,time,duration,config){
 }
 export function bad(message,status=400){ return Object.assign(new Error(message),{status,expose:true}); }
 export async function activePromotions(date, types){
-  const snap=await adminDb.collection('promotions').where('active','==',true).get(); const day=dateDay(date); return snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>(!p.daysOfWeek||p.daysOfWeek.includes(day))&&(!p.startDate||date>=p.startDate)&&(!p.endDate||date<=p.endDate)&&(!p.simulatorTypes||types.some(t=>p.simulatorTypes.includes(t))));
+  // Cached per-date only (not per `types`) so different rig-type combos on the
+  // same date still share one Firestore read; the type filter runs after,
+  // in memory, on every call.
+  const day=dateDay(date);
+  const perDate = await cached(`promotions:${date}`, async () => {
+    const snap=await adminDb.collection('promotions').where('active','==',true).get();
+    return snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>(!p.daysOfWeek||p.daysOfWeek.includes(day))&&(!p.startDate||date>=p.startDate)&&(!p.endDate||date<=p.endDate));
+  });
+  return perDate.filter(p=>!p.simulatorTypes||types.some(t=>p.simulatorTypes.includes(t)));
 }
 export function priceReservation(rigs,duration,config,promos,lead){
   const base=rigs.reduce((s,r)=>s+(Number(config.prices[r.type])||0)*duration,0);
@@ -106,6 +202,28 @@ export function priceReservation(rigs,duration,config,promos,lead){
   discount=Math.min(base,Math.round(discount*100)/100); let penalty=0;
   if(config.lateBooking?.enabled && lead < Number(config.lateBooking.thresholdMinutes||60)){ penalty=config.lateBooking.type==='fixed'?Number(config.lateBooking.value||0):(base-discount)*Number(config.lateBooking.value||0)/100; }
   penalty=Math.max(0,Math.round(penalty*100)/100); return {base,discount,penalty,total:Math.max(0,base-discount+penalty)};
+}
+
+/*
+ * Permanent business rule: every Tuesday is 50% off the final total. This
+ * used to be hand-implemented only inside api/_lib/paypal-reservation.js
+ * (labeled "EMERGENCY PATCH"), so a bank-transfer booking (api/reservations/
+ * create.js) never got the discount while a PayPal booking on the same date
+ * did. It's now one function both paths call after priceReservation().
+ */
+export function applyTuesdayPromotion(pricing, dateStr){
+  if (dateDay(dateStr) !== 2) return pricing;
+  const totalBeforeDiscount = Number(pricing.total || 0);
+  const tuesdayDiscount = Math.round(totalBeforeDiscount * 0.5 * 100) / 100;
+  const total = Math.round((totalBeforeDiscount - tuesdayDiscount) * 100) / 100;
+  return {
+    ...pricing,
+    beforeTuesdayDiscount: totalBeforeDiscount,
+    tuesdayDiscount,
+    tuesdayDiscountPercent: 50,
+    tuesdayPromotionApplied: true,
+    total
+  };
 }
 export function slotIds(date,start,end,slotMinutes,rigId){ const out=[]; for(let m=start;m<end;m+=slotMinutes) out.push(`${date}_${String(Math.floor(m/60)).padStart(2,'0')}${String(m%60).padStart(2,'0')}_${rigId}`); return out; }
 export function code(){ return `IN-${new Date().toISOString().slice(2,10).replaceAll('-','')}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`; }

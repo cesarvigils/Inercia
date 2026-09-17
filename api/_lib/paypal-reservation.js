@@ -18,11 +18,11 @@
  *      is called (e.g. from a cancel/expire path) to mark the reservation
  *      as cancelled/expired and delete its locks so the slot frees up.
  *
- * IMPORTANT: there is a hardcoded "Tuesday = 50% off" promotion applied
- * directly in buildPaypalReservationData() below (search for "EMERGENCY
- * PATCH"). It is NOT read from Firestore's `promotions` collection like
- * normal promotions — it's applied in code, after the normal pricing
- * step. If this promotion should end or change, look for that block.
+ * The permanent "every Tuesday = 50% off" rule and admin lockdown
+ * enforcement both live in ./reservations.js (applyTuesdayPromotion,
+ * getActiveLockdowns/findOverlappingLockdown) and are called the same way
+ * from api/reservations/create.js's bank-transfer path, so both payment
+ * methods behave identically.
  */
 
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
@@ -32,6 +32,9 @@ import {
     validateWhen,
     activePromotions,
     priceReservation,
+    applyTuesdayPromotion,
+    getActiveLockdowns,
+    findOverlappingLockdown,
     slotIds,
     code,
     bad
@@ -44,6 +47,17 @@ const CHECKOUT_TTL_MINUTES = 15;
 export async function buildPaypalReservationData(user, body) {
     const config = await getConfig();
     const when = validateWhen(body.date, body.time, body.duration, config);
+
+    const lockdowns = await getActiveLockdowns(body.date);
+    const overlappingLockdown = findOverlappingLockdown(lockdowns, when.start, when.end);
+    if (overlappingLockdown) {
+        throw bad(
+            overlappingLockdown.reason
+                ? `Horario no disponible: ${overlappingLockdown.reason}.`
+                : 'Este horario no está disponible temporalmente.',
+            409
+        );
+    }
 
     if (!Array.isArray(body.rigIds) || body.rigIds.length === 0 || body.rigIds.length > MAX_RIGS) {
         throw bad('Seleccioná al menos un simulador válido.');
@@ -97,139 +111,11 @@ export async function buildPaypalReservationData(user, body) {
     }
 
     const promotions = await activePromotions(body.date, rigs.map((rig) => rig.type));
-let pricing = priceReservation(
-    rigs,
-    Number(body.duration),
-    config,
-    promotions,
-    when.lead
-);
+    let pricing = priceReservation(rigs, Number(body.duration), config, promotions, when.lead);
+    pricing = applyTuesdayPromotion(pricing, body.date);
 
-
-/* =========================================================
-   EMERGENCY PATCH
-   TODOS LOS MARTES = 50% OFF
-   ========================================================= */
-
-function isTuesday(dateString) {
-    if (!dateString) {
-        return false;
-    }
-
-    const [
-        year,
-        month,
-        day
-    ] =
-        String(dateString)
-            .split('-')
-            .map(Number);
-
-
-    const date =
-        new Date(
-            Date.UTC(
-                year,
-                month - 1,
-                day
-            )
-        );
-
-
-    return (
-        date.getUTCDay() === 2
-    );
-}
-
-
-if (
-    isTuesday(body.date)
-) {
-
-    /*
-     * priceReservation() ya devuelve el total
-     * definitivo después de promociones normales.
-     *
-     * Para este emergency patch forzamos
-     * el total del martes al 50%.
-     */
-
-    const totalBeforeTuesday =
-        Number(
-            pricing.total || 0
-        );
-
-
-    const tuesdayDiscount =
-        Number(
-            (
-                totalBeforeTuesday *
-                0.50
-            ).toFixed(2)
-        );
-
-
-    const tuesdayTotal =
-        Number(
-            (
-                totalBeforeTuesday -
-                tuesdayDiscount
-            ).toFixed(2)
-        );
-
-
-    pricing = {
-        ...pricing,
-
-        /*
-         * Dejamos información útil en Firestore.
-         */
-        beforeTuesdayDiscount:
-            totalBeforeTuesday,
-
-        tuesdayDiscount:
-            tuesdayDiscount,
-
-        tuesdayDiscountPercent:
-            50,
-
-        tuesdayPromotionApplied:
-            true,
-
-        total:
-            tuesdayTotal
-    };
-
-
-    console.log(
-        '[TUESDAY 50%]',
-        {
-            date:
-                body.date,
-
-            original:
-                totalBeforeTuesday,
-
-            discount:
-                tuesdayDiscount,
-
-            final:
-                tuesdayTotal
-        }
-    );
-}
-
-
-const exchangeRate =
-    await getPaypalRate();
-
-
-const amountUSD =
-    hnlToUsd(
-        pricing.total,
-        exchangeRate
-    );
-
+    const exchangeRate = await getPaypalRate();
+    const amountUSD = hnlToUsd(pricing.total, exchangeRate);
 
     const reservationRef = adminDb.collection('reservations').doc();
     const reservationCode = code();

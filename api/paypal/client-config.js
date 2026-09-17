@@ -9,12 +9,13 @@
  * server (see api/_lib/paypal.js).
  */
 
-import { method, json, fail } from '../_lib/http.js';
+import { method, json, fail, rateLimit } from '../_lib/http.js';
 import { paypalClientId, getPaypalRate } from '../_lib/paypal.js';
 
 export default async function handler(req, res) {
     try {
         if (!method(req, res, ['GET'])) return;
+        if (!rateLimit(req, res, { limit: 30, windowMs: 60_000 })) return;
 
         const rate = await getPaypalRate();
 

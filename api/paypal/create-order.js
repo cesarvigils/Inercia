@@ -19,7 +19,7 @@
  */
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { method, json, fail, requireUser } from '../_lib/http.js';
+import { method, json, fail, requireUser, rateLimit } from '../_lib/http.js';
 import { bad } from '../_lib/reservations.js';
 import { paypalRequest } from '../_lib/paypal.js';
 import {
@@ -35,6 +35,8 @@ export default async function handler(req, res) {
 
         const user = await requireUser(req);
         if (!user?.uid) throw bad('Tenés que iniciar sesión.', 401);
+
+        if (!rateLimit(req, res, { key: `paypal-create:${user.uid}`, limit: 5, windowMs: 60_000 })) return;
 
         draft = await createPaypalPendingReservation(user, req.body || {});
 

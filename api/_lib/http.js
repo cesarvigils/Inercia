@@ -21,6 +21,12 @@
  *                                side, then responds with a safe status/message
  *                                (4xx errors expose error.message to the client,
  *                                5xx errors are masked in production).
+ *   - rateLimit(req, res, opts)  Best-effort per-key request throttle (see its
+ *                                own comment below for how it works and its
+ *                                limits). Returns false and already sent a 429
+ *                                if the caller is over the limit, so handlers
+ *                                do `if (!rateLimit(req, res, {...})) return;`
+ *                                the same way they do for method().
  *
  * Typical usage in an /api handler:
  *   if (!method(req, res, ['GET', 'POST'])) return;
@@ -179,10 +185,14 @@ export async function requireUser(
 
     try {
 
+        // Second argument = checkRevoked: without it, a token that was valid
+        // when issued keeps being accepted here for up to an hour after a
+        // staff member disables the account or force-revokes its sessions.
         const decoded =
             await adminAuth
                 .verifyIdToken(
-                    token
+                    token,
+                    true
                 );
 
 
@@ -342,4 +352,71 @@ export function fail(
                 message
         }
     );
+}
+
+
+/* =========================================================
+   RATE LIMITING
+   ========================================================= */
+
+/*
+ * Best-effort, in-process request throttle. No external service, no
+ * Firestore reads/writes — the whole point is to stop a scripted abuse loop
+ * from generating real Firestore documents and live PayPal orders without
+ * adding cost of its own.
+ *
+ * Honest limitations (worth knowing, not a reason to skip this): each
+ * Vercel serverless instance has its own memory, so the effective limit is
+ * "per warm instance", not truly global — a cold start resets it, and heavy
+ * concurrent traffic can be spread across several instances. It's a
+ * best-effort speed bump against a single scripted client, not a hard
+ * guarantee. If usage ever grows enough for that gap to matter, move this
+ * to a shared store (Vercel KV/Upstash) instead of layering more logic on
+ * top of this one.
+ */
+const buckets = new Map();
+let sweepCounter = 0;
+
+function sweepExpiredBuckets(now) {
+    for (const [key, bucket] of buckets) {
+        if (bucket.resetAt <= now) buckets.delete(key);
+    }
+}
+
+function getClientIp(req) {
+    const forwarded = req.headers?.['x-forwarded-for'];
+    if (forwarded) return String(forwarded).split(',')[0].trim();
+    return req.socket?.remoteAddress || 'unknown';
+}
+
+/*
+ * opts.key      identifier to bucket by (defaults to the client IP) — pass
+ *               a uid for endpoints that already require auth, since a
+ *               shared office/venue IP shouldn't throttle every customer
+ *               together.
+ * opts.limit    max requests allowed per window.
+ * opts.windowMs window length in ms.
+ */
+export function rateLimit(req, res, { key, limit, windowMs } = {}) {
+    const id = `${key || getClientIp(req)}`;
+    const now = Date.now();
+
+    sweepCounter += 1;
+    if (sweepCounter % 200 === 0) sweepExpiredBuckets(now);
+
+    let bucket = buckets.get(id);
+    if (!bucket || bucket.resetAt <= now) {
+        bucket = { count: 0, resetAt: now + windowMs };
+        buckets.set(id, bucket);
+    }
+
+    bucket.count += 1;
+
+    if (bucket.count > limit) {
+        res.setHeader('Retry-After', Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)));
+        json(res, 429, { error: 'Demasiadas solicitudes. Esperá un momento y volvé a intentar.' });
+        return false;
+    }
+
+    return true;
 }

@@ -11,9 +11,9 @@
  */
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { method, json, fail, requireUser } from '../_lib/http.js';
+import { method, json, fail, requireUser, rateLimit } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
-import { bad } from '../_lib/reservations.js';
+import { bad, invalidateCache } from '../_lib/reservations.js';
 
 async function requireAdmin(user) {
     const snapshot = await adminDb.doc(`adminUsers/${user.uid}`).get();
@@ -28,6 +28,8 @@ export default async function handler(req, res) {
 
         const user = await requireUser(req);
         await requireAdmin(user);
+
+        if (!rateLimit(req, res, { key: `paypal-settings:${user.uid}`, limit: 20, windowMs: 60_000 })) return;
 
         const ref = adminDb.doc('settings/payments');
 
@@ -61,6 +63,11 @@ export default async function handler(req, res) {
             updatedAt: FieldValue.serverTimestamp(),
             updatedBy: user.uid
         }, { merge: true });
+
+        // Best-effort: only clears this Vercel function's own copy of the
+        // cache (see the caveat in reservations.js). getPaypalRate()'s cache
+        // in other functions still expires on its own within CACHE_TTL_MS.
+        invalidateCache('paypalSettings');
 
         return json(res, 200, {
             ok: true,

@@ -17,7 +17,7 @@
  */
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { method, json, fail, requireUser } from '../_lib/http.js';
+import { method, json, fail, requireUser, rateLimit } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
 import { bad } from '../_lib/reservations.js';
 import { paypalRequest } from '../_lib/paypal.js';
@@ -32,6 +32,9 @@ export default async function handler(req, res) {
         if (!method(req, res, ['POST'])) return;
 
         const user = await requireUser(req);
+
+        if (!rateLimit(req, res, { key: `paypal-capture:${user.uid}`, limit: 10, windowMs: 60_000 })) return;
+
         const reservationId = String(req.body?.reservationId || '').trim();
         const orderID = String(req.body?.orderID || '').trim();
 

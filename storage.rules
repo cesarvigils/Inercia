@@ -1,0 +1,32 @@
+// Firebase Storage security rules for the Simuladores Inercia customer site.
+// Same status as firestore.rules: this file did not exist before and needs
+// `firebase deploy --only storage:rules` (or pasting into Firebase Console >
+// Storage > Rules) to actually take effect — adding it to the repo alone
+// changes nothing live.
+//
+// The only Storage usage found in this branch's frontend is uploading a
+// bank-transfer payment proof to `reservation-proofs/{uid}/...` (see
+// js/reservas.js, uploadBytes call). api/reservations/create.js already
+// re-validates ownership prefix, size (<=5MB) and content type (JPEG/PNG/
+// PDF) server-side before trusting an uploaded file — see MAX_PROOF_SIZE /
+// ALLOWED_PROOF_TYPES there. The rules below enforce the same limits at
+// upload time too, so a bad file never lands in Storage in the first place
+// instead of being rejected only after the fact when the reservation is
+// created. Keep the two in sync if either changes.
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /reservation-proofs/{uid}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.size <= 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/jpeg|image/png|application/pdf');
+    }
+
+    // Default deny.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

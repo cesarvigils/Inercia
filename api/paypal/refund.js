@@ -17,7 +17,7 @@
  */
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { method, json, fail, requireUser } from '../_lib/http.js';
+import { method, json, fail, requireUser, rateLimit } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
 import { bad } from '../_lib/reservations.js';
 import { paypalRequest } from '../_lib/paypal.js';
@@ -35,6 +35,8 @@ export default async function handler(req, res) {
 
         const user = await requireUser(req);
         await requireAdmin(user);
+
+        if (!rateLimit(req, res, { key: `refund:${user.uid}`, limit: 10, windowMs: 60_000 })) return;
 
         const reservationId = String(req.body?.reservationId || '').trim();
         if (!reservationId) throw bad('Reserva inválida.');
@@ -76,7 +78,13 @@ export default async function handler(req, res) {
             {
                 method: 'POST',
                 headers: {
-                    'PayPal-Request-Id': `refund-${reservationId}-${Date.now()}`
+                    // Deterministic per logical refund attempt (same reservation,
+                    // same already-refunded baseline, same requested amount) so a
+                    // retried request after a dropped response reuses the same key
+                    // and PayPal dedupes it, instead of refunding twice. Using
+                    // Date.now() here previously defeated that — every retry got
+                    // a fresh key.
+                    'PayPal-Request-Id': `refund-${reservationId}-${alreadyRefundedHNL}-${requestedHNL}`
                 },
                 body: JSON.stringify(
                     fullRefund
