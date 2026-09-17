@@ -66,6 +66,7 @@ export function createFakeFirestore(seed = {}) {
           empty: docs.length === 0,
           docs: docs.map((d) => ({
             id: d.id,
+            exists: true,
             data: () => { const { id: _id, ...rest } = d; return rest; }
           }))
         };

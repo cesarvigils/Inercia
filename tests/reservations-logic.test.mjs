@@ -11,6 +11,7 @@ import {
   applyTuesdayPromotion,
   findOverlappingLockdown,
   isRigBookable,
+  isLockActive,
   slotIds,
   hm,
   dateDay,
@@ -229,4 +230,38 @@ test('isRigBookable: falls back to legacy booleans when there is no status field
   assert.equal(isRigBookable({ active: true, maintenance: true }), false);
   assert.equal(isRigBookable({}), false); // no active flag at all -> not bookable
   assert.equal(isRigBookable({ maintenance: false }), false); // active still missing
+});
+
+// isLockActive: the fix for "Uno de esos simuladores acaba de ser reservado"
+// firing on a genuinely free rig. A reservationLocks doc used to block its
+// slot forever just by existing, with no regard for its `expiresAt` field —
+// so an abandoned PayPal checkout (closed tab, crash, network drop) left a
+// permanent phantom lock, since nothing ever released it and nothing ever
+// checked whether its hold had actually expired.
+function fakeSnapshot({ exists = true, expiresAt } = {}) {
+  return {
+    exists,
+    data: () => (exists ? { expiresAt } : undefined)
+  };
+}
+function fakeTimestamp(millis) {
+  return { toMillis: () => millis };
+}
+
+test('isLockActive: a non-existent lock doc is not active', () => {
+  assert.equal(isLockActive(fakeSnapshot({ exists: false })), false);
+});
+
+test('isLockActive: a lock with no expiresAt field blocks indefinitely (e.g. a confirmed booking)', () => {
+  assert.equal(isLockActive(fakeSnapshot({ expiresAt: undefined })), true);
+});
+
+test('isLockActive: a lock whose expiresAt is in the future still blocks', () => {
+  const inFiveMinutes = fakeTimestamp(Date.now() + 5 * 60 * 1000);
+  assert.equal(isLockActive(fakeSnapshot({ expiresAt: inFiveMinutes })), true);
+});
+
+test('isLockActive: a lock whose expiresAt has already passed no longer blocks', () => {
+  const fiveMinutesAgo = fakeTimestamp(Date.now() - 5 * 60 * 1000);
+  assert.equal(isLockActive(fakeSnapshot({ expiresAt: fiveMinutesAgo })), false);
 });

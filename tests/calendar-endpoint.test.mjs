@@ -102,6 +102,22 @@ test('calendar: every rig booked for an hour makes that specific hour unavailabl
   assert.equal(day.status, 'available'); // still has other open hours
 });
 
+test('calendar: an expired lock (abandoned checkout) no longer blocks its slot', async () => {
+  // Regression test for "Uno de esos simuladores acaba de ser reservado" firing
+  // on a genuinely free rig: a lock doc whose expiresAt has already passed
+  // (an abandoned PayPal checkout that was never explicitly released) must
+  // not keep showing that hour as unavailable.
+  fake.setDocs('reservationLocks', [
+    { id: `${testDate}_${openTime.replace(':', '')}_rig-1`, expiresAt: { toMillis: () => Date.now() - 60_000 } },
+    { id: `${testDate}_${openTime.replace(':', '')}_rig-2`, expiresAt: { toMillis: () => Date.now() - 60_000 } }
+  ]);
+  const { payload } = await callCalendar({ duration: '1' });
+  const day = payload.days.find((d) => d.date === testDate);
+  const openHour = day.hours.find((h) => h.time === openTime);
+  assert.equal(openHour.available, true);
+  fake.setDocs('reservationLocks', []);
+});
+
 test('calendar: every hour booked on every rig marks the whole day "full"', async () => {
   const day = testDate;
   const openHour = Number(openTime.split(':')[0]);

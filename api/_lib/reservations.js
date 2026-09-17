@@ -83,6 +83,14 @@
  *                           a rig over a date/time range. These IDs are used
  *                           as Firestore document IDs in `reservationLocks`
  *                           to prevent double-booking the same rig/slot.
+ *   - isLockActive(snapshot) Whether a reservationLocks doc snapshot still
+ *                           blocks its slot, i.e. it exists AND its
+ *                           `expiresAt` (if any) hasn't passed yet. Used by
+ *                           getLockedSlotIds() and by the transaction-based
+ *                           lock checks in api/reservations/create.js and
+ *                           api/_lib/paypal-reservation.js, so an abandoned
+ *                           checkout's lock stops blocking new bookings once
+ *                           it expires instead of blocking that slot forever.
  *   - getLockedSlotIds(date) All reservationLocks doc IDs for one date, in a
  *                           single range query on the document ID itself
  *                           (IDs are `${date}_${HHMM}_${rigId}`), instead of
@@ -215,6 +223,26 @@ export function findOverlappingLockdown(lockdowns, start, end){
 }
 
 /*
+ * Whether a `reservationLocks/{id}` doc snapshot should still block its slot.
+ * A checkout-initiated lock carries `expiresAt` (~CHECKOUT_TTL_MINUTES from
+ * when checkout started, see api/_lib/paypal-reservation.js) or, for a
+ * confirmed booking, ~6 hours out (see expiresAt() below). Nothing ever read
+ * that field before this fix — a lock only ever disappeared via an explicit
+ * release/cancel call, so a checkout abandoned any other way (closed tab,
+ * crash, network drop, ad-blocker killing the PayPal SDK) left a permanent
+ * phantom lock, making that exact rig/date/time look "just reserved" to
+ * every future customer forever. Treating an expired lock as inactive
+ * (rather than deleting it here, since a plain read shouldn't also be a
+ * write) fixes that without needing a cron job.
+ */
+export function isLockActive(snapshot){
+  if (!snapshot.exists) return false;
+  const expiry = snapshot.data()?.expiresAt;
+  if (expiry && typeof expiry.toMillis === 'function' && expiry.toMillis() < Date.now()) return false;
+  return true;
+}
+
+/*
  * All reservationLocks doc IDs for one date in a single query, using a
  * range scan on the document ID itself (IDs are `${date}_${HHMM}_${rigId}`,
  * see slotIds() below) rather than fetching one specific ref per candidate
@@ -229,7 +257,7 @@ export async function getLockedSlotIds(date){
       .startAt(`${date}_`)
       .endAt(`${date}_`)
       .get();
-    return new Set(snap.docs.map(d => d.id));
+    return new Set(snap.docs.filter(isLockActive).map(d => d.id));
   }, 15_000);
 }
 

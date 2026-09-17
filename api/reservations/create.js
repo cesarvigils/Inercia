@@ -51,6 +51,7 @@ import {
     getActiveLockdowns,
     findOverlappingLockdown,
     isRigBookable,
+    isLockActive,
     slotIds,
     code,
     expiresAt,
@@ -779,8 +780,7 @@ export default async function handler(req, res) {
 
                 if (
                     lockDocs.some(
-                        (snapshot) =>
-                            snapshot.exists
+                        isLockActive
                     )
                 ) {
 
@@ -793,6 +793,12 @@ export default async function handler(req, res) {
 
                 /* -------------------------------------------------
                    CREATE LOCKS
+
+                   set(), not create(): a lock doc may already exist
+                   here from an expired-but-undeleted checkout attempt
+                   (isLockActive() above already confirmed it no longer
+                   blocks) — create() would throw "already exists" on
+                   that doc instead of overwriting it.
                    ------------------------------------------------- */
 
                 for (
@@ -800,7 +806,7 @@ export default async function handler(req, res) {
                     of lockRefs
                 ) {
 
-                    transaction.create(
+                    transaction.set(
                         lockRef,
                         {
 
