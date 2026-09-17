@@ -281,10 +281,27 @@ body {
     top: 25px;
     right: 30px;
 
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
     color: rgba(255, 255, 255, 0.08);
 
     font-family: var(--display);
     font-size: 70px;
+    line-height: 1;
+}
+
+
+.section-number-label {
+    margin-bottom: 4px;
+
+    color: rgba(255, 255, 255, 0.18);
+
+    font-family: var(--body);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .14em;
     line-height: 1;
 }
 
@@ -461,8 +478,16 @@ body {
 .calendar-widget {
     display: grid;
 
+    /*
+     * Un número fijo de columnas (no auto-fill) para que la semana
+     * ocupe dos filas en vez de una sola fila angosta arriba del todo
+     * — así ocupa un alto parecido al del reloj en vez de dejar un
+     * hueco vacío debajo en pantallas grandes.
+     */
     grid-template-columns:
-        repeat(auto-fill, minmax(74px, 1fr));
+        repeat(4, minmax(0, 1fr));
+
+    align-content: start;
 
     gap: 8px;
 }
@@ -477,7 +502,7 @@ body {
     justify-content: center;
     gap: 4px;
 
-    min-height: 74px;
+    min-height: 92px;
     padding: 10px 6px;
 
     border: 1px solid rgba(255,255,255,.13);
@@ -581,13 +606,7 @@ body {
     border: 1px solid rgba(255,255,255,.13);
     border-radius: 50%;
 
-    background:
-        radial-gradient(
-            circle at center,
-            rgba(255,139,0,.05),
-            transparent 68%
-        ),
-        #171717;
+    background: #171717;
 }
 
 

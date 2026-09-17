@@ -47,6 +47,18 @@ export default async function handler(req, res) {
             },
             body: JSON.stringify({
                 intent: 'CAPTURE',
+                // Sin esto, PayPal asume que puede haber un envío físico y
+                // el formulario de tarjeta de invitado pide una dirección
+                // de envío/facturación completa (calle, apto, ciudad,
+                // estado, ZIP) con el país por defecto en EE. UU. — nada
+                // de eso aplica a una reserva de simulador, y es screen
+                // extra donde un cliente hondureño no tiene qué poner en
+                // "estado" o "ZIP code" al estilo estadounidense.
+                application_context: {
+                    shipping_preference: 'NO_SHIPPING',
+                    user_action: 'PAY_NOW',
+                    brand_name: 'Simuladores Inercia'
+                },
                 purchase_units: [
                     {
                         reference_id: draft.reservationRef.id,
