@@ -21,13 +21,26 @@ function weekdayOf(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay();
 }
+// Guaranteed-open weekday within the (7-day) booking window — picking an
+// arbitrary fixed offset would occasionally land this whole file's test
+// date on the closed Monday.
+function nextDateOnWeekday(weekday, withinDays = 6) {
+  for (let i = 1; i <= withinDays; i += 1) {
+    const candidate = addDaysISO(i);
+    if (weekdayOf(candidate) === weekday) return candidate;
+  }
+  throw new Error(`No weekday ${weekday} found within ${withinDays} days`);
+}
 
-const DEFAULT_HOURS = { 0: ['12:00', '21:00'], 1: ['10:00', '21:00'], 2: ['10:00', '21:00'], 3: ['10:00', '21:00'], 4: ['10:00', '21:00'], 5: ['10:00', '21:00'], 6: ['12:00', '21:00'] };
+// Lunes cerrado (sin entrada); martes-viernes 14:00-21:00; sábado y
+// domingo 12:00-21:00 — debe reflejar el horario real en
+// api/_lib/reservations.js's DEFAULT_CONFIG.
+const DEFAULT_HOURS = { 0: ['12:00', '21:00'], 2: ['14:00', '21:00'], 3: ['14:00', '21:00'], 4: ['14:00', '21:00'], 5: ['14:00', '21:00'], 6: ['12:00', '21:00'] };
 
-// A date at least 2 days out (clear of "today"'s lead-time edge cases) with
-// predictable, default opening hours.
-const testDate = addDaysISO(2);
-const [openTime] = DEFAULT_HOURS[weekdayOf(testDate)];
+// A Tuesday within the window: guaranteed open, and far enough out to be
+// clear of "today"'s lead-time edge cases.
+const testDate = nextDateOnWeekday(2);
+const [openTime, closeTime] = DEFAULT_HOURS[weekdayOf(testDate)];
 
 const fake = createFakeFirestore({
   rigs: [
@@ -91,8 +104,10 @@ test('calendar: every rig booked for an hour makes that specific hour unavailabl
 
 test('calendar: every hour booked on every rig marks the whole day "full"', async () => {
   const day = testDate;
+  const openHour = Number(openTime.split(':')[0]);
+  const closeHour = Number(closeTime.split(':')[0]);
   const locks = [];
-  for (let h = 10; h < 21; h += 1) {
+  for (let h = openHour; h < closeHour; h += 1) {
     locks.push({ id: `${day}_${String(h).padStart(2, '0')}00_rig-1` });
     locks.push({ id: `${day}_${String(h).padStart(2, '0')}00_rig-2` });
   }

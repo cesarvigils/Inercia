@@ -50,15 +50,19 @@ const config = {
   maxDurationHours: 8,
   slotMinutes: 30,
   prices: { standard: 200, premium: 350 },
+  // Lunes cerrado (sin entrada); martes-viernes 14:00-21:00; sábado y
+  // domingo 12:00-21:00 — el horario real del negocio.
   hours: {
-    0: ['12:00', '21:00'], 1: ['10:00', '21:00'], 2: ['10:00', '21:00'],
-    3: ['10:00', '21:00'], 4: ['10:00', '21:00'], 5: ['10:00', '21:00'], 6: ['12:00', '21:00']
+    0: ['12:00', '21:00'], 2: ['14:00', '21:00'],
+    3: ['14:00', '21:00'], 4: ['14:00', '21:00'], 5: ['14:00', '21:00'], 6: ['12:00', '21:00']
   },
   lateBooking: { enabled: true, thresholdMinutes: 60, type: 'percent', value: 10 }
 };
 
 test('validateWhen: accepts a well-formed booking inside hours/window/lead time', () => {
-  const date = inWindow(2);
+  // A guaranteed-open weekday (not the closed Monday) within the window,
+  // rather than an arbitrary offset that could land on a closed day.
+  const date = nextDateOnWeekday(2, 6);
   const day = dateDay(date);
   const [openTime] = config.hours[day];
   const start = hm(openTime) + 60; // an hour after opening, safely inside the window
@@ -85,7 +89,7 @@ test('validateWhen: rejects a booking outside the configured window', () => {
 });
 
 test('validateWhen: rejects a time outside that day\'s opening hours', () => {
-  const date = inWindow(2);
+  const date = nextDateOnWeekday(2, 6);
   const day = dateDay(date);
   const [, closeTime] = config.hours[day];
   const closeMinutes = hm(closeTime);
@@ -98,7 +102,11 @@ test('validateWhen: rejects a booking made too close to the requested time', () 
   const today = localParts();
   const inFiveMinutes = today.minutes + 5;
   const time = `${String(Math.floor(inFiveMinutes / 60) % 24).padStart(2, '0')}:${String(inFiveMinutes % 60).padStart(2, '0')}`;
-  assert.throws(() => validateWhen(today.date, time, 1, config), /anticipación/);
+  // Force today's weekday open all day so only the lead-time check (what
+  // this test is actually about) can fail — otherwise this would flake
+  // specifically whenever the suite happens to run on a closed Monday.
+  const allDayConfig = { ...config, hours: { ...config.hours, [today.weekday]: ['00:00', '23:59'] } };
+  assert.throws(() => validateWhen(today.date, time, 1, allDayConfig), /anticipación/);
 });
 
 test('priceReservation: sums per-rig hourly price', () => {

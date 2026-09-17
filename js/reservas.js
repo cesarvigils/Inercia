@@ -239,15 +239,6 @@ let loginRequiredShown =
 
 const wheel =
     'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49';
-const DEFAULT_HOURS = {
-    0: ['12:00', '21:00'], // Domingo
-    1: null,                // Lunes - CERRADO
-    2: ['14:00', '21:00'], // Martes
-    3: ['14:00', '21:00'], // Miércoles
-    4: ['14:00', '21:00'], // Jueves
-    5: ['14:00', '21:00'], // Viernes
-    6: ['12:00', '21:00']  // Sábado
-};
 
 
 /* =========================================================

@@ -107,7 +107,9 @@ export const TZ = 'America/Tegucigalpa';
 const DEFAULT_CONFIG = {
   bookingWindowDays: 7, minLeadMinutes: 30, minDurationHours: 1, maxDurationHours: 8, slotMinutes: 30,
   prices: { standard: 200, premium: 350 },
-  hours: { 0: ['12:00','21:00'], 1: ['10:00','21:00'], 2: ['10:00','21:00'], 3: ['10:00','21:00'], 4: ['10:00','21:00'], 5: ['10:00','21:00'], 6: ['12:00','21:00'] },
+  // Lunes cerrado (sin entrada = cerrado, ver validateWhen/getConfig).
+  // Martes a viernes 14:00-21:00, sábado y domingo 12:00-21:00.
+  hours: { 0: ['12:00','21:00'], 2: ['14:00','21:00'], 3: ['14:00','21:00'], 4: ['14:00','21:00'], 5: ['14:00','21:00'], 6: ['12:00','21:00'] },
   lateBooking: { enabled: true, thresholdMinutes: 60, type: 'percent', value: 0 },
   payment: { bankTransfer: true, card: true, paypal: false, bank: 'BAC', currency: 'HNL', account: '758-610-001', beneficiary: 'Inercia S.A.' }
 };

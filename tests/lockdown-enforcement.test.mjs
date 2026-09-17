@@ -36,9 +36,21 @@ function weekdayOf(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay();
 }
+// Guaranteed-open weekday within the window — an arbitrary fixed offset
+// would occasionally land on the closed Monday.
+function nextDateOnWeekday(weekday, withinDays = 6) {
+  for (let i = 1; i <= withinDays; i += 1) {
+    const candidate = addDaysISO(i);
+    if (weekdayOf(candidate) === weekday) return candidate;
+  }
+  throw new Error(`No weekday ${weekday} found within ${withinDays} days`);
+}
 
-const testDate = addDaysISO(2);
-const defaultHours = { 0: ['12:00', '21:00'], 1: ['10:00', '21:00'], 2: ['10:00', '21:00'], 3: ['10:00', '21:00'], 4: ['10:00', '21:00'], 5: ['10:00', '21:00'], 6: ['12:00', '21:00'] };
+// Lunes cerrado (sin entrada); martes-viernes 14:00-21:00; sábado y
+// domingo 12:00-21:00 — debe reflejar el horario real en
+// api/_lib/reservations.js's DEFAULT_CONFIG.
+const defaultHours = { 0: ['12:00', '21:00'], 2: ['14:00', '21:00'], 3: ['14:00', '21:00'], 4: ['14:00', '21:00'], 5: ['14:00', '21:00'], 6: ['12:00', '21:00'] };
+const testDate = nextDateOnWeekday(2);
 const [openTime] = defaultHours[weekdayOf(testDate)];
 const requestTime = openTime.replace(/^(\d{2}):/, (_, h) => `${String((Number(h) + 2) % 24).padStart(2, '0')}:`); // 2h after opening
 
@@ -97,8 +109,12 @@ test('availability: an inactive (soft-deleted) lockdown does not block', async (
 });
 
 test('availability: a lockdown on a different date does not block this one', async () => {
+  // Derived from testDate itself (not a fixed "now+N" offset) so it's
+  // guaranteed to differ from it regardless of which day testDate lands on.
+  const [ty, tm, td] = testDate.split('-').map(Number);
+  const otherDate = new Date(Date.UTC(ty, tm - 1, td + 1)).toISOString().slice(0, 10);
   fake.setDocs('availabilityLockdowns', [
-    { id: 'lock1', date: addDaysISO(3), start: '00:00', end: '23:59', active: true }
+    { id: 'lock1', date: otherDate, start: '00:00', end: '23:59', active: true }
   ]);
   const res = await callAvailability();
   assert.equal(res.statusCode, 200);
