@@ -13,11 +13,27 @@
 // upload time too, so a bad file never lands in Storage in the first place
 // instead of being rejected only after the fact when the reservation is
 // created. Keep the two in sync if either changes.
+//
+// Admin read access: an admin needs to open a customer's uploaded proof to
+// verify a bank transfer before approving the reservation (see the
+// paymentVerification flow in api/reservations/create.js and the admin
+// check in api/paypal/refund.js / api/paypal/settings.js). isAdmin() below
+// mirrors that exact server-side check — same collection (`adminUsers`),
+// same field (`enabled == true`) — so "is this uid an admin" means the same
+// thing here and in the API. firestore.get()/exists() calls from Storage
+// rules run with elevated access and are NOT filtered by firestore.rules,
+// so no change is needed there for this to work.
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null &&
+             firestore.exists(/databases/(default)/documents/adminUsers/$(request.auth.uid)) &&
+             firestore.get(/databases/(default)/documents/adminUsers/$(request.auth.uid)).data.enabled == true;
+    }
+
     match /reservation-proofs/{uid}/{fileName} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
       allow write: if request.auth != null
                    && request.auth.uid == uid
                    && request.resource.size <= 5 * 1024 * 1024
