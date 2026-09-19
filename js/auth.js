@@ -28,6 +28,8 @@
 
 import { auth, db } from '../firebase-config.js';
 
+import { normalizePhone } from '../lib/phone.js';
+
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -1372,6 +1374,17 @@ registerForm?.addEventListener('submit', async (event) => {
     }
 
 
+    /*
+     * Normalizamos el teléfono aquí (antes de guardarlo en
+     * Firestore) para que TODOS los números nuevos queden en el
+     * mismo formato ("+504 9999-9999"), sin importar cómo lo haya
+     * escrito el usuario (con o sin +504, guiones, espacios, etc.).
+     */
+
+    const normalizedPhone =
+        normalizePhone(phone);
+
+
     if (password.length < 6) {
 
         showMessage(
@@ -1486,14 +1499,15 @@ registerForm?.addEventListener('submit', async (event) => {
 
                 /*
                  * Campo principal que usaremos
-                 * para reservas.
+                 * para reservas. Ya normalizado
+                 * (formato "+504 9999-9999").
                  */
-                phone: phone,
+                phone: normalizedPhone,
 
                 /*
                  * Compatibilidad con código viejo.
                  */
-                phoneNumber: phone,
+                phoneNumber: normalizedPhone,
 
                 provider: 'password',
 

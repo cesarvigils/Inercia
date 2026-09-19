@@ -29,6 +29,8 @@
 
 import { FieldValue } from 'firebase-admin/firestore';
 
+import { normalizePhone } from '../../lib/phone.js';
+
 import {
     method,
     json,
@@ -340,11 +342,11 @@ export default async function handler(req, res) {
                     .toLowerCase(),
 
             phoneNumber:
-                String(
+                normalizePhone(
                     profile.phone ||
                     profile.phoneNumber ||
                     ''
-                ).trim()
+                )
         };
 
 

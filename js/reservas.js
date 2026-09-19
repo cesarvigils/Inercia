@@ -77,6 +77,8 @@
 
 import { auth, db } from '../firebase-config.js';
 
+import { normalizePhone } from '../lib/phone.js';
+
 import {
     doc,
     getDoc
@@ -2460,13 +2462,15 @@ async function profile(
 
 
             phoneNumber:
-                firestoreProfile
-                    .phone ||
+                normalizePhone(
+                    firestoreProfile
+                        .phone ||
 
-                firestoreProfile
-                    .phoneNumber ||
+                    firestoreProfile
+                        .phoneNumber ||
 
-                ''
+                    ''
+                )
         };
 
 
