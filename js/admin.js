@@ -74,6 +74,14 @@ const fdate = (v) => (v ? String(v).split("-").reverse().join("/") : "N/D");
 
 const dt = (v) => (v?.toDate ? v.toDate() : v ? new Date(v) : null);
 
+// Permanent business rule: every Tuesday is 50% off (mirrors applyTuesdayPromotion
+// in api/_lib/reservations.js on the main site so admin-created reservations match).
+const isTuesday = (dateStr) => {
+    if (!dateStr) return false;
+    let [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay() === 2;
+};
+
 // Authorization check
 async function authorized(u) {
     if (!u) return false;
@@ -1228,7 +1236,7 @@ $("#newReservationBtn").onclick = () => {
             (rig) => selectedIds.includes(rig.id)
         );
 
-        const total = selectedRigs.reduce(
+        const subtotal = selectedRigs.reduce(
             (sum, rig) => {
                 const type = String(
                     rig.type || "standard"
@@ -1249,10 +1257,20 @@ $("#newReservationBtn").onclick = () => {
             0
         );
 
-        $("#mrTotal").textContent =
-            money(total);
+        const tuesdayDiscount = isTuesday($("#mrDate").value)
+            ? Math.round(subtotal * 0.5 * 100) / 100
+            : 0;
+
+        const total =
+            Math.round((subtotal - tuesdayDiscount) * 100) / 100;
+
+        $("#mrTotal").textContent = tuesdayDiscount
+            ? `${money(total)} (-50% MARTES)`
+            : money(total);
 
         return {
+            subtotal,
+            tuesdayDiscount,
             total,
             selectedRigs
         };
@@ -1277,6 +1295,11 @@ $("#newReservationBtn").onclick = () => {
         calculateTotal
     );
 
+    $("#mrDate").addEventListener(
+        "change",
+        calculateTotal
+    );
+
 
     /* =========================================================
        CREAR RESERVA
@@ -1292,6 +1315,8 @@ $("#newReservationBtn").onclick = () => {
                 );
 
             const {
+                subtotal,
+                tuesdayDiscount,
                 total,
                 selectedRigs
             } = calculateTotal();
@@ -1448,6 +1473,19 @@ $("#newReservationBtn").onclick = () => {
                             ),
 
                         pricing: {
+                            beforeTuesdayDiscount:
+                                subtotal,
+
+                            tuesdayDiscount,
+
+                            tuesdayDiscountPercent:
+                                tuesdayDiscount
+                                    ? 50
+                                    : 0,
+
+                            tuesdayPromotionApplied:
+                                tuesdayDiscount > 0,
+
                             total
                         },
 
