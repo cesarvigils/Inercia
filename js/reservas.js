@@ -2461,6 +2461,9 @@ async function profile(
 
             phoneNumber:
                 firestoreProfile
+                    .phone ||
+
+                firestoreProfile
                     .phoneNumber ||
 
                 ''
