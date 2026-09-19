@@ -27,6 +27,7 @@
 
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin.js';
+import { normalizePhone } from '../../lib/phone.js';
 import {
     getConfig,
     validateWhen,
@@ -76,7 +77,7 @@ export async function buildPaypalReservationData(user, body) {
     const customer = {
         name: String(profile.name || user.name || '').trim(),
         email: String(profile.email || user.email || '').trim().toLowerCase(),
-        phoneNumber: String(profile.phone || profile.phoneNumber || '').trim()
+        phoneNumber: normalizePhone(profile.phone || profile.phoneNumber || '')
     };
 
     if (!customer.name) throw bad('Tu cuenta no tiene un nombre registrado.');
