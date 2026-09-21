@@ -80,17 +80,12 @@ const ALLOWED_PROOF_TYPES =
     ]);
 
 
-/* =========================================================
-   HANDLER
-   ========================================================= */
 
 export default async function handler(req, res) {
 
     try {
 
-        /* =================================================
-           METHOD
-           ================================================= */
+
 
         if (
             !method(
@@ -118,16 +113,6 @@ export default async function handler(req, res) {
                 401
             );
         }
-
-
-        /* =================================================
-           RATE LIMIT
-
-           Por uid (no por IP) porque el endpoint ya exige
-           sesión: así un wifi compartido en el local no
-           frena a otros clientes.
-           ================================================= */
-
         if (
             !rateLimit(req, res, {
                 key: `create:${user.uid}`,
@@ -143,10 +128,6 @@ export default async function handler(req, res) {
             req.body || {};
 
 
-        /* =================================================
-           CONFIG + DATE/TIME
-           ================================================= */
-
         const config =
             await getConfig();
 
@@ -158,16 +139,6 @@ export default async function handler(req, res) {
                 body.duration,
                 config
             );
-
-
-        /* =================================================
-           ADMIN LOCKDOWNS
-
-           Antes solo se comprobaba en
-           api/reservations/availability.js (la UI se ponía
-           gris), pero nunca acá — así que un lockdown nunca
-           bloqueaba de verdad una reserva creada directamente.
-           ================================================= */
 
         const lockdowns =
             await getActiveLockdowns(body.date);
@@ -254,7 +225,7 @@ export default async function handler(req, res) {
          */
 
 
-        /* =================================================
+        /* 
            CUSTOMER PROFILE - FIRESTORE
 
            IMPORTANTE:
@@ -272,7 +243,7 @@ export default async function handler(req, res) {
            - email
            - phone
            - phoneNumber (fallback)
-           ================================================= */
+            */
 
         let profile = {};
 
