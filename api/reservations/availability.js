@@ -36,7 +36,8 @@ import {
     bad,
     getActiveRigs,
     getActiveLockdowns,
-    findOverlappingLockdown
+    findOverlappingLockdown,
+    isLockActive
 } from '../_lib/reservations.js';
 
 // getActiveLockdowns/findOverlappingLockdown used to be defined only in this
@@ -172,48 +173,84 @@ export default async function handler(
 
         /* =================================================
            RESERVATION LOCKS
+
+           Each rig keeps its own slot-doc refs (rather than a single
+           flattened list re-parsed back into a rig id from the doc id
+           string afterward) so this holds up even if a rig id ever
+           contains an underscore itself — slotIds()'s doc ids are
+           `${date}_${HHMM}_${rigId}`, and splitting that back apart on
+           '_' would silently mis-associate such a rig's lock with the
+           wrong id, making it look permanently available.
+
+           isLockActive(), not a bare `snapshot.exists`, so a lock left
+           behind by an abandoned checkout (see isLockActive's own
+           comment in ../_lib/reservations.js) stops blocking once it
+           expires here too, same as calendar.js and create.js already
+           do — this endpoint was the one path still checking existence
+           alone.
            ================================================= */
 
-        const refs =
-            rigs.flatMap(
-                rig =>
-                    slotIds(
-                        date,
-                        start,
-                        end,
-                        config.slotMinutes,
-                        rig.id
-                    )
-                        .map(
-                            id =>
-                                adminDb.doc(
-                                    `reservationLocks/${id}`
-                                )
+        const rigSlotRefs =
+            rigs.map(
+                rig => ({
+                    rig,
+                    refs:
+                        slotIds(
+                            date,
+                            start,
+                            end,
+                            config.slotMinutes,
+                            rig.id
                         )
+                            .map(
+                                id =>
+                                    adminDb.doc(
+                                        `reservationLocks/${id}`
+                                    )
+                            )
+                })
             );
 
 
-        const docs =
-            refs.length
+        const allRefs =
+            rigSlotRefs.flatMap(
+                entry =>
+                    entry.refs
+            );
+
+
+        const allDocs =
+            allRefs.length
                 ? await adminDb.getAll(
-                    ...refs
+                    ...allRefs
                 )
                 : [];
 
 
-        const locked =
-            new Set(
-                docs
-                    .filter(
-                        snapshot =>
-                            snapshot.exists
-                    )
-                    .map(
-                        snapshot =>
-                            snapshot.id
-                                .split('_')
-                                .at(-1)
-                    )
+        let cursor = 0;
+
+        const availabilityByRigId =
+            new Map(
+                rigSlotRefs.map(
+                    ({ rig, refs }) => {
+
+                        const docs =
+                            allDocs.slice(
+                                cursor,
+                                cursor + refs.length
+                            );
+
+                        cursor +=
+                            refs.length;
+
+                        return [
+                            rig.id,
+                            !docs.some(
+                                isLockActive
+                            )
+                        ];
+                    }
+                )
             );
 
 
@@ -231,7 +268,7 @@ export default async function handler(
                             ...rig,
 
                             available:
-                                !locked.has(
+                                availabilityByRigId.get(
                                     rig.id
                                 )
                         })
