@@ -1160,8 +1160,12 @@ td:last-child {
 .actions {
     display: grid;
 
-    /* EDITAR + RECHAZAR + APROBAR on the pending-reservation drawer. */
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /*
+     * Just EDITAR on an approved reservation, or EDITAR + RECHAZAR +
+     * APROBAR on a pending one — auto-fit so either count fills the
+     * row evenly instead of leaving empty grid cells.
+     */
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 
     gap: 9px;
 
