@@ -4,7 +4,7 @@ service cloud.firestore { match /databases/{database}/documents {
   function isAdmin(){ return signedIn() && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid)) && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.enabled == true; }
   match /adminUsers/{uid}{ allow read: if signedIn() && request.auth.uid == uid; allow write: if false; }
   match /reservations/{id}{ allow read,create,update: if isAdmin(); }
-  match /reservationLocks/{id}{ allow read,delete: if isAdmin(); }
+  match /reservationLocks/{id}{ allow read,create,update,delete: if isAdmin(); }
   match /rigs/{id}{ allow read,write: if isAdmin(); }
   match /sales/{id}{ allow read,write: if isAdmin(); }
   match /products/{id}{ allow read,write: if isAdmin(); }
