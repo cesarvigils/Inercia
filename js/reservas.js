@@ -1856,6 +1856,18 @@ function render(
             : [];
 
 
+    /*
+     * Sumamos el total a partir de lo que realmente se muestra en cada
+     * grupo (no filtrando safeList por separado), para que el contador
+     * de arriba nunca pueda quedar desincronizado de lo que el cliente
+     * ve: un rig cuyo `type` no sea 'standard' ni 'premium' (y por lo
+     * tanto no aparece en ningún grid) tampoco suma al total.
+     */
+
+    let totalAvailable =
+        0;
+
+
     for (
         const type
         of [
@@ -1918,18 +1930,16 @@ function render(
                 .textContent =
                 `${available} DISPONIBLES`;
         }
+
+
+        totalAvailable +=
+            available;
     }
 
 
     setText(
         'availableCount',
-
-        safeList.filter(
-            (
-                rig
-            ) =>
-                rig.available
-        ).length
+        totalAvailable
     );
 
 
