@@ -531,7 +531,17 @@ async function openReservation(id) {
         }
 
         ${
-            r.status === "pending"
+            /*
+             * EDITAR queda disponible en pending Y approved: una reserva
+             * de PayPal (que se aprueba sola al capturarse el pago) podía
+             * necesitar el mismo tipo de corrección que una pendiente, y
+             * antes no había ninguna forma de tocarla salvo rechazarla.
+             * RECHAZAR/APROBAR siguen siendo solo para pending — no tiene
+             * sentido "aprobar" o "rechazar" algo que ya se resolvió.
+             * Una reserva rejected no se puede editar: ya no cuenta para
+             * el calendario ni para disponibilidad.
+             */
+            ["pending", "approved"].includes(r.status)
                 ? `
                     <div class="actions">
                         <button
@@ -541,19 +551,25 @@ async function openReservation(id) {
                             EDITAR
                         </button>
 
-                        <button
-                            id="reject"
-                            class="danger"
-                        >
-                            RECHAZAR
-                        </button>
+                        ${
+                            r.status === "pending"
+                                ? `
+                                    <button
+                                        id="reject"
+                                        class="danger"
+                                    >
+                                        RECHAZAR
+                                    </button>
 
-                        <button
-                            id="approve"
-                            class="primary"
-                        >
-                            APROBAR
-                        </button>
+                                    <button
+                                        id="approve"
+                                        class="primary"
+                                    >
+                                        APROBAR
+                                    </button>
+                                `
+                                : ""
+                        }
                     </div>
                 `
                 : ""
@@ -679,6 +695,29 @@ function openEditReservation(r) {
             ? r.payment
             : r.payment?.method || "efectivo";
 
+    const EDITABLE_PAYMENT_METHODS =
+        ["efectivo", "transferencia", "tarjeta"];
+
+    /*
+     * Una reserva pagada por PayPal (o cualquier otro método que este
+     * formulario no ofrece) no está en la lista de arriba. Sin esta
+     * opción de respaldo, el <select> simplemente cae en la primera
+     * opción (EFECTIVO) sin marcarla como tal, y guardar sin tocar
+     * este campo le cambiaría el método de pago real a "efectivo" en
+     * silencio.
+     */
+    const paymentFallbackOption =
+        EDITABLE_PAYMENT_METHODS.includes(currentPayment)
+            ? ""
+            : `
+                <option
+                    value="${esc(currentPayment)}"
+                    selected
+                >
+                    ${esc(currentPayment.toUpperCase())}
+                </option>
+            `;
+
     const durationOptions = [1, 2, 3, 4]
         .map((h) => `
             <option
@@ -763,6 +802,8 @@ function openEditReservation(r) {
                     >
                         TARJETA
                     </option>
+
+                    ${paymentFallbackOption}
                 </select>
             </label>
 
