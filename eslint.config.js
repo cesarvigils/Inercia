@@ -83,6 +83,7 @@ export default [
         Event: 'readonly',
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
+        IntersectionObserver: 'readonly',
         queueMicrotask: 'readonly',
       },
     },

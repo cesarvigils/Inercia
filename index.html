@@ -130,21 +130,7 @@
     <p>© <span id="year"></span> Simuladores Inercia — Todos los derechos reservados</p>
   </footer>
 
-<script>
-  document.getElementById('year').textContent = new Date().getFullYear();
-  const revealEls = document.querySelectorAll('.reveal, .reveal-up');
-
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-        io.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.15 });
-
-  revealEls.forEach(el => io.observe(el));
-</script>
+<script type="module" src="js/home.js"></script>
 <script type="module" src="js/menu.js"></script>
 </body>
 <video class="page-bg-video" autoplay muted loop playsinline>
