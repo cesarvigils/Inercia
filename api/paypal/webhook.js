@@ -19,14 +19,34 @@
  * because PayPal retries webhook deliveries and can send the same event
  * more than once.
  *
- * Only PAYMENT.CAPTURE.COMPLETED is currently handled; other event types
- * are acknowledged (200 OK) but otherwise ignored.
+ * If handling an event fails, its paypalWebhookEvents marker is removed
+ * again before answering 500, so PayPal's retry is processed instead of
+ * being skipped as a duplicate.
+ *
+ * Handled events:
+ *   - PAYMENT.CAPTURE.COMPLETED: one-off reservation payments (above).
+ *   - BILLING.SUBSCRIPTION.* and PAYMENT.SALE.COMPLETED (a subscription
+ *     renewal): membership changes. The event only names the subscription;
+ *     its current state is re-read from PayPal by syncSubscription() (see
+ *     api/_lib/membership.js), so events arriving out of order are harmless.
+ * Other event types are acknowledged (200 OK) but otherwise ignored.
  */
 
 import { FieldValue } from 'firebase-admin/firestore';
 import { method, json } from '../_lib/http.js';
 import { adminDb } from '../_lib/firebase-admin.js';
 import { verifyPaypalWebhook } from '../_lib/paypal.js';
+import { syncSubscription } from '../_lib/membership.js';
+
+// Which subscription an event is about. BILLING.SUBSCRIPTION.* events carry
+// the subscription itself; a renewal payment (PAYMENT.SALE.COMPLETED)
+// carries it as billing_agreement_id, and a one-off sale has none.
+function subscriptionIdFor(event) {
+    const type = String(event.event_type || '');
+    if (type.startsWith('BILLING.SUBSCRIPTION.')) return event.resource?.id || null;
+    if (type === 'PAYMENT.SALE.COMPLETED') return event.resource?.billing_agreement_id || null;
+    return null;
+}
 
 // Reservations don't store PayPal's capture id until after our own
 // capture-order flow runs, so incoming webhooks match by the order id
@@ -43,6 +63,8 @@ async function findReservationByOrderId(orderId) {
 }
 
 export default async function handler(req, res) {
+    let eventRef = null;
+
     try {
         if (!method(req, res, ['POST'])) return;
 
@@ -53,13 +75,22 @@ export default async function handler(req, res) {
         }
 
         if (event.id) {
-            const eventRef = adminDb.doc(`paypalWebhookEvents/${event.id}`);
-            const seen = await eventRef.get();
+            const ref = adminDb.doc(`paypalWebhookEvents/${event.id}`);
+            const seen = await ref.get();
             if (seen.exists) return json(res, 200, { ok: true, duplicate: true });
-            await eventRef.set({
+            await ref.set({
                 type: event.event_type || null,
                 receivedAt: FieldValue.serverTimestamp()
             });
+            eventRef = ref;
+        }
+
+        const subscriptionId = subscriptionIdFor(event);
+        if (subscriptionId) {
+            const result = await syncSubscription(subscriptionId);
+            if (result.ignored) {
+                console.warn('[PAYPAL WEBHOOK] Suscripción ignorada:', subscriptionId, result.ignored);
+            }
         }
 
         if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
@@ -97,6 +128,10 @@ export default async function handler(req, res) {
         return json(res, 200, { ok: true });
     } catch (error) {
         console.error('[PAYPAL WEBHOOK]', error);
+        if (eventRef) {
+            await eventRef.delete().catch((cleanupError) =>
+                console.error('[PAYPAL WEBHOOK CLEANUP]', cleanupError));
+        }
         return json(res, 500, { error: 'Webhook no procesado.' });
     }
 }

@@ -1,7 +1,8 @@
 /*
  * POST /api/reservations/create
  *
- * Creates a reservation paid by bank transfer ("transferencia"). This is
+ * Creates a reservation paid by bank transfer ("transferencia") or, for
+ * members only, in cash at the venue ("efectivo"). This is
  * the non-PayPal counterpart to the flow in api/paypal/create-order.js +
  * api/_lib/paypal-reservation.js — it's a single endpoint rather than a
  * create/capture pair because there's no third-party payment step to wait
@@ -10,8 +11,12 @@
  * verifies that upload and records the reservation as awaiting manual
  * verification.
  *
- * Body: { date, time, duration, rigIds: string[], payment: 'transferencia',
- *         proofPath: string }
+ * Body: { date, time, duration, rigIds: string[],
+ *         payment: 'transferencia' | 'efectivo', proofPath?: string }
+ *   'efectivo' requires an active membership (api/_lib/membership.js),
+ *   checked here server-side: the browser only hides the option, it can't
+ *   be trusted to enforce it. It needs no proof and no payment
+ *   verification; the reservation records which membership allowed it.
  *   proofPath must point at a file already uploaded under
  *   `reservation-proofs/<uid>/...` in Firebase Storage (checked below —
  *   see the PAYMENT PROOF section — for ownership, path traversal, size,
@@ -22,9 +27,9 @@
  * transaction to prevent double-booking — never trust a price or
  * availability sent from the browser.
  *
- * Resulting reservation starts at status 'pending' with
- * paymentVerification.status 'pending', to be manually approved by an
- * admin after checking the uploaded proof.
+ * Resulting reservation starts at status 'pending' (paymentVerification
+ * 'pending' for a transfer, 'not_required' for cash), to be manually
+ * approved by an admin.
  */
 
 import { FieldValue } from 'firebase-admin/firestore';
@@ -60,13 +65,19 @@ import {
     bad
 } from '../_lib/reservations.js';
 
+import {
+    getMembership,
+    isMembershipActive
+} from '../_lib/membership.js';
+
 
 /* =========================================================
    CONSTANTS
    ========================================================= */
 
 const METHODS = new Set([
-    'transferencia'
+    'transferencia',
+    'efectivo'
 ]);
 
 const MAX_RIGS = 10;
@@ -222,9 +233,38 @@ export default async function handler(req, res) {
         /*
          * FLUJO DE PAGO
          * transferencia = comprobante + verificación manual
+         * efectivo = solo con membresía activa, se paga al llegar
          * PayPal usa endpoints dedicados /api/paypal/*
          * WhatsApp se conectará después.
          */
+
+        let membership =
+            null;
+
+
+        if (
+            payment ===
+            'efectivo'
+        ) {
+
+            membership =
+                await getMembership(
+                    user.uid
+                );
+
+
+            if (
+                !isMembershipActive(
+                    membership
+                )
+            ) {
+
+                throw bad(
+                    'El pago en efectivo está disponible únicamente para miembros con una suscripción activa.',
+                    403
+                );
+            }
+        }
 
 
         /* 
@@ -888,6 +928,18 @@ export default async function handler(req, res) {
 
                         paymentProof:
                             proof,
+
+                        // Qué membresía habilitó el pago en efectivo.
+                        ...(membership
+                            ? {
+                                membership: {
+                                    source:
+                                        membership.source || 'paypal',
+                                    subscriptionId:
+                                        membership.subscriptionId || null
+                                }
+                            }
+                            : {}),
 
                         // Preparado para el flujo futuro de confirmación/WhatsApp.
                         paymentVerification: {

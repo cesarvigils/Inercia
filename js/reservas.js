@@ -1752,31 +1752,78 @@ function card(
         `Simulador ${rigNumber}`;
 
 
-    button.innerHTML = `
-        <span class="simulator-check">
-            ✓
-        </span>
+    /*
+     * rig.name y rig.type vienen de Firestore (los edita el panel
+     * admin), así que se escriben con textContent y nunca como HTML.
+     */
+    const check =
+        document.createElement(
+            'span'
+        );
 
-        <img
-            class="simulator-wheel"
-            src="${wheel}"
-            alt=""
-        >
+    check.className =
+        'simulator-check';
 
-        <span class="simulator-card-info">
+    check.textContent =
+        '✓';
 
-            <small>
-                ${String(
-                    rig.type || ''
-                ).toUpperCase()}
-            </small>
 
-            <strong>
-                ${rigName.toUpperCase()}
-            </strong>
+    const wheelImg =
+        document.createElement(
+            'img'
+        );
 
-        </span>
-    `;
+    wheelImg.className =
+        'simulator-wheel';
+
+    wheelImg.src =
+        wheel;
+
+    wheelImg.alt =
+        '';
+
+
+    const info =
+        document.createElement(
+            'span'
+        );
+
+    info.className =
+        'simulator-card-info';
+
+
+    const typeLabel =
+        document.createElement(
+            'small'
+        );
+
+    typeLabel.textContent =
+        String(
+            rig.type || ''
+        ).toUpperCase();
+
+
+    const nameLabel =
+        document.createElement(
+            'strong'
+        );
+
+    nameLabel.textContent =
+        String(
+            rigName
+        ).toUpperCase();
+
+
+    info.append(
+        typeLabel,
+        nameLabel
+    );
+
+    button.append(
+        check,
+        wheelImg,
+        info
+    );
 
 
     if (
@@ -1856,6 +1903,18 @@ function render(
             : [];
 
 
+    /*
+     * Sumamos el total a partir de lo que realmente se muestra en cada
+     * grupo (no filtrando safeList por separado), para que el contador
+     * de arriba nunca pueda quedar desincronizado de lo que el cliente
+     * ve: un rig cuyo `type` no sea 'standard' ni 'premium' (y por lo
+     * tanto no aparece en ningún grid) tampoco suma al total.
+     */
+
+    let totalAvailable =
+        0;
+
+
     for (
         const type
         of [
@@ -1918,18 +1977,16 @@ function render(
                 .textContent =
                 `${available} DISPONIBLES`;
         }
+
+
+        totalAvailable +=
+            available;
     }
 
 
     setText(
         'availableCount',
-
-        safeList.filter(
-            (
-                rig
-            ) =>
-                rig.available
-        ).length
+        totalAvailable
     );
 
 
