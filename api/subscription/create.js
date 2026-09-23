@@ -14,7 +14,10 @@
  * Either way, the browser then calls POST /api/subscription/activate; if it
  * never does, the BILLING.SUBSCRIPTION.ACTIVATED webhook records it.
  *
- * Response 201: { subscriptionID, approveUrl, status }
+ * Body (optional): { planId } — one of the plans in PAYPAL_MEMBERSHIP_PLAN_ID
+ * (e.g. monthly vs yearly). Defaults to the first one listed.
+ *
+ * Response 201: { subscriptionID, approveUrl, status, planId }
  * 409 if the caller already has an active membership.
  */
 
@@ -45,7 +48,12 @@ export default async function handler(req, res) {
 
         if (!rateLimit(req, res, { key: `subscription-create:${user.uid}`, limit: 5, windowMs: 60_000 })) return;
 
-        const [planId] = membershipPlanIds();
+        const planIds = membershipPlanIds();
+        const requestedPlan = String(req.body?.planId || '').trim();
+        if (requestedPlan && !planIds.includes(requestedPlan)) {
+            throw bad('Ese plan de membresía no existe.');
+        }
+        const planId = requestedPlan || planIds[0];
         await assertPaypalEnabled();
 
         const existing = await getMembership(user.uid);
@@ -92,7 +100,8 @@ export default async function handler(req, res) {
         return json(res, 201, {
             subscriptionID: subscription.id,
             approveUrl,
-            status: subscription.status || null
+            status: subscription.status || null,
+            planId
         });
     } catch (error) {
         return fail(res, error);

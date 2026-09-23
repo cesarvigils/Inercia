@@ -101,7 +101,7 @@ test('membershipPayload: the browser gets `active` plus a few display fields, no
   });
 });
 
-test('membershipPlanIds: first id is for new subscriptions, the rest are still accepted; none is a 503', () => {
+test('membershipPlanIds: parses the comma-separated list; none is a 503', () => {
   const original = process.env.PAYPAL_MEMBERSHIP_PLAN_ID;
   try {
     process.env.PAYPAL_MEMBERSHIP_PLAN_ID = ' P-NEW , P-OLD ,';

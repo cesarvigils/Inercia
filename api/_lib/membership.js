@@ -26,11 +26,14 @@
  * someone else's subscription id).
  *
  * Environment:
- *   PAYPAL_MEMBERSHIP_PLAN_ID  PayPal billing plan id(s) (P-...). The first
- *                              one is used for new subscriptions; any
- *                              others (comma separated) are still accepted
- *                              for existing subscribers, so a price change
- *                              (a new plan) doesn't cut off current members.
+ *   PAYPAL_MEMBERSHIP_PLAN_ID  PayPal billing plan id(s) (P-...), comma
+ *                              separated. Every listed plan counts as a
+ *                              membership (e.g. monthly and yearly), and
+ *                              api/subscription/create.js lets the buyer pick
+ *                              one, defaulting to the first. Keep an old plan
+ *                              listed after a price change so its existing
+ *                              subscribers stay members; see
+ *                              documentation/membership-setup.md.
  *
  * Exports:
  *   - membershipPlanIds()          Configured plan ids (throws 503 if none).

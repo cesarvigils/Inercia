@@ -263,6 +263,17 @@ test('create: makes a PayPal subscription on the current plan, tagged with the c
   assert.equal(fake.read('memberships', uid), undefined, 'nothing is stored until the buyer approves');
 });
 
+test('create: the buyer can pick any configured plan, but not an unknown one', async () => {
+  const picked = await call(createHandler, { uid: 'uid-create-pick', method: 'POST', body: { planId: 'P-OLD' } });
+  assert.equal(picked.status, 201);
+  assert.equal(picked.body.planId, 'P-OLD');
+  assert.equal(paypalCallsTo(/^POST \/v1\/billing\/subscriptions$/)[0].body.plan_id, 'P-OLD');
+
+  const unknown = await call(createHandler, { uid: 'uid-create-unknown', method: 'POST', body: { planId: 'P-HACKED' } });
+  assert.equal(unknown.status, 400);
+  assert.equal(paypalCallsTo(/^POST \/v1\/billing\/subscriptions$/).length, 1);
+});
+
 test('create: refuses when the caller is already a member', async () => {
   const uid = 'uid-create-member';
   seedMembership(uid, { status: 'ACTIVE', subscriptionId: 'I-B00000000001' });
