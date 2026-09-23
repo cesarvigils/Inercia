@@ -40,6 +40,9 @@
      *                            there), and falls back to the
      *                            PAYPAL_HNL_USD_RATE env var if Firestore
      *                            doesn't have one yet.
+     *   - assertPaypalEnabled() Throws 503 if the same `paypal.enabled` kill
+     *                            switch is off. For flows with no HNL->USD
+     *                            conversion (membership subscriptions).
      *   - hnlToUsd(total, rate)  Converts an HNL amount to a USD string with
      *                            2 decimals, for the PayPal order amount.
      *   - verifyPaypalWebhook(headers, event)
@@ -133,36 +136,46 @@
         return data;
     }
 
-    export async function getPaypalRate() {
-        let rate = 0;
-        let settings = null;
-
-        // Only the Firestore READ is allowed to fail soft (falls back to the
-        // env var below). The admin's paypal.enabled=false kill switch is a
-        // deliberate decision, not a read error — it used to be thrown INSIDE
-        // this same try block, where this catch swallowed it as if it were a
-        // connectivity hiccup, so turning PayPal off in Firestore never
-        // actually blocked a payment. It's evaluated after the try now, so it
-        // always propagates.
+    // Only the Firestore READ is allowed to fail soft (returns null, and
+    // callers fall back to env vars). The admin's paypal.enabled=false kill
+    // switch is a deliberate decision, not a read error — it used to be
+    // thrown INSIDE the same try block as the read, where the catch
+    // swallowed it as if it were a connectivity hiccup, so turning PayPal off
+    // in Firestore never actually blocked a payment. assertPaypalEnabled()
+    // evaluates it after the read, so it always propagates.
+    async function readPaymentSettings() {
         try {
-            settings = await cached('paypalSettings', async () => {
+            return await cached('paypalSettings', async () => {
                 const snapshot = await adminDb.doc('settings/payments').get();
                 return snapshot.exists ? snapshot.data() : null;
             });
         } catch (error) {
-            console.warn('[PAYPAL RATE] No se pudo leer settings/payments:', error.message);
+            console.warn('[PAYPAL SETTINGS] No se pudo leer settings/payments:', error.message);
+            return null;
         }
+    }
+
+    function throwIfDisabled(settings) {
+        if (settings?.paypal?.enabled === false) {
+            const error = new Error('PayPal está desactivado temporalmente.');
+            error.status = 503;
+            throw error;
+        }
+    }
+
+    // Kill switch check for PayPal flows that don't need the exchange rate
+    // (membership subscriptions are billed in USD directly by the plan).
+    export async function assertPaypalEnabled() {
+        throwIfDisabled(await readPaymentSettings());
+    }
+
+    export async function getPaypalRate() {
+        let rate = 0;
+        const settings = await readPaymentSettings();
 
         if (settings) {
-            const paypal = settings.paypal || {};
-
-            if (paypal.enabled === false) {
-                const error = new Error('PayPal está desactivado temporalmente.');
-                error.status = 503;
-                throw error;
-            }
-
-            rate = Number(paypal.hnlPerUsd || 0);
+            throwIfDisabled(settings);
+            rate = Number(settings.paypal?.hnlPerUsd || 0);
         }
 
         if (!rate) {
