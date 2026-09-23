@@ -32,6 +32,35 @@ import {
 
 } from 'firebase/firestore';
 
+import {
+    calculateReservationTotal,
+    canEditReservation,
+    currentPaymentMethod,
+    displayRigName,
+    normalizeRigType,
+    paymentOptionsFor,
+    rigNumber
+} from './reservation-logic.js';
+
+import {
+    createManualReservation,
+    saveReservationEdit
+} from './reservation-writes.js';
+
+/*
+ * Las funciones de Firestore que usan js/reservation-writes.js, pasadas
+ * por parámetro en vez de importadas allá: los tests le pasan el doble en
+ * memoria de tests/helpers/fake-firestore.mjs en este mismo lugar.
+ */
+const firestore = {
+    db,
+    doc,
+    collection,
+    runTransaction,
+    serverTimestamp,
+    timestampFromDate: (date) => Timestamp.fromDate(date)
+};
+
 // DOM helpers
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -76,64 +105,15 @@ const fdate = (v) => (v ? String(v).split("-").reverse().join("/") : "N/D");
 
 const dt = (v) => (v?.toDate ? v.toDate() : v ? new Date(v) : null);
 
-// Permanent business rule: every Tuesday is 50% off (mirrors applyTuesdayPromotion
-// in api/_lib/reservations.js on the main site so admin-created reservations match).
-const isTuesday = (dateStr) => {
-    if (!dateStr) return false;
-    let [y, m, d] = dateStr.split("-").map(Number);
-    return new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay() === 2;
-};
-
 /*
- * reservationLocks helpers — mirror api/_lib/reservations.js's hm()/slotIds()/
- * isLockActive()/expiresAt() on the main site exactly (same doc id format,
- * same slot size, same expiry rule) so a lock either side creates is
- * understood by the other. Duplicated here rather than imported because this
- * bundle has no build step wiring it to that file.
- *
- * Manual admin reservations used to skip reservationLocks entirely: they
- * only ever wrote the `reservations` doc, with no check against existing
- * locks and no lock of their own. That let the admin panel double-book a
- * rig/time that was already taken (nothing here or in the security rules
- * stopped it), invisibly — since renderCalendar() draws straight from
- * `reservations` and only ever shows one dot per cell (list.find() returns
- * the first match), a second reservation silently landed on the same
- * cell. Rejecting whichever one happened to render first then "revealed"
- * the other, which is why rejecting a reservation could appear to flip an
- * unrelated slot for a different client back to available/approved. Every
- * write below goes through a transaction that checks reservationLocks
- * first, the same way api/reservations/create.js already does for the
- * public site.
+ * isTuesday(), los helpers de reservationLocks (hm/slotIds/lockExpiresAt/
+ * isLockSnapshotActive), los de rigs (normalizeRigType/rigNumber/
+ * displayRigName) y el cálculo de totales viven en
+ * js/reservation-logic.js, y las dos escrituras de reservas en
+ * js/reservation-writes.js. Están afuera de este archivo porque acá todo
+ * toca el DOM y el SDK de Firebase apenas se importa, así que nada de
+ * esto se podría ejecutar (ni probar) en Node. Ver tests/.
  */
-const LOCK_SLOT_MINUTES = 30;
-
-function hm(value) {
-    const [h, m] = String(value).split(":").map(Number);
-    return h * 60 + m;
-}
-
-function slotIds(date, start, end, rigId) {
-    const out = [];
-    for (let m = start; m < end; m += LOCK_SLOT_MINUTES) {
-        out.push(`${date}_${String(Math.floor(m / 60)).padStart(2, "0")}${String(m % 60).padStart(2, "0")}_${rigId}`);
-    }
-    return out;
-}
-
-// Same rule as expiresAt() in api/_lib/reservations.js: ~6h after the
-// reservation's own start time, not 6h from now.
-function lockExpiresAt(date, time) {
-    const [y, m, d] = date.split("-").map(Number);
-    const [h, mi] = time.split(":").map(Number);
-    return Timestamp.fromDate(new Date(Date.UTC(y, m - 1, d, h + 6, mi)));
-}
-
-function isLockSnapshotActive(snapshot) {
-    if (!snapshot.exists()) return false;
-    const expiry = snapshot.data()?.expiresAt;
-    if (expiry && typeof expiry.toMillis === "function" && expiry.toMillis() < Date.now()) return false;
-    return true;
-}
 
 // Authorization check
 async function authorized(u) {
@@ -244,49 +224,6 @@ function listen() {
         );
 });
     loadSettings();
-}
-function normalizeRigType(value) {
-    return String(value || "")
-        .trim()
-        .toLowerCase() === "premium"
-        ? "premium"
-        : "standard";
-}
-
-function rigNumber(rig) {
-    const type = normalizeRigType(rig.type);
-
-    // Primero usamos number si existe.
-    if (rig.number != null) {
-        return Number(rig.number);
-    }
-
-    // Si el order global es 1-10:
-    // Standard 1-8
-    // Premium 9-10 -> Premium 1-2
-    if (rig.order != null) {
-        const order = Number(rig.order);
-
-        if (type === "premium" && order > 8) {
-            return order - 8;
-        }
-
-        return order;
-    }
-
-    // Último fallback: sacar número del nombre.
-    const match = String(rig.name || "").match(/\d+/);
-
-    return match
-        ? Number(match[0])
-        : 0;
-}
-
-function displayRigName(rig) {
-    const type = normalizeRigType(rig.type);
-    const number = rigNumber(rig);
-
-    return `${type === "premium" ? "Premium" : "Standard"} ${number}`;
 }
 // Active rigs helper
 function activeRigs() {
@@ -541,7 +478,7 @@ async function openReservation(id) {
              * Una reserva rejected no se puede editar: ya no cuenta para
              * el calendario ni para disponibilidad.
              */
-            ["pending", "approved"].includes(r.status)
+            canEditReservation(r.status)
                 ? `
                     <div class="actions">
                         <button
@@ -690,33 +627,9 @@ function openEditReservation(r) {
         `)
         .join("");
 
-    const currentPayment =
-        typeof r.payment === "string"
-            ? r.payment
-            : r.payment?.method || "efectivo";
+    const currentPayment = currentPaymentMethod(r);
 
-    const EDITABLE_PAYMENT_METHODS =
-        ["efectivo", "transferencia", "tarjeta"];
-
-    /*
-     * Una reserva pagada por PayPal (o cualquier otro método que este
-     * formulario no ofrece) no está en la lista de arriba. Sin esta
-     * opción de respaldo, el <select> simplemente cae en la primera
-     * opción (EFECTIVO) sin marcarla como tal, y guardar sin tocar
-     * este campo le cambiaría el método de pago real a "efectivo" en
-     * silencio.
-     */
-    const paymentFallbackOption =
-        EDITABLE_PAYMENT_METHODS.includes(currentPayment)
-            ? ""
-            : `
-                <option
-                    value="${esc(currentPayment)}"
-                    selected
-                >
-                    ${esc(currentPayment.toUpperCase())}
-                </option>
-            `;
+    const paymentOptions = paymentOptionsFor(currentPayment);
 
     const durationOptions = [1, 2, 3, 4]
         .map((h) => `
@@ -782,28 +695,16 @@ function openEditReservation(r) {
                 MÉTODO DE PAGO
 
                 <select id="erPayment">
-                    <option
-                        value="efectivo"
-                        ${currentPayment === "efectivo" ? "selected" : ""}
-                    >
-                        EFECTIVO
-                    </option>
-
-                    <option
-                        value="transferencia"
-                        ${currentPayment === "transferencia" ? "selected" : ""}
-                    >
-                        TRANSFERENCIA
-                    </option>
-
-                    <option
-                        value="tarjeta"
-                        ${currentPayment === "tarjeta" ? "selected" : ""}
-                    >
-                        TARJETA
-                    </option>
-
-                    ${paymentFallbackOption}
+                    ${paymentOptions
+                        .map((option) => `
+                            <option
+                                value="${esc(option.value)}"
+                                ${option.selected ? "selected" : ""}
+                            >
+                                ${esc(option.label)}
+                            </option>
+                        `)
+                        .join("")}
                 </select>
             </label>
 
@@ -831,55 +732,22 @@ function openEditReservation(r) {
        ========================================================= */
 
     function calculateEditTotal() {
-        const duration =
-            Number($("#erDuration").value) || 1;
+        const result = calculateReservationTotal({
+            rigs: availableRigs,
 
-        const selectedIds = $$(
-            'input[name="erRig"]:checked'
-        ).map((input) => input.value);
+            selectedIds: $$(
+                'input[name="erRig"]:checked'
+            ).map((input) => input.value),
 
-        const selectedRigs = availableRigs.filter(
-            (rig) => selectedIds.includes(rig.id)
-        );
+            duration: $("#erDuration").value,
+            date: $("#erDate").value
+        });
 
-        const subtotal = selectedRigs.reduce(
-            (sum, rig) => {
-                const type = String(
-                    rig.type || "standard"
-                ).toLowerCase();
+        $("#erTotal").textContent = result.tuesdayDiscount
+            ? `${money(result.total)} (-50% MARTES)`
+            : money(result.total);
 
-                const defaultPrice =
-                    type === "premium"
-                        ? 350
-                        : 200;
-
-                const price = Number(
-                    rig.pricePerHour ??
-                    defaultPrice
-                );
-
-                return sum + (price * duration);
-            },
-            0
-        );
-
-        const tuesdayDiscount = isTuesday($("#erDate").value)
-            ? Math.round(subtotal * 0.5 * 100) / 100
-            : 0;
-
-        const total =
-            Math.round((subtotal - tuesdayDiscount) * 100) / 100;
-
-        $("#erTotal").textContent = tuesdayDiscount
-            ? `${money(total)} (-50% MARTES)`
-            : money(total);
-
-        return {
-            subtotal,
-            tuesdayDiscount,
-            total,
-            selectedRigs
-        };
+        return result;
     }
 
     $$('input[name="erRig"]').forEach(
@@ -944,67 +812,6 @@ function openEditReservation(r) {
             const duration =
                 Number($("#erDuration").value);
 
-            const start =
-                hm(time);
-
-            const end =
-                start + duration * 60;
-
-            const oldStart =
-                hm(r.time);
-
-            const oldEnd =
-                oldStart + Number(r.duration || 1) * 60;
-
-            const oldLockIds = new Set(
-                [...currentRigIds].flatMap(
-                    (rigId) =>
-                        slotIds(r.date, oldStart, oldEnd, rigId)
-                )
-            );
-
-            const newLockIds = new Set(
-                selectedRigs.flatMap(
-                    (rig) =>
-                        slotIds(date, start, end, rig.id)
-                )
-            );
-
-            const idsToRelease =
-                [...oldLockIds].filter(
-                    (id) => !newLockIds.has(id)
-                );
-
-            const idsToCheck =
-                [...newLockIds].filter(
-                    (id) => !oldLockIds.has(id)
-                );
-
-            const reservationRigs =
-                selectedRigs.map(
-                    (rig) => {
-
-                        const type =
-                            String(
-                                rig.type || "standard"
-                            ).toLowerCase();
-
-                        const price =
-                            Number(
-                                rig.pricePerHour ??
-                                (type === "premium" ? 350 : 200)
-                            );
-
-                        return {
-                            id: rig.id,
-                            rigId: rig.id,
-                            name: displayRigName(rig),
-                            type,
-                            number: rigNumber(rig),
-                            pricePerHour: price
-                        };
-                    }
-                );
 
             submitButton.disabled = true;
             submitButton.textContent =
@@ -1012,89 +819,26 @@ function openEditReservation(r) {
 
             try {
 
-                await runTransaction(
-                    db,
-                    async (transaction) => {
+                await saveReservationEdit(
+                    firestore,
+                    {
+                        reservation: r,
+                        currentRigIds: [...currentRigIds],
+                        date,
+                        time,
+                        duration,
+                        selectedRigs,
 
-                        const checkRefs =
-                            idsToCheck.map(
-                                (id) =>
-                                    doc(db, "reservationLocks", id)
-                            );
+                        paymentMethod:
+                            $("#erPayment").value,
 
-                        const snapshots =
-                            await Promise.all(
-                                checkRefs.map(
-                                    (ref) =>
-                                        transaction.get(ref)
-                                )
-                            );
+                        pricing: {
+                            subtotal,
+                            tuesdayDiscount,
+                            total
+                        },
 
-                        if (
-                            snapshots.some(
-                                isLockSnapshotActive
-                            )
-                        ) {
-
-                            throw Object.assign(
-                                new Error(
-                                    "Uno de esos simuladores ya está reservado para ese horario."
-                                ),
-                                { code: "slot-taken" }
-                            );
-                        }
-
-                        for (
-                            const id
-                            of idsToRelease
-                        ) {
-
-                            transaction.delete(
-                                doc(db, "reservationLocks", id)
-                            );
-                        }
-
-                        for (
-                            const id
-                            of idsToCheck
-                        ) {
-
-                            transaction.set(
-                                doc(db, "reservationLocks", id),
-                                {
-                                    reservationId: r.id,
-                                    createdBy: auth.currentUser.uid,
-                                    expiresAt: lockExpiresAt(date, time),
-                                    createdAt: serverTimestamp()
-                                }
-                            );
-                        }
-
-                        transaction.update(
-                            doc(db, "reservations", r.id),
-                            {
-                                date,
-                                time,
-                                duration,
-                                rigs: reservationRigs,
-
-                                pricing: {
-                                    beforeTuesdayDiscount: subtotal,
-                                    tuesdayDiscount,
-                                    tuesdayDiscountPercent:
-                                        tuesdayDiscount ? 50 : 0,
-                                    tuesdayPromotionApplied:
-                                        tuesdayDiscount > 0,
-                                    total
-                                },
-
-                                payment: {
-                                    method: $("#erPayment").value
-                                },
-
-                                updatedAt: serverTimestamp()
-                            }
-                        );
+                        uid: auth.currentUser.uid
                     }
                 );
 
@@ -1791,55 +1535,22 @@ $("#newReservationBtn").onclick = () => {
        ========================================================= */
 
     function calculateTotal() {
-        const duration =
-            Number($("#mrDuration").value) || 1;
+        const result = calculateReservationTotal({
+            rigs: availableRigs,
 
-        const selectedIds = $$(
-            'input[name="manualRig"]:checked'
-        ).map((input) => input.value);
+            selectedIds: $$(
+                'input[name="manualRig"]:checked'
+            ).map((input) => input.value),
 
-        const selectedRigs = availableRigs.filter(
-            (rig) => selectedIds.includes(rig.id)
-        );
+            duration: $("#mrDuration").value,
+            date: $("#mrDate").value
+        });
 
-        const subtotal = selectedRigs.reduce(
-            (sum, rig) => {
-                const type = String(
-                    rig.type || "standard"
-                ).toLowerCase();
+        $("#mrTotal").textContent = result.tuesdayDiscount
+            ? `${money(result.total)} (-50% MARTES)`
+            : money(result.total);
 
-                const defaultPrice =
-                    type === "premium"
-                        ? 350
-                        : 200;
-
-                const price = Number(
-                    rig.pricePerHour ??
-                    defaultPrice
-                );
-
-                return sum + (price * duration);
-            },
-            0
-        );
-
-        const tuesdayDiscount = isTuesday($("#mrDate").value)
-            ? Math.round(subtotal * 0.5 * 100) / 100
-            : 0;
-
-        const total =
-            Math.round((subtotal - tuesdayDiscount) * 100) / 100;
-
-        $("#mrTotal").textContent = tuesdayDiscount
-            ? `${money(total)} (-50% MARTES)`
-            : money(total);
-
-        return {
-            subtotal,
-            tuesdayDiscount,
-            total,
-            selectedRigs
-        };
+        return result;
     }
 
 
@@ -1949,66 +1660,6 @@ $("#newReservationBtn").onclick = () => {
             const time =
                 $("#mrTime").value;
 
-            const start =
-                hm(time);
-
-            const end =
-                start + duration * 60;
-
-            const reservationRigs =
-                selectedRigs.map(
-                    (rig) => {
-
-                        const type =
-                            String(
-                                rig.type ||
-                                "standard"
-                            ).toLowerCase();
-
-                        const number =
-                            typeof rigNumber ===
-                            "function"
-                                ? rigNumber(rig)
-                                : Number(
-                                    rig.number ??
-                                    rig.order ??
-                                    0
-                                );
-
-                        const rigName =
-                            typeof displayRigName ===
-                            "function"
-                                ? displayRigName(rig)
-                                : rig.name;
-
-                        const price =
-                            Number(
-                                rig.pricePerHour ??
-                                (
-                                    type ===
-                                    "premium"
-                                        ? 350
-                                        : 200
-                                )
-                            );
-
-                        return {
-                            id: rig.id,
-                            rigId: rig.id,
-
-                            name:
-                                rigName,
-
-                            type,
-
-                            number,
-
-                            pricePerHour:
-                                price
-                        };
-                    }
-                );
-
             try {
 
                 /* =============================
@@ -2027,167 +1678,33 @@ $("#newReservationBtn").onclick = () => {
                    reservationLocks.
                    ============================= */
 
-                const reservationRef =
-                    doc(
-                        collection(
-                            db,
-                            "reservations"
-                        )
-                    );
+                await createManualReservation(
+                    firestore,
+                    {
+                        date,
+                        time,
+                        duration,
+                        selectedRigs,
 
-                const lockRefs =
-                    reservationRigs.flatMap(
-                        (rig) =>
-                            slotIds(
-                                date,
-                                start,
-                                end,
-                                rig.id
-                            ).map(
-                                (id) =>
-                                    doc(
-                                        db,
-                                        "reservationLocks",
-                                        id
-                                    )
-                            )
-                    );
+                        customer: {
+                            name,
+                            email,
+                            phone
+                        },
 
-                await runTransaction(
-                    db,
-                    async (transaction) => {
+                        paymentMethod:
+                            $("#mrPayment").value,
 
-                        const snapshots =
-                            await Promise.all(
-                                lockRefs.map(
-                                    (ref) =>
-                                        transaction.get(ref)
-                                )
-                            );
+                        status,
+                        code,
 
-                        if (
-                            snapshots.some(
-                                isLockSnapshotActive
-                            )
-                        ) {
+                        uid: auth.currentUser.uid,
 
-                            throw Object.assign(
-                                new Error(
-                                    "Uno de esos simuladores ya está reservado para ese horario."
-                                ),
-                                { code: "slot-taken" }
-                            );
+                        pricing: {
+                            subtotal,
+                            tuesdayDiscount,
+                            total
                         }
-
-                        for (
-                            const lockRef
-                            of lockRefs
-                        ) {
-
-                            transaction.set(
-                                lockRef,
-                                {
-                                    reservationId:
-                                        reservationRef.id,
-
-                                    createdBy:
-                                        auth.currentUser.uid,
-
-                                    expiresAt:
-                                        lockExpiresAt(
-                                            date,
-                                            time
-                                        ),
-
-                                    createdAt:
-                                        serverTimestamp()
-                                }
-                            );
-                        }
-
-                        transaction.set(
-                            reservationRef,
-                            {
-                                code,
-
-                                source: "admin",
-
-                                /*
-                                 * No existe usuario Firebase
-                                 * necesariamente porque es
-                                 * reserva manual.
-                                 */
-                                uid: null,
-
-                                customer: {
-                                    name,
-
-                                    email:
-                                        email || null,
-
-                                    phone:
-                                        phone || null
-                                },
-
-                                date,
-
-                                time,
-
-                                duration,
-
-                                rigs:
-                                    reservationRigs,
-
-                                pricing: {
-                                    beforeTuesdayDiscount:
-                                        subtotal,
-
-                                    tuesdayDiscount,
-
-                                    tuesdayDiscountPercent:
-                                        tuesdayDiscount
-                                            ? 50
-                                            : 0,
-
-                                    tuesdayPromotionApplied:
-                                        tuesdayDiscount > 0,
-
-                                    total
-                                },
-
-                                payment: {
-                                    method:
-                                        $("#mrPayment")
-                                            .value
-                                },
-
-                                status,
-
-                                confirmation: {
-                                    status,
-
-                                    approvedAt:
-                                        status ===
-                                        "approved"
-                                            ? serverTimestamp()
-                                            : null,
-
-                                    approvedBy:
-                                        status ===
-                                        "approved"
-                                            ? auth.currentUser.uid
-                                            : null
-                                },
-
-                                createdBy: auth.currentUser.uid,
-
-                                createdAt:
-                                    serverTimestamp(),
-
-                                updatedAt:
-                                    serverTimestamp()
-                            }
-                        );
                     }
                 );
 
