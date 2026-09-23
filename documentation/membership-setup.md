@@ -11,8 +11,9 @@ PayPal and Vercel setup it needs.
 
 ## 1. Which PayPal ID goes where
 
-PayPal shows you a lot of IDs. You only copy **three kinds** into Vercel. The
-rest are for reference, or the system fills them in on its own.
+PayPal shows you a lot of IDs. Three are already in Vercel from the PayPal
+checkout, and **only one new kind goes in: the Plan ID**. The rest are for
+reference, or the system handles them on its own.
 
 | ID | Looks like | Where you see it | What to do with it |
 |---|---|---|---|
