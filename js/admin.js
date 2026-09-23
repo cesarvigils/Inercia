@@ -45,6 +45,8 @@ import {
     saveReservationEdit
 } from './reservation-writes.js';
 
+import { esc, safeUrl } from './html-safety.js';
+
 /*
  * Las funciones de Firestore que usan js/reservation-writes.js, pasadas
  * por parámetro en vez de importadas allá: los tests le pasan el doble en
@@ -81,12 +83,6 @@ let products = [];
 
 // Utility functions
 const money = (v) => `L ${Number(v || 0).toLocaleString("es-HN")}`;
-
-const esc = (v) =>
-    String(v ?? "").replace(
-        /[&<>"']/g,
-        (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
-    );
 
 const today = () => {
     let d = new Date();
@@ -318,7 +314,7 @@ function renderCalendar() {
         h += `<div class="cal-row"><div class="cell time">${ftime(t)}</div>${rs
             .map((g) => {
                 let r = list.find((x) => x.time === t && hasRig(x, g));
-                return `<div class="cell">${r ? `<button class="point ${r.status}" data-r="${r.id}"></button>` : ""}</div>`;
+                return `<div class="cell">${r ? `<button class="point ${esc(r.status)}" data-r="${esc(r.id)}"></button>` : ""}</div>`;
             })
             .join("")}</div>`;
     }
@@ -386,7 +382,7 @@ async function openReservation(id) {
         r.customer || {};
 
     const url =
-        await receipt(r);
+        safeUrl(await receipt(r));
 
     const names =
         rr(r)
@@ -886,7 +882,7 @@ function renderRigs() {
     $("#rigList").innerHTML = rigs
         .map(
             (r) =>
-                `<div class="rig"><div class="num">${String(r.order ?? "--").padStart(2, "0")}</div><div><strong>${esc(r.name)} <span class="status ${r.status}">${status(r.status)}</span></strong><small>${String(r.type || "standard").toUpperCase()} · ${money(r.pricePerHour ?? (r.type === "premium" ? 350 : 200))}/H</small></div><button class="mini" data-edit="${r.id}">EDITAR</button></div>`
+                `<div class="rig"><div class="num">${esc(String(r.order ?? "--").padStart(2, "0"))}</div><div><strong>${esc(r.name)} <span class="status ${esc(r.status)}">${status(r.status)}</span></strong><small>${esc(String(r.type || "standard").toUpperCase())} · ${money(r.pricePerHour ?? (r.type === "premium" ? 350 : 200))}/H</small></div><button class="mini" data-edit="${esc(r.id)}">EDITAR</button></div>`
         )
         .join("");
     $$("[data-edit]").forEach((b) => (b.onclick = () => rigModal(rigs.find((x) => x.id === b.dataset.edit))));
@@ -897,7 +893,7 @@ $("#newRigBtn").onclick = () => rigModal();
 // Rig modal
 function rigModal(r) {
     modal(
-        `<span class="eyebrow">${r ? "MODIFICAR" : "NUEVO"} RIG</span><h2>${r ? "EDITAR" : "CREAR"} SIMULADOR</h2><form id="rigForm"><label>NOMBRE<input id="rn" value="${esc(r?.name || "")}" required></label><label>ORDEN<input id="ro" type="number" value="${r?.order ?? ""}" required></label><label>TIPO<select id="rt"><option value="standard">STANDARD</option><option value="premium" ${r?.type === "premium" ? "selected" : ""}>PREMIUM</option></select></label><label>PRECIO/H<input id="rp" type="number" value="${r?.pricePerHour ?? (r?.type === "premium" ? 350 : 200)}"></label><label>ESTADO<select id="rs"><option value="active">DISPONIBLE</option><option value="maintenance" ${r?.status === "maintenance" ? "selected" : ""}>MANTENIMIENTO</option><option value="disabled" ${r?.status === "disabled" ? "selected" : ""}>DESACTIVADO</option></select></label><button class="primary">GUARDAR</button>${r ? '<button type="button" id="delRig" class="danger">ELIMINAR</button>' : ""}</form>`
+        `<span class="eyebrow">${r ? "MODIFICAR" : "NUEVO"} RIG</span><h2>${r ? "EDITAR" : "CREAR"} SIMULADOR</h2><form id="rigForm"><label>NOMBRE<input id="rn" value="${esc(r?.name || "")}" required></label><label>ORDEN<input id="ro" type="number" value="${esc(r?.order ?? "")}" required></label><label>TIPO<select id="rt"><option value="standard">STANDARD</option><option value="premium" ${r?.type === "premium" ? "selected" : ""}>PREMIUM</option></select></label><label>PRECIO/H<input id="rp" type="number" value="${esc(r?.pricePerHour ?? (r?.type === "premium" ? 350 : 200))}"></label><label>ESTADO<select id="rs"><option value="active">DISPONIBLE</option><option value="maintenance" ${r?.status === "maintenance" ? "selected" : ""}>MANTENIMIENTO</option><option value="disabled" ${r?.status === "disabled" ? "selected" : ""}>DESACTIVADO</option></select></label><button class="primary">GUARDAR</button>${r ? '<button type="button" id="delRig" class="danger">ELIMINAR</button>' : ""}</form>`
     );
     $("#rigForm").onsubmit = async (e) => {
         e.preventDefault();
@@ -973,7 +969,7 @@ function renderSales() {
         ? rows
             .map(
                 (s) =>
-                    `<tr><td>${s.date ? s.date.toLocaleDateString("es-HN") : "N/D"}</td><td>${esc(s.description || "Venta")}</td><td>${pay(s.paymentMethod)}</td><td>${s.type === "reservation" ? "RESERVA" : "MANUAL"}</td><td>${money(s.total)}</td></tr>`
+                    `<tr><td>${s.date ? s.date.toLocaleDateString("es-HN") : "N/D"}</td><td>${esc(s.description || "Venta")}</td><td>${esc(pay(s.paymentMethod))}</td><td>${s.type === "reservation" ? "RESERVA" : "MANUAL"}</td><td>${money(s.total)}</td></tr>`
             )
             .join("")
         : '<tr><td colspan="5">No hay ventas en este período.</td></tr>';
@@ -1006,7 +1002,7 @@ $("#newSaleBtn").onclick = () => {
 
                     ${activeProducts.map(product => `
                         <option
-                            value="${product.id}"
+                            value="${esc(product.id)}"
                         >
                             ${esc(product.name)}
                             — ${money(product.price)}
@@ -1272,7 +1268,7 @@ function renderProductsModal() {
                         <button
                             type="button"
                             class="danger product-delete"
-                            data-product="${product.id}"
+                            data-product="${esc(product.id)}"
                         >
                             ELIMINAR
                         </button>
