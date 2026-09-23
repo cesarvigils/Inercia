@@ -3,9 +3,7 @@ import { auth, db } from '../firebase-config.js';
 import {
     signInWithEmailAndPassword,
     onAuthStateChanged,
-    signOut,
-    setPersistence,
-    browserLocalPersistence
+    signOut
 } from 'firebase/auth';
 import {
     getStorage,
@@ -121,9 +119,6 @@ async function authorized(u) {
     let s = await getDoc(doc(db, "adminUsers", u.uid));
     return s.exists() && s.data().enabled === true;
 }
-
-// Set persistence
-setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 // Login handler
 loginForm.onsubmit = async (e) => {
