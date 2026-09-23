@@ -1,6 +1,10 @@
 
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import {
+  initializeAuth,
+  browserLocalPersistence,
+  indexedDBLocalPersistence
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,5 +17,18 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
+/*
+ * La sesión se guarda en localStorage, no en IndexedDB. getAuth() elige
+ * IndexedDB por defecto, y el SDK cierra esa base cuando la pestaña se
+ * oculta (pagehide / visibilitychange); cualquier lectura o escritura de
+ * la sesión en ese momento falla con "Database is closing/hidden" y deja
+ * la inicialización de Auth rota. Antes esto se "arreglaba" llamando a
+ * setPersistence() en js/admin.js, que en cada carga movía la sesión de
+ * IndexedDB a localStorage justo en esa ventana. IndexedDB queda de segundo
+ * en la lista sólo para rescatar sesiones viejas guardadas ahí: si la
+ * encuentra, el SDK la pasa a localStorage.
+ */
+export const auth = initializeAuth(app, {
+  persistence: [browserLocalPersistence, indexedDBLocalPersistence],
+});
 export const db = getFirestore(app);
