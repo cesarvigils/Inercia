@@ -1,12 +1,28 @@
 // Minimal in-memory stand-in for the slice of the Firestore Admin SDK this
-// codebase actually uses (doc().get(), collection().where('==').get(),
-// getAll(...refs)). Not a general-purpose Firestore emulator — just enough
-// to drive api/_lib/reservations.js and the handlers built on it without a
-// real Firebase project.
+// codebase actually uses (doc().get()/set()/create()/delete(),
+// collection().where('==').get(), getAll(...refs), runTransaction()). Not a
+// general-purpose Firestore emulator — just enough to drive
+// api/_lib/reservations.js and the handlers built on it without a real
+// Firebase project. Transactions run their callback once, with no
+// isolation or retries; FieldValue sentinels are stored as-is.
 export function createFakeFirestore(seed = {}) {
   const store = {};
   for (const [collection, docs] of Object.entries(seed)) {
     store[collection] = docs.map((d) => ({ ...d }));
+  }
+  let autoId = 0;
+
+  function write(collection, id, data, { merge = false, mustNotExist = false } = {}) {
+    const docs = (store[collection] = store[collection] || []);
+    const index = docs.findIndex((d) => d.id === id);
+    if (mustNotExist && index !== -1) throw new Error(`fake-firestore: ${collection}/${id} already exists`);
+    const next = index !== -1 && merge ? { ...docs[index], ...data, id } : { ...data, id };
+    if (index === -1) docs.push(next);
+    else docs[index] = next;
+  }
+
+  function remove(collection, id) {
+    store[collection] = (store[collection] || []).filter((d) => d.id !== id);
   }
 
   function snapshotFor(collection, id) {
@@ -22,8 +38,18 @@ export function createFakeFirestore(seed = {}) {
     const [collection, id] = path.split('/');
     return {
       id,
+      path,
       async get() {
         return snapshotFor(collection, id);
+      },
+      async set(data, options = {}) {
+        write(collection, id, data, { merge: options.merge === true });
+      },
+      async create(data) {
+        write(collection, id, data, { mustNotExist: true });
+      },
+      async delete() {
+        remove(collection, id);
       }
     };
   }
@@ -71,8 +97,9 @@ export function createFakeFirestore(seed = {}) {
           }))
         };
       },
-      doc() {
-        return docRef(`${name}/__auto__`);
+      doc(id) {
+        autoId += 1;
+        return docRef(`${name}/${id || `auto-${autoId}`}`);
       }
     };
     return ref;
@@ -83,6 +110,38 @@ export function createFakeFirestore(seed = {}) {
     collection: collectionRef,
     async getAll(...refs) {
       return Promise.all(refs.map((ref) => ref.get()));
+    },
+    async runTransaction(callback) {
+      const transaction = {
+        get: (ref) => ref.get(),
+        getAll: (...refs) => Promise.all(refs.map((ref) => ref.get())),
+        set: (ref, data, options = {}) => {
+          const [collection, id] = ref.path.split('/');
+          write(collection, id, data, { merge: options.merge === true });
+          return transaction;
+        },
+        create: (ref, data) => {
+          const [collection, id] = ref.path.split('/');
+          write(collection, id, data, { mustNotExist: true });
+          return transaction;
+        },
+        delete: (ref) => {
+          const [collection, id] = ref.path.split('/');
+          remove(collection, id);
+          return transaction;
+        }
+      };
+      return callback(transaction);
+    },
+    // Test inspection: the stored document (without its id), or undefined.
+    read(collection, id) {
+      const found = (store[collection] || []).find((d) => d.id === id);
+      if (!found) return undefined;
+      const { id: _id, ...rest } = found;
+      return rest;
+    },
+    list(collection) {
+      return (store[collection] || []).map((d) => ({ ...d }));
     },
     // Lets a test change what a collection returns between assertions,
     // without re-importing the module under test (see the comment in
