@@ -145,6 +145,7 @@ $('#logoutBtn').onclick = () => signOut(auth);
 // Auth state listener
 onAuthStateChanged(auth, async (u) => {
     if (!u) {
+        stopListening();
         adminShell.hidden = true;
         loginScreen.hidden = false;
         return;
@@ -186,23 +187,50 @@ function shift(n) {
 $("#prevDay").onclick = () => shift(-1);
 $("#nextDay").onclick = () => shift(1);
 
-// Listen to Firestore changes
+/*
+ * Escuchar cambios en Firestore.
+ *
+ * Cada onSnapshot cobra una lectura por documento al conectarse (y otra
+ * por cada cambio después), así que escuchar colecciones enteras hacía que
+ * cada recarga del panel leyera TODAS las reservas y ventas desde el
+ * inicio. Ahora reservas y ventas se limitan al año en curso, que es lo
+ * más atrás que llegan los filtros de ventas ("AÑO"). El calendario ya no
+ * muestra reservas de años anteriores.
+ *
+ * listen() puede volver a llamarse si alguien cierra sesión y vuelve a
+ * entrar sin recargar; stopListening() suelta los listeners anteriores
+ * para no duplicarlos (cada duplicado vuelve a leer todo).
+ */
+let unsubscribers = [];
+
+function stopListening() {
+    unsubscribers.forEach((unsubscribe) => unsubscribe());
+    unsubscribers = [];
+}
+
+function startOfYear() {
+    return new Date(new Date().getFullYear(), 0, 1);
+}
+
 function listen() {
-    onSnapshot(collection(db, "reservations"), (s) => {
+    stopListening();
+    const yearStart = startOfYear();
+    const yearStartDate = `${yearStart.getFullYear()}-01-01`;
+    unsubscribers.push(onSnapshot(query(collection(db, "reservations"), where("date", ">=", yearStartDate)), (s) => {
         reservations = s.docs.map((d) => ({ id: d.id, ...d.data() }));
         renderCalendar();
         renderSales();
-    });
-    onSnapshot(collection(db, "rigs"), (s) => {
+    }));
+    unsubscribers.push(onSnapshot(collection(db, "rigs"), (s) => {
         rigs = s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 99) - (b.order || 99));
         renderRigs();
         renderCalendar();
-    });
-    onSnapshot(collection(db, "sales"), (s) => {
+    }));
+    unsubscribers.push(onSnapshot(query(collection(db, "sales"), where("createdAt", ">=", Timestamp.fromDate(yearStart))), (s) => {
         sales = s.docs.map((d) => ({ id: d.id, ...d.data() }));
         renderSales();
-    });
-    onSnapshot(collection(db, "products"), (snapshot) => {
+    }));
+    unsubscribers.push(onSnapshot(collection(db, "products"), (snapshot) => {
     products = snapshot.docs
         .map(d => ({
             id: d.id,
@@ -213,7 +241,7 @@ function listen() {
                 String(b.name || "")
             )
         );
-});
+}));
     loadSettings();
 }
 // Active rigs helper

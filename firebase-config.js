@@ -5,7 +5,11 @@ import {
   browserLocalPersistence,
   indexedDBLocalPersistence
 } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from 'firebase/firestore';
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -31,4 +35,13 @@ const app = initializeApp(firebaseConfig);
 export const auth = initializeAuth(app, {
   persistence: [browserLocalPersistence, indexedDBLocalPersistence],
 });
-export const db = getFirestore(app);
+/*
+ * Caché local de Firestore en IndexedDB. Sin esto, cada recarga del panel
+ * vuelve a descargar (y cobrar) cada documento que escuchan los
+ * onSnapshot de js/admin.js. Con la caché, si el panel se reabre dentro de
+ * ~30 minutos Firestore sólo cobra los documentos que cambiaron. Varias
+ * pestañas abiertas comparten la misma caché.
+ */
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
