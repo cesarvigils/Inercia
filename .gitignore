@@ -11,3 +11,4 @@
 preview.txt
 # node_modules: installed dependencies, reproducible from package.json/package-lock.json — never commit.
 node_modules
+documentation/ips-inercia.md
