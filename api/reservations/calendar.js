@@ -102,6 +102,12 @@ export default async function handler(req, res) {
             })
         );
 
+        // Shared CDN cache, same 15s freshness as getLockedSlotIds(). The
+        // in-memory cache in api/_lib/reservations.js dies with each cold
+        // Vercel instance, so without this nearly every page load re-ran
+        // the ~16 Firestore queries above. A slot taken in the last few
+        // seconds may still show as open; create.js re-checks it anyway.
+        res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
         return json(res, 200, {
             bookingWindowDays: config.bookingWindowDays,
             slotMinutes: config.slotMinutes,
