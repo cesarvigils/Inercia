@@ -31,6 +31,7 @@
                     <button class="nav active" data-view="reservas">RESERVAS</button
                     ><button class="nav" data-view="rigs">RIGS</button
                     ><button class="nav" data-view="ventas">VENTAS</button
+                    ><button class="nav" data-view="usuarios">USUARIOS</button
                     ><button class="nav" data-view="configuracion">CONFIGURACIÓN</button>
                 </nav>
                 <div class="user"><span id="adminEmail"></span><button id="logoutBtn">CERRAR SESIÓN</button></div>
@@ -145,6 +146,35 @@
     </div>
 
 </section>
+                <section id="view-usuarios" class="view">
+                    <div class="heading">
+                        <div>
+                            <span class="eyebrow">CLIENTES</span>
+                            <h2>USUARIOS REGISTRADOS</h2>
+                        </div>
+                        <button id="refreshUsersBtn" class="ghost" type="button">ACTUALIZAR</button>
+                    </div>
+                    <div class="users-toolbar">
+                        <input id="userSearch" type="search" placeholder="Buscar por nombre, correo o teléfono" />
+                        <span id="userCount"></span>
+                    </div>
+                    <div class="table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>NOMBRE</th>
+                                    <th>CORREO</th>
+                                    <th>TELÉFONO</th>
+                                    <th>REGISTRO</th>
+                                    <th>RECHAZADAS</th>
+                                    <th>NO-SHOW</th>
+                                    <th>REPUTACIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable"></tbody>
+                        </table>
+                    </div>
+                </section>
                 <section id="view-configuracion" class="view">
                     <div class="heading">
                         <div>

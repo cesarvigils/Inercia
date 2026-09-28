@@ -1960,3 +1960,24 @@ td:last-child {
             1 / -1;
     }
 }
+
+/* USUARIOS */
+
+.users-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    margin-bottom: 16px;
+}
+
+.users-toolbar input {
+    flex: 1;
+    max-width: 420px;
+}
+
+.users-toolbar span {
+    color: #777;
+
+    font-size: 12px;
+}
