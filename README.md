@@ -29,3 +29,7 @@ No uses una lista de UIDs solo en frontend. Las reglas incluidas verifican `admi
 
 ## admin.inerciahn.com
 Si este folder está dentro del proyecto principal, configurá el dominio `admin.inerciahn.com` en Vercel. Para que el subdominio sirva directamente este panel sin `/admin`, lo más limpio es crear un proyecto Vercel separado usando `admin` como Root Directory.
+
+## Reembolsos
+
+La vista REEMBOLSOS lista las reservas pagadas con PayPal (del año en curso, igual que el calendario) y reembolsa total o parcialmente. El reembolso lo hace `api/paypal/refund.js` del sitio principal (rama `main`), que tiene las credenciales de PayPal: verifica que quien llama esté en `adminUsers` con `enabled: true`, reembolsa el capture en USD con la tasa guardada en la reserva y registra `payment.refundedHNL` y `payment.refunds[]`. `vercel.json` reescribe `/api/paypal/refund` hacia `https://inerciahn.com`, así que el panel lo llama en su mismo dominio. Si el sitio usa otro dominio principal (por ejemplo `www.`), cambiá ese destino. Reembolsar no cambia el estado de la reserva: rechazala aparte si corresponde.

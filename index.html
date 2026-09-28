@@ -32,6 +32,7 @@
                     ><button class="nav" data-view="rigs">RIGS</button
                     ><button class="nav" data-view="ventas">VENTAS</button
                     ><button class="nav" data-view="usuarios">USUARIOS</button
+                    ><button class="nav" data-view="reembolsos">REEMBOLSOS</button
                     ><button class="nav" data-view="configuracion">CONFIGURACIÓN</button>
                 </nav>
                 <div class="user"><span id="adminEmail"></span><button id="logoutBtn">CERRAR SESIÓN</button></div>
@@ -175,6 +176,37 @@
                                 </tr>
                             </thead>
                             <tbody id="usersTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section id="view-reembolsos" class="view">
+                    <div class="heading">
+                        <div>
+                            <span class="eyebrow">PAYPAL</span>
+                            <h2>REEMBOLSOS</h2>
+                        </div>
+                    </div>
+                    <div class="filters">
+                        <button class="filter active" data-refund-filter="pending" type="button">CON SALDO</button
+                        ><button class="filter" data-refund-filter="refunded" type="button">REEMBOLSADAS</button
+                        ><button class="filter" data-refund-filter="all" type="button">TODAS</button>
+                    </div>
+                    <div id="refundMetrics" class="metrics"></div>
+                    <div id="refundPanel" class="card refund-panel" hidden></div>
+                    <div class="table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>FECHA</th>
+                                    <th>CÓDIGO</th>
+                                    <th>CLIENTE</th>
+                                    <th>RESERVA</th>
+                                    <th>PAGO</th>
+                                    <th>TOTAL</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="refundTable"></tbody>
                         </table>
                     </div>
                 </section>

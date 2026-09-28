@@ -51,6 +51,7 @@ import {
 
 import { esc, safeUrl } from './html-safety.js';
 
+import { renderRefunds, setupRefunds } from './refunds-view.js';
 import {
     MAX_REPUTATION,
     canMarkNoShow,
@@ -173,6 +174,8 @@ onAuthStateChanged(auth, async (u) => {
     listen();
 });
 
+setupRefunds({ currentUser: () => currentUser });
+
 // Navigation
 $$(".nav").forEach(
     (b) =>
@@ -232,6 +235,7 @@ function listen() {
         reservations = s.docs.map((d) => ({ id: d.id, ...d.data() }));
         renderCalendar();
         renderSales();
+        renderRefunds(reservations);
     }));
     unsubscribers.push(onSnapshot(collection(db, "rigs"), (s) => {
         rigs = s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 99) - (b.order || 99));

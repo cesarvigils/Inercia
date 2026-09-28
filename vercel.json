@@ -3,6 +3,10 @@
     {
       "source": "/admin",
       "destination": "/admin/index.html"
+    },
+    {
+      "source": "/api/paypal/refund",
+      "destination": "https://inerciahn.com/api/paypal/refund"
     }
   ],
   "headers": [

@@ -2003,3 +2003,99 @@ td:last-child {
 
     font-size: 12px;
 }
+
+
+/* =========================================================
+   REEMBOLSOS
+   ========================================================= */
+
+.refund-panel {
+    margin-bottom: 18px;
+}
+
+.refund-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.refund-panel-head .close {
+    position: static;
+}
+
+.refund-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.refund-summary div {
+    display: grid;
+    gap: 4px;
+    padding: 14px;
+    border: 1px solid var(--border);
+}
+
+.refund-summary span,
+.refund-summary small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.refund-summary strong {
+    color: var(--white);
+    font: 600 20px var(--display);
+}
+
+.refund-history {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.refund-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.refund-message {
+    margin: 0;
+    color: var(--red);
+    font-size: 13px;
+}
+
+.refund-message.ok {
+    color: var(--green);
+}
+
+.refund-flag {
+    background: rgba(217, 84, 84, 0.08);
+}
+
+.refund-res-rejected {
+    color: var(--red);
+}
+
+.refund-res-approved {
+    color: var(--green);
+}
+
+#refundTable small {
+    display: block;
+    color: var(--red);
+}
+
+.refund-empty {
+    padding: 25px;
+    color: #666;
+    text-align: center !important;
+}
+
+@media (max-width: 650px) {
+    .refund-summary {
+        grid-template-columns: 1fr;
+    }
+}
