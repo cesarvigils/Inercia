@@ -1960,6 +1960,50 @@ td:last-child {
             1 / -1;
     }
 }
+/* EDITAR RESERVA: simulador ocupado por otra reserva en ese horario */
+.admin-rig-option .taken-label {
+    display: none;
+    margin-left: auto;
+    font: 600 12px var(--display);
+    color: #777;
+}
+
+.admin-rig-option.taken {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.admin-rig-option.taken .taken-label {
+    display: inline;
+}
+
+/* VENTAS: sin título propio (ya lo muestra la barra superior) */
+.sales-heading {
+    justify-content: flex-end;
+}
+
+
+/* USUARIOS */
+
+.users-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    margin-bottom: 16px;
+}
+
+.users-toolbar input {
+    flex: 1;
+    max-width: 420px;
+}
+
+.users-toolbar span {
+    color: #777;
+
+    font-size: 12px;
+}
+
 
 /* =========================================================
    REEMBOLSOS

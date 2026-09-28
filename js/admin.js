@@ -35,10 +35,14 @@ import {
     canEditReservation,
     currentPaymentMethod,
     displayRigName,
+    hourRangeLabel,
     normalizeRigType,
     paymentOptionsFor,
-    rigNumber
+    rigNumber,
+    takenRigIds
 } from './reservation-logic.js';
+
+import { isInSalesRange, saleDescription } from './sales-logic.js';
 
 import {
     createManualReservation,
@@ -48,6 +52,13 @@ import {
 import { esc, safeUrl } from './html-safety.js';
 
 import { renderRefunds, setupRefunds } from './refunds-view.js';
+import {
+    MAX_REPUTATION,
+    canMarkNoShow,
+    filterUserRows,
+    loadUserReputation,
+    setNoShow
+} from './user-reputation.js';
 
 /*
  * Las funciones de Firestore que usan js/reservation-writes.js, pasadas
@@ -344,7 +355,7 @@ function renderCalendar() {
 `).join("")}</div>`;
     for (let n = 10; n <= 21; n++) {
         let t = `${String(n).padStart(2, "0")}:00`;
-        h += `<div class="cal-row"><div class="cell time">${ftime(t)}</div>${rs
+        h += `<div class="cal-row"><div class="cell time">${hourRangeLabel(t)}</div>${rs
             .map((g) => {
                 let r = list.find((x) => x.time === t && hasRig(x, g));
                 return `<div class="cell">${r ? `<button class="point ${esc(r.status)}" data-r="${esc(r.id)}"></button>` : ""}</div>`;
@@ -531,6 +542,8 @@ async function openReservation(id) {
                                 `
                                 : ""
                         }
+
+                        ${noShowButton(r)}
                     </div>
                 `
                 : ""
@@ -560,6 +573,12 @@ async function openReservation(id) {
         ?.addEventListener(
             "click",
             () => openEditReservation(r)
+        );
+
+    $("#noShowBtn")
+        ?.addEventListener(
+            "click",
+            () => toggleNoShow(r)
         );
 }
 
@@ -647,6 +666,8 @@ function openEditReservation(r) {
                 >
 
                 <span>${esc(displayRigName(rig))}</span>
+
+                <small class="taken-label">OCUPADO</small>
             </label>
         `)
         .join("");
@@ -795,6 +816,43 @@ function openEditReservation(r) {
 
 
     /* =========================================================
+       SIMULADORES OCUPADOS
+
+       Los que otra reserva ya tiene en esa fecha/hora/duración
+       quedan en gris y no se pueden marcar. Si uno que estaba
+       marcado queda ocupado al cambiar el horario, se desmarca.
+       ========================================================= */
+
+    function markTakenRigs() {
+        const taken = takenRigIds({
+            reservation: r,
+            currentRigIds: [...currentRigIds],
+            reservations,
+            date: $("#erDate").value,
+            time: $("#erTime").value,
+            duration: $("#erDuration").value,
+            rigs: availableRigs,
+            hasRig
+        });
+
+        $$('input[name="erRig"]').forEach((input) => {
+            const isTaken = taken.has(input.value);
+
+            if (isTaken) input.checked = false;
+            input.disabled = isTaken;
+            input.closest(".admin-rig-option")
+                .classList.toggle("taken", isTaken);
+        });
+
+        calculateEditTotal();
+    }
+
+    ["#erDate", "#erTime", "#erDuration"].forEach((id) => {
+        $(id).addEventListener("change", markTakenRigs);
+    });
+
+
+    /* =========================================================
        GUARDAR CAMBIOS
 
        Reconcilia los reservationLocks viejos contra los nuevos
@@ -882,13 +940,15 @@ function openEditReservation(r) {
                         : "No se pudieron guardar los cambios."
                 );
 
+                markTakenRigs();
+
                 submitButton.disabled = false;
                 submitButton.textContent =
                     "GUARDAR CAMBIOS";
             }
         };
 
-    calculateEditTotal();
+    markTakenRigs();
 }
 
 // Status formatter
@@ -964,16 +1024,7 @@ $$(".filter").forEach(
 
 // Check if date is within range
 function inside(d) {
-    if (!d) return false;
-    let n = new Date();
-    if (range === "year") return d.getFullYear() === n.getFullYear();
-    if (range === "month") return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
-    let s = new Date(n);
-    s.setHours(0, 0, 0, 0);
-    s.setDate(n.getDate() - ((n.getDay() + 6) % 7));
-    let e = new Date(s);
-    e.setDate(s.getDate() + 7);
-    return d >= s && d < e;
+    return isInSalesRange(d, range);
 }
 
 // Render sales
@@ -1002,7 +1053,7 @@ function renderSales() {
         ? rows
             .map(
                 (s) =>
-                    `<tr><td>${s.date ? s.date.toLocaleDateString("es-HN") : "N/D"}</td><td>${esc(s.description || "Venta")}</td><td>${esc(pay(s.paymentMethod))}</td><td>${s.type === "reservation" ? "RESERVA" : "MANUAL"}</td><td>${money(s.total)}</td></tr>`
+                    `<tr><td>${s.date ? s.date.toLocaleDateString("es-HN") : "N/D"}</td><td>${esc(saleDescription(s))}</td><td>${esc(pay(s.paymentMethod))}</td><td>${s.type === "reservation" ? "RESERVA" : "MANUAL"}</td><td>${money(s.total)}</td></tr>`
             )
             .join("")
         : '<tr><td colspan="5">No hay ventas en este período.</td></tr>';
@@ -2007,3 +2058,84 @@ onSnapshot(
         );
     }
 );
+
+
+/*
+ * USUARIOS: todos los usuarios registrados (users/{uid}) con su
+ * reputación. La lógica y las lecturas viven en js/user-reputation.js.
+ * Se cargan una sola vez al abrir la vista (no hay listener), porque cada
+ * lectura cuenta contra la cuota de Firestore; ACTUALIZAR vuelve a leer.
+ */
+const userDeps = { db, collection, query, where, getDocs, doc, updateDoc, serverTimestamp };
+let userRows = null;
+let usersLoading = false;
+
+async function loadUsers() {
+    if (usersLoading) return;
+    usersLoading = true;
+    $("#usersTable").innerHTML = '<tr><td colspan="7">Cargando usuarios...</td></tr>';
+    try {
+        userRows = await loadUserReputation(userDeps);
+    } catch (error) {
+        console.error("[USUARIOS]", error);
+        userRows = null;
+        $("#usersTable").innerHTML = '<tr><td colspan="7">No se pudieron cargar los usuarios.</td></tr>';
+        $("#userCount").textContent = "";
+        return;
+    } finally {
+        usersLoading = false;
+    }
+    renderUsers();
+}
+
+function renderUsers() {
+    if (!userRows) return;
+    const rows = filterUserRows(userRows, $("#userSearch").value);
+    $("#userCount").textContent =
+        rows.length === userRows.length ? `${userRows.length} USUARIOS` : `${rows.length} DE ${userRows.length} USUARIOS`;
+    $("#usersTable").innerHTML = rows.length
+        ? rows
+              .map(
+                  (u) => `<tr><td>${esc(u.name || "N/D")}</td><td>${esc(u.email || "N/D")}</td><td>${esc(u.phone || "N/D")}</td><td>${esc(u.createdAt ? dt(u.createdAt).toLocaleDateString("es-HN") : "N/D")}</td><td>${u.rejected}</td><td>${u.noShows}</td><td><strong>${u.reputation}/${MAX_REPUTATION}</strong></td></tr>`
+              )
+              .join("")
+        : '<tr><td colspan="7">No hay usuarios que coincidan.</td></tr>';
+}
+
+$('.nav[data-view="usuarios"]').addEventListener("click", () => {
+    if (!userRows) loadUsers();
+});
+$("#refreshUsersBtn").onclick = loadUsers;
+$("#userSearch").oninput = renderUsers;
+
+// Al cerrar sesión se olvida la lista; el próximo admin la vuelve a leer.
+onAuthStateChanged(auth, (u) => {
+    if (!u) userRows = null;
+});
+
+/*
+ * NO-SHOW en el detalle de una reserva aprobada que ya empezó. Queda como
+ * campo aparte (noShow) y no como status, así que la reserva sigue en el
+ * calendario y en ventas; solo resta un punto de reputación.
+ */
+function noShowButton(r) {
+    if (r.noShow === true) {
+        return '<button id="noShowBtn" class="ghost">QUITAR NO-SHOW</button>';
+    }
+    return canMarkNoShow(r) ? '<button id="noShowBtn" class="danger">MARCAR NO-SHOW</button>' : "";
+}
+
+async function toggleNoShow(r) {
+    const marking = r.noShow !== true;
+    if (marking && !confirm("¿Marcar esta reserva como no-show? Le resta un punto de reputación al cliente.")) return;
+    try {
+        await setNoShow(userDeps, r, marking, currentUser.uid);
+    } catch (error) {
+        console.error("[NO-SHOW]", error);
+        alert(error.message || "No se pudo guardar el no-show.");
+        return;
+    }
+    // La reputación cambió: la lista se vuelve a leer la próxima vez.
+    userRows = null;
+    closeDrawer();
+}
