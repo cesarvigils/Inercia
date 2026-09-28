@@ -51,6 +51,14 @@ import {
 
 import { esc, safeUrl } from './html-safety.js';
 
+import {
+    MAX_REPUTATION,
+    canMarkNoShow,
+    filterUserRows,
+    loadUserReputation,
+    setNoShow
+} from './user-reputation.js';
+
 /*
  * Las funciones de Firestore que usan js/reservation-writes.js, pasadas
  * por parámetro en vez de importadas allá: los tests le pasan el doble en
@@ -530,6 +538,8 @@ async function openReservation(id) {
                                 `
                                 : ""
                         }
+
+                        ${noShowButton(r)}
                     </div>
                 `
                 : ""
@@ -559,6 +569,12 @@ async function openReservation(id) {
         ?.addEventListener(
             "click",
             () => openEditReservation(r)
+        );
+
+    $("#noShowBtn")
+        ?.addEventListener(
+            "click",
+            () => toggleNoShow(r)
         );
 }
 
@@ -2038,3 +2054,84 @@ onSnapshot(
         );
     }
 );
+
+
+/*
+ * USUARIOS: todos los usuarios registrados (users/{uid}) con su
+ * reputación. La lógica y las lecturas viven en js/user-reputation.js.
+ * Se cargan una sola vez al abrir la vista (no hay listener), porque cada
+ * lectura cuenta contra la cuota de Firestore; ACTUALIZAR vuelve a leer.
+ */
+const userDeps = { db, collection, query, where, getDocs, doc, updateDoc, serverTimestamp };
+let userRows = null;
+let usersLoading = false;
+
+async function loadUsers() {
+    if (usersLoading) return;
+    usersLoading = true;
+    $("#usersTable").innerHTML = '<tr><td colspan="7">Cargando usuarios...</td></tr>';
+    try {
+        userRows = await loadUserReputation(userDeps);
+    } catch (error) {
+        console.error("[USUARIOS]", error);
+        userRows = null;
+        $("#usersTable").innerHTML = '<tr><td colspan="7">No se pudieron cargar los usuarios.</td></tr>';
+        $("#userCount").textContent = "";
+        return;
+    } finally {
+        usersLoading = false;
+    }
+    renderUsers();
+}
+
+function renderUsers() {
+    if (!userRows) return;
+    const rows = filterUserRows(userRows, $("#userSearch").value);
+    $("#userCount").textContent =
+        rows.length === userRows.length ? `${userRows.length} USUARIOS` : `${rows.length} DE ${userRows.length} USUARIOS`;
+    $("#usersTable").innerHTML = rows.length
+        ? rows
+              .map(
+                  (u) => `<tr><td>${esc(u.name || "N/D")}</td><td>${esc(u.email || "N/D")}</td><td>${esc(u.phone || "N/D")}</td><td>${esc(u.createdAt ? dt(u.createdAt).toLocaleDateString("es-HN") : "N/D")}</td><td>${u.rejected}</td><td>${u.noShows}</td><td><strong>${u.reputation}/${MAX_REPUTATION}</strong></td></tr>`
+              )
+              .join("")
+        : '<tr><td colspan="7">No hay usuarios que coincidan.</td></tr>';
+}
+
+$('.nav[data-view="usuarios"]').addEventListener("click", () => {
+    if (!userRows) loadUsers();
+});
+$("#refreshUsersBtn").onclick = loadUsers;
+$("#userSearch").oninput = renderUsers;
+
+// Al cerrar sesión se olvida la lista; el próximo admin la vuelve a leer.
+onAuthStateChanged(auth, (u) => {
+    if (!u) userRows = null;
+});
+
+/*
+ * NO-SHOW en el detalle de una reserva aprobada que ya empezó. Queda como
+ * campo aparte (noShow) y no como status, así que la reserva sigue en el
+ * calendario y en ventas; solo resta un punto de reputación.
+ */
+function noShowButton(r) {
+    if (r.noShow === true) {
+        return '<button id="noShowBtn" class="ghost">QUITAR NO-SHOW</button>';
+    }
+    return canMarkNoShow(r) ? '<button id="noShowBtn" class="danger">MARCAR NO-SHOW</button>' : "";
+}
+
+async function toggleNoShow(r) {
+    const marking = r.noShow !== true;
+    if (marking && !confirm("¿Marcar esta reserva como no-show? Le resta un punto de reputación al cliente.")) return;
+    try {
+        await setNoShow(userDeps, r, marking, currentUser.uid);
+    } catch (error) {
+        console.error("[NO-SHOW]", error);
+        alert(error.message || "No se pudo guardar el no-show.");
+        return;
+    }
+    // La reputación cambió: la lista se vuelve a leer la próxima vez.
+    userRows = null;
+    closeDrawer();
+}
