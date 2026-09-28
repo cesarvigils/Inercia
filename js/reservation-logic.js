@@ -266,3 +266,69 @@ export function slotTakenError() {
         { code: "slot-taken" }
     );
 }
+
+// "10:00" -> "10AM-11AM": la etiqueta de cada fila de la columna HORA del
+// calendario, que muestra la hora completa y no solo cuándo empieza.
+export function hourRangeLabel(time) {
+    const start = Math.floor(hm(time) / 60);
+    const label = (h) => `${h % 12 || 12}${h % 24 >= 12 ? "PM" : "AM"}`;
+
+    return `${label(start)}-${label(start + 1)}`;
+}
+
+/*
+ * Qué simuladores ya están tomados por OTRAS reservas en ese horario, para
+ * que EDITAR RESERVA los muestre deshabilitados. Cuenta solo pending y
+ * approved (las mismas que dibuja el calendario) y compara rangos, así que
+ * una reserva de 2 horas que empieza antes también bloquea.
+ *
+ * Los simuladores que la reserva editada ya tiene (`currentRigIds`) solo
+ * cuentan como tomados en la parte del horario nuevo que la reserva no
+ * cubría antes, igual que planReservationEdit solo revisa los locks
+ * nuevos: sus propios lugares siempre siguen elegibles.
+ *
+ * `hasRig` es el mismo matcher del calendario en admin.js (por id, o por
+ * tipo + número en reservas viejas). La transacción de saveReservationEdit
+ * sigue revisando reservationLocks al guardar; esto solo evita elegir un
+ * simulador que ya se sabe ocupado.
+ */
+export function takenRigIds({ reservation, currentRigIds = [], reservations = [], date, time, duration, rigs = [], hasRig }) {
+    const start = hm(time);
+    const end = start + (Number(duration) || 1) * 60;
+
+    const windowOf = (res) => {
+        const resStart = hm(res.time);
+        return [resStart, resStart + (Number(res.duration) || 1) * 60];
+    };
+
+    // Los tramos de [start, end) que la reserva editada no tenía ya.
+    let newRanges = [[start, end]];
+    if (reservation?.time && reservation.date === date) {
+        const [oldStart, oldEnd] = windowOf(reservation);
+        newRanges = [[start, Math.min(end, oldStart)], [Math.max(start, oldEnd), end]]
+            .filter(([from, to]) => from < to);
+    }
+
+    const others = reservations.filter((other) =>
+        other.id !== reservation?.id &&
+        other.date === date &&
+        EDITABLE_STATUSES.includes(other.status) &&
+        other.time
+    );
+
+    const own = new Set([...currentRigIds].map(String));
+
+    return new Set(
+        rigs
+            .filter((rig) => {
+                const ranges = own.has(String(rig.id)) ? newRanges : [[start, end]];
+
+                return others.some((other) => {
+                    const [otherStart, otherEnd] = windowOf(other);
+                    return hasRig(other, rig) &&
+                        ranges.some(([from, to]) => otherStart < to && from < otherEnd);
+                });
+            })
+            .map((rig) => rig.id)
+    );
+}

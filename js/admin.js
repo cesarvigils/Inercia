@@ -35,10 +35,14 @@ import {
     canEditReservation,
     currentPaymentMethod,
     displayRigName,
+    hourRangeLabel,
     normalizeRigType,
     paymentOptionsFor,
-    rigNumber
+    rigNumber,
+    takenRigIds
 } from './reservation-logic.js';
+
+import { isInSalesRange, saleDescription } from './sales-logic.js';
 
 import {
     createManualReservation,
@@ -347,7 +351,7 @@ function renderCalendar() {
 `).join("")}</div>`;
     for (let n = 10; n <= 21; n++) {
         let t = `${String(n).padStart(2, "0")}:00`;
-        h += `<div class="cal-row"><div class="cell time">${ftime(t)}</div>${rs
+        h += `<div class="cal-row"><div class="cell time">${hourRangeLabel(t)}</div>${rs
             .map((g) => {
                 let r = list.find((x) => x.time === t && hasRig(x, g));
                 return `<div class="cell">${r ? `<button class="point ${esc(r.status)}" data-r="${esc(r.id)}"></button>` : ""}</div>`;
@@ -658,6 +662,8 @@ function openEditReservation(r) {
                 >
 
                 <span>${esc(displayRigName(rig))}</span>
+
+                <small class="taken-label">OCUPADO</small>
             </label>
         `)
         .join("");
@@ -806,6 +812,43 @@ function openEditReservation(r) {
 
 
     /* =========================================================
+       SIMULADORES OCUPADOS
+
+       Los que otra reserva ya tiene en esa fecha/hora/duración
+       quedan en gris y no se pueden marcar. Si uno que estaba
+       marcado queda ocupado al cambiar el horario, se desmarca.
+       ========================================================= */
+
+    function markTakenRigs() {
+        const taken = takenRigIds({
+            reservation: r,
+            currentRigIds: [...currentRigIds],
+            reservations,
+            date: $("#erDate").value,
+            time: $("#erTime").value,
+            duration: $("#erDuration").value,
+            rigs: availableRigs,
+            hasRig
+        });
+
+        $$('input[name="erRig"]').forEach((input) => {
+            const isTaken = taken.has(input.value);
+
+            if (isTaken) input.checked = false;
+            input.disabled = isTaken;
+            input.closest(".admin-rig-option")
+                .classList.toggle("taken", isTaken);
+        });
+
+        calculateEditTotal();
+    }
+
+    ["#erDate", "#erTime", "#erDuration"].forEach((id) => {
+        $(id).addEventListener("change", markTakenRigs);
+    });
+
+
+    /* =========================================================
        GUARDAR CAMBIOS
 
        Reconcilia los reservationLocks viejos contra los nuevos
@@ -893,13 +936,15 @@ function openEditReservation(r) {
                         : "No se pudieron guardar los cambios."
                 );
 
+                markTakenRigs();
+
                 submitButton.disabled = false;
                 submitButton.textContent =
                     "GUARDAR CAMBIOS";
             }
         };
 
-    calculateEditTotal();
+    markTakenRigs();
 }
 
 // Status formatter
@@ -975,16 +1020,7 @@ $$(".filter").forEach(
 
 // Check if date is within range
 function inside(d) {
-    if (!d) return false;
-    let n = new Date();
-    if (range === "year") return d.getFullYear() === n.getFullYear();
-    if (range === "month") return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
-    let s = new Date(n);
-    s.setHours(0, 0, 0, 0);
-    s.setDate(n.getDate() - ((n.getDay() + 6) % 7));
-    let e = new Date(s);
-    e.setDate(s.getDate() + 7);
-    return d >= s && d < e;
+    return isInSalesRange(d, range);
 }
 
 // Render sales
@@ -1013,7 +1049,7 @@ function renderSales() {
         ? rows
             .map(
                 (s) =>
-                    `<tr><td>${s.date ? s.date.toLocaleDateString("es-HN") : "N/D"}</td><td>${esc(s.description || "Venta")}</td><td>${esc(pay(s.paymentMethod))}</td><td>${s.type === "reservation" ? "RESERVA" : "MANUAL"}</td><td>${money(s.total)}</td></tr>`
+                    `<tr><td>${s.date ? s.date.toLocaleDateString("es-HN") : "N/D"}</td><td>${esc(saleDescription(s))}</td><td>${esc(pay(s.paymentMethod))}</td><td>${s.type === "reservation" ? "RESERVA" : "MANUAL"}</td><td>${money(s.total)}</td></tr>`
             )
             .join("")
         : '<tr><td colspan="5">No hay ventas en este período.</td></tr>';
