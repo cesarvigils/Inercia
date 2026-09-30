@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildUserRows,
+  calendarStatus,
   canMarkNoShow,
   filterUserRows,
   loadUserReputation,
@@ -149,4 +150,16 @@ test('setNoShow can clear the flag, and refuses to mark a future reservation', a
     setNoShow(deps, { id: 'r2', status: 'approved', date: '2999-01-01', time: '10:00' }, true, 'admin-1')
   );
   assert.equal(deps.writes.length, 1);
+});
+
+test('the calendar paints a no-show red instead of its approved green', () => {
+  assert.equal(calendarStatus({ status: 'approved', noShow: true }), 'noshow');
+  assert.equal(calendarStatus({ status: 'approved', noShow: false }), 'approved');
+  assert.equal(calendarStatus({ status: 'pending' }), 'pending');
+});
+
+test('marking a no-show takes exactly one point off', () => {
+  const before = { id: 'r1', uid: ANA.id, status: 'approved', date: '2026-06-17', time: '15:00' };
+  assert.equal(buildUserRows([ANA], [before])[0].reputation, 5);
+  assert.equal(buildUserRows([ANA], [{ ...before, noShow: true }])[0].reputation, 4);
 });

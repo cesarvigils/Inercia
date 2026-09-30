@@ -54,6 +54,7 @@ import { esc, safeUrl } from './html-safety.js';
 import { renderRefunds, setupRefunds } from './refunds-view.js';
 import {
     MAX_REPUTATION,
+    calendarStatus,
     canMarkNoShow,
     filterUserRows,
     loadUserReputation,
@@ -358,7 +359,7 @@ function renderCalendar() {
         h += `<div class="cal-row"><div class="cell time">${hourRangeLabel(t)}</div>${rs
             .map((g) => {
                 let r = list.find((x) => x.time === t && hasRig(x, g));
-                return `<div class="cell">${r ? `<button class="point ${esc(r.status)}" data-r="${esc(r.id)}"></button>` : ""}</div>`;
+                return `<div class="cell">${r ? `<button class="point ${esc(calendarStatus(r))}" data-r="${esc(r.id)}"></button>` : ""}</div>`;
             })
             .join("")}</div>`;
     }
@@ -444,6 +445,7 @@ async function openReservation(id) {
         "N/D";
 
     $("#reservationDetail").innerHTML = `
+        ${r.noShow === true ? '<div class="noshow-banner">NO-SHOW: EL CLIENTE NO LLEGÓ</div>' : ""}
         <div class="detail-grid">
             ${[
                 ["CÓDIGO", r.code],
@@ -2122,7 +2124,11 @@ function noShowButton(r) {
     if (r.noShow === true) {
         return '<button id="noShowBtn" class="ghost">QUITAR NO-SHOW</button>';
     }
-    return canMarkNoShow(r) ? '<button id="noShowBtn" class="danger">MARCAR NO-SHOW</button>' : "";
+    if (r.status !== "approved") return "";
+    // Visible en toda reserva aprobada; se habilita cuando ya empezó.
+    return canMarkNoShow(r)
+        ? '<button id="noShowBtn" class="danger">MARCAR NO-SHOW</button>'
+        : '<button class="danger" disabled title="Se puede marcar cuando empiece la reserva">MARCAR NO-SHOW</button>';
 }
 
 async function toggleNoShow(r) {

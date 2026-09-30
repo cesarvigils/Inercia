@@ -29,6 +29,14 @@ export function canMarkNoShow(reservation, now = new Date()) {
     return !Number.isNaN(start.getTime()) && start <= now;
 }
 
+/*
+ * La clase de color de una reserva en el calendario: un no-show se pinta
+ * en rojo aunque su status siga siendo "approved".
+ */
+export function calendarStatus(reservation) {
+    return reservation?.noShow === true ? 'noshow' : reservation?.status || '';
+}
+
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
 /*
