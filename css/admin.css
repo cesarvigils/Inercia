@@ -633,6 +633,10 @@ input[type='checkbox'] {
     background: var(--green);
 }
 
+.noshow {
+    background: var(--red);
+}
+
 
 /* =========================================================
    RESERVATION CALENDAR
@@ -733,6 +737,13 @@ input[type='checkbox'] {
 
     box-shadow:
         0 0 0 4px rgba(57, 184, 106, 0.09);
+}
+
+.point.noshow {
+    background: var(--red);
+
+    box-shadow:
+        0 0 0 4px rgba(217, 84, 84, 0.12);
 }
 
 
@@ -2098,4 +2109,26 @@ td:last-child {
     .refund-summary {
         grid-template-columns: 1fr;
     }
+}
+
+
+/* NO-SHOW en el detalle de la reserva */
+
+.noshow-banner {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+
+    border: 1px solid var(--red);
+
+    color: var(--red);
+    background: rgba(217, 84, 84, 0.08);
+
+    font-family: var(--display);
+    font-size: 15px;
+    letter-spacing: 0.3px;
+}
+
+.danger:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
