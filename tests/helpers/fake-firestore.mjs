@@ -129,6 +129,12 @@ export function createFakeFirestore(seed = {}) {
           const [collection, id] = ref.path.split('/');
           remove(collection, id);
           return transaction;
+        },
+        // Shallow merge; dotted field paths are stored as literal keys.
+        update: (ref, data) => {
+          const [collection, id] = ref.path.split('/');
+          write(collection, id, data, { merge: true });
+          return transaction;
         }
       };
       return callback(transaction);

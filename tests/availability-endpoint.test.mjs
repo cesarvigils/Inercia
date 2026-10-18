@@ -106,3 +106,27 @@ test('availability: a lock with no expiresAt (a confirmed booking) blocks indefi
   assert.equal(rigById(payload, 'standard_1').available, false);
   fake.setDocs('reservationLocks', []);
 });
+
+test('availability: a lock whose reservation was cancelled or deleted no longer blocks its rig', async () => {
+  fake.setDocs('reservations', [{ id: 'res-cancelled', status: 'cancelled' }]);
+  fake.setDocs('reservationLocks', [
+    { id: `${testDate}_${slotHHMM}_standard_1`, reservationId: 'res-cancelled' },
+    { id: `${testDate}_${slotHHMM}_rig-2`, reservationId: 'res-deleted' }
+  ]);
+  const payload = await callAvailability();
+  assert.equal(rigById(payload, 'standard_1').available, true);
+  assert.equal(rigById(payload, 'rig-2').available, true);
+  fake.setDocs('reservationLocks', []);
+  fake.setDocs('reservations', []);
+});
+
+test('availability: a lock held by a live reservation still blocks its rig', async () => {
+  fake.setDocs('reservations', [{ id: 'res-live', status: 'approved' }]);
+  fake.setDocs('reservationLocks', [
+    { id: `${testDate}_${slotHHMM}_standard_1`, reservationId: 'res-live' }
+  ]);
+  const payload = await callAvailability();
+  assert.equal(rigById(payload, 'standard_1').available, false);
+  fake.setDocs('reservationLocks', []);
+  fake.setDocs('reservations', []);
+});
