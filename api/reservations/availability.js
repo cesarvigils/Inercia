@@ -37,7 +37,7 @@ import {
     getActiveRigs,
     getActiveLockdowns,
     findOverlappingLockdown,
-    isLockActive
+    findBlockingLocks
 } from '../_lib/reservations.js';
 
 // getActiveLockdowns/findOverlappingLockdown used to be defined only in this
@@ -182,12 +182,11 @@ export default async function handler(
            '_' would silently mis-associate such a rig's lock with the
            wrong id, making it look permanently available.
 
-           isLockActive(), not a bare `snapshot.exists`, so a lock left
-           behind by an abandoned checkout (see isLockActive's own
-           comment in ../_lib/reservations.js) stops blocking once it
-           expires here too, same as calendar.js and create.js already
-           do — this endpoint was the one path still checking existence
-           alone.
+           findBlockingLocks(), not a bare `snapshot.exists`, so a lock
+           left behind by an abandoned checkout, or by a reservation that
+           was cancelled, rejected or deleted without its locks, doesn't
+           grey out a free rig. create.js applies the same rule through
+           claimSlots(), so this page and the booking agree.
            ================================================= */
 
         const rigSlotRefs =
@@ -227,6 +226,28 @@ export default async function handler(
                 : [];
 
 
+        const { blocking } =
+            await findBlockingLocks(
+                allDocs,
+                {
+                    getAll:
+                        (...refs) =>
+                            adminDb.getAll(
+                                ...refs
+                            )
+                }
+            );
+
+
+        const blockingIds =
+            new Set(
+                blocking.map(
+                    lock =>
+                        lock.id
+                )
+            );
+
+
         let cursor = 0;
 
         const availabilityByRigId =
@@ -246,7 +267,10 @@ export default async function handler(
                         return [
                             rig.id,
                             !docs.some(
-                                isLockActive
+                                lock =>
+                                    blockingIds.has(
+                                        lock.id
+                                    )
                             )
                         ];
                     }

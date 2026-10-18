@@ -3457,36 +3457,23 @@ form
 
 
                 /*
-                 * Refrescar las horas después
-                 * de reservar.
-                 *
-                 * Esto hace que, si esa reserva
-                 * agotó completamente una hora,
-                 * desaparezca inmediatamente
-                 * del dropdown.
+                 * Refrescar horas y simuladores
+                 * después de reservar. Antes esto
+                 * solo redibujaba las horas con el
+                 * calendario viejo y marcaba todos
+                 * los simuladores como libres, así
+                 * que el que se acababa de reservar
+                 * se podía volver a elegir y la
+                 * segunda reserva fallaba con
+                 * "Uno de esos simuladores acaba de
+                 * ser reservado". availability()
+                 * consulta los locks en vivo.
                  */
-
                 try {
 
-                    await makeTimes();
+                    await loadCalendar();
 
-
-                    /*
-                     * Limpiar selección de rigs.
-                     */
-
-                    render(
-                        rigs.map(
-                            (
-                                rig
-                            ) => ({
-                                ...rig,
-
-                                available:
-                                    true
-                            })
-                        )
-                    );
+                    await availability();
 
                 } catch (
                     refreshError

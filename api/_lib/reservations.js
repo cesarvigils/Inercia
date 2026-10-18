@@ -108,7 +108,7 @@
  */
 
 import crypto from 'node:crypto';
-import { Timestamp, FieldPath } from 'firebase-admin/firestore';
+import { Timestamp, FieldPath, FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin.js';
 
 export const TZ = 'America/Tegucigalpa';
@@ -243,6 +243,76 @@ export function isLockActive(snapshot){
 }
 
 /*
+ * Reservation statuses that still own their slots. Anything else
+ * (cancelled, rejected, expired, payment_failed, ...) or a reservation doc
+ * that no longer exists means the lock pointing at it is an orphan: some
+ * path changed or deleted the reservation without deleting its locks.
+ * Those orphans used to block the rig until their expiresAt (or forever,
+ * for a lock with none), which customers saw as "Uno de esos simuladores
+ * acaba de ser reservado" on rigs nobody had booked.
+ */
+const LIVE_RESERVATION_STATUSES = new Set(['pending', 'approved', 'payment_pending']);
+
+/*
+ * Splits lock snapshots into the ones that really block a new booking and
+ * the ones held by `uid`'s own unpaid PayPal checkout (ownPendingIds: the
+ * reservation ids, for the caller to cancel before taking the slot over).
+ * `getAll` is transaction.getAll inside a transaction, adminDb.getAll
+ * outside one. A lock without a reservationId is kept as blocking, since
+ * nothing tells us whose it is.
+ */
+export async function findBlockingLocks(lockSnapshots, { getAll, uid = null }){
+  const active = lockSnapshots.filter(isLockActive);
+  const reservationIds = [...new Set(active.map(s => s.data()?.reservationId).filter(Boolean))];
+  const reservations = new Map();
+  if (reservationIds.length) {
+    const snaps = await getAll(...reservationIds.map(id => adminDb.doc(`reservations/${id}`)));
+    snaps.forEach((snap, i) => reservations.set(reservationIds[i], snap.exists ? snap.data() : null));
+  }
+  const blocking = [];
+  const ownPendingIds = new Set();
+  for (const lock of active) {
+    const reservationId = lock.data()?.reservationId;
+    if (!reservationId) { blocking.push(lock); continue; }
+    const reservation = reservations.get(reservationId);
+    if (!reservation || !LIVE_RESERVATION_STATUSES.has(reservation.status)) continue;
+    if (uid && reservation.status === 'payment_pending' && reservation.uid === uid) { ownPendingIds.add(reservationId); continue; }
+    blocking.push(lock);
+  }
+  return { blocking, ownPendingIds: [...ownPendingIds] };
+}
+
+/*
+ * The lock check both booking paths (api/reservations/create.js and
+ * api/_lib/paypal-reservation.js) run inside their transaction before
+ * writing their own locks. Throws the 409 when a live booking holds any of
+ * the slots, logging which locks and reservations did it so the next
+ * report can be traced in Firestore. The customer's own unpaid PayPal
+ * checkout on those slots is cancelled instead of blocking them: retrying
+ * after closing the PayPal window without onCancel firing (or after a
+ * failed capture) used to lock the customer out of their own slot until
+ * the checkout's 15 minutes ran out. capture-order.js refuses a
+ * reservation that is no longer payment_pending, so that old order can't
+ * be paid afterwards.
+ */
+export async function claimSlots(transaction, lockRefs, uid){
+  const lockDocs = lockRefs.length ? await transaction.getAll(...lockRefs) : [];
+  const { blocking, ownPendingIds } = await findBlockingLocks(lockDocs, { getAll: (...refs) => transaction.getAll(...refs), uid });
+  if (blocking.length) {
+    console.warn('[RESERVATION LOCKS] Slot taken:', blocking.map(lock => ({ lock: lock.id, reservationId: lock.data()?.reservationId || null })));
+    throw bad('Uno de esos simuladores acaba de ser reservado. Actualizá la disponibilidad.', 409);
+  }
+  for (const id of ownPendingIds) {
+    transaction.update(adminDb.doc(`reservations/${id}`), {
+      status: 'cancelled',
+      'confirmation.status': 'cancelled',
+      'payment.status': 'cancelled',
+      updatedAt: FieldValue.serverTimestamp()
+    });
+  }
+}
+
+/*
  * All reservationLocks doc IDs for one date in a single query, using a
  * range scan on the document ID itself (IDs are `${date}_${HHMM}_${rigId}`,
  * see slotIds() below) rather than fetching one specific ref per candidate
@@ -257,7 +327,8 @@ export async function getLockedSlotIds(date){
       .startAt(`${date}_`)
       .endAt(`${date}_`)
       .get();
-    return new Set(snap.docs.filter(isLockActive).map(d => d.id));
+    const { blocking } = await findBlockingLocks(snap.docs, { getAll: (...refs) => adminDb.getAll(...refs) });
+    return new Set(blocking.map(d => d.id));
   }, 15_000);
 }
 

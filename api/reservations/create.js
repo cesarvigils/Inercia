@@ -58,7 +58,7 @@ import {
     getActiveLockdowns,
     findOverlappingLockdown,
     isRigBookable,
-    isLockActive,
+    claimSlots,
     slotIds,
     code,
     expiresAt,
@@ -783,25 +783,11 @@ export default async function handler(req, res) {
                    CHECK LOCKS
                    ------------------------------------------------- */
 
-                const lockDocs =
-                    lockRefs.length
-                        ? await transaction.getAll(
-                            ...lockRefs
-                        )
-                        : [];
-
-
-                if (
-                    lockDocs.some(
-                        isLockActive
-                    )
-                ) {
-
-                    throw bad(
-                        'Uno de esos simuladores acaba de ser reservado. Actualizá la disponibilidad.',
-                        409
-                    );
-                }
+                await claimSlots(
+                    transaction,
+                    lockRefs,
+                    user.uid
+                );
 
 
                 /* -------------------------------------------------
@@ -809,8 +795,8 @@ export default async function handler(req, res) {
 
                    set(), not create(): a lock doc may already exist
                    here from an expired-but-undeleted checkout attempt
-                   (isLockActive() above already confirmed it no longer
-                   blocks) — create() would throw "already exists" on
+                   or a booking that no longer holds it (claimSlots()
+                   above already confirmed it no longer blocks) — create() would throw "already exists" on
                    that doc instead of overwriting it.
                    ------------------------------------------------- */
 

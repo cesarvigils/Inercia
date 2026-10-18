@@ -37,7 +37,7 @@ import {
     getActiveLockdowns,
     findOverlappingLockdown,
     isRigBookable,
-    isLockActive,
+    claimSlots,
     slotIds,
     code,
     bad
@@ -198,22 +198,14 @@ export async function createPaypalPendingReservation(user, body) {
     const draft = await buildPaypalReservationData(user, body);
 
     await adminDb.runTransaction(async (transaction) => {
-        const lockDocs = draft.lockRefs.length
-            ? await transaction.getAll(...draft.lockRefs)
-            : [];
-
-        if (lockDocs.some(isLockActive)) {
-            throw bad(
-                'Uno de esos simuladores acaba de ser reservado. Actualizá la disponibilidad.',
-                409
-            );
-        }
+        await claimSlots(transaction, draft.lockRefs, user.uid);
 
         for (const lockRef of draft.lockRefs) {
             // set(), not create(): a lock doc may already exist here from an
-            // expired-but-undeleted checkout attempt (isLockActive() above
-            // already confirmed it no longer blocks) — create() would throw
-            // "already exists" on that doc instead of overwriting it.
+            // expired-but-undeleted checkout attempt or a booking that no
+            // longer holds it (claimSlots() above already confirmed it no
+            // longer blocks) — create() would throw "already exists" on that
+            // doc instead of overwriting it.
             transaction.set(lockRef, {
                 reservationId: draft.reservationRef.id,
                 uid: user.uid,
