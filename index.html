@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Anton&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/menu.css">
+<link rel="stylesheet" href="css/navbar.css">
 <link rel="stylesheet" href="css/auth.css">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link
@@ -84,6 +85,22 @@
 
   </div>
 
+  <nav class="desk-nav" id="deskNav" aria-label="Navegación principal">
+    <div class="desk-nav-inner">
+      <a href="/inicio" class="desk-nav-home" tabindex="-1" aria-hidden="true">
+        <img src="/assets/menu.png" alt="">
+      </a>
+      <ul class="desk-nav-links">
+        <li><a href="/inicio" class="desk-nav-link" data-nav="inicio">INICIO</a></li>
+        <li><a href="/reservas" class="desk-nav-link" data-nav="reservas">RESERVAR</a></li>
+        <li><a href="/standings" class="desk-nav-link" data-nav="standings">RESULTADOS</a></li>
+        <li><a href="/contacto" class="desk-nav-link" data-nav="contacto">CONTACTO</a></li>
+      </ul>
+      <span class="desk-nav-sep" aria-hidden="true"></span>
+      <a href="/suscripcion" class="desk-nav-cta" data-nav="suscripcion">SUSCRIBITE</a>
+    </div>
+  </nav>
+
   <section class="hero reveal">
     <div class="hero-art" role="img">
       <img class="hero-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fpanoramicarigs.jpg?alt=media&token=4b312fec-49b1-4239-ab79-4c143d6531ca" alt="Sala de simuladores de carreras con luces de neón">
@@ -127,6 +144,7 @@
 
 <script type="module" src="js/home.js"></script>
 <script type="module" src="js/menu.js"></script>
+<script type="module" src="js/navbar.js"></script>
 </body>
 <video class="page-bg-video" autoplay muted loop playsinline>
     <source src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fbackground1.mp4?alt=media&token=cc4f4fcf-328b-4e9f-a13e-e90faa3ae8ce" type="video/mp4">

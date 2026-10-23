@@ -31,6 +31,7 @@
 
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/menu.css">
+    <link rel="stylesheet" href="/css/navbar.css">
     <link rel="stylesheet" href="/css/reservas.css">
     <link rel="stylesheet" href="/css/reservas-backend.css">
     <link rel="stylesheet" href="/css/auth.css">
@@ -174,6 +175,22 @@
             <span>SIMULADORES INERCIA</span>
         </div>
 
+    </nav>
+
+    <nav class="desk-nav" id="deskNav" aria-label="Navegación principal">
+      <div class="desk-nav-inner">
+        <a href="/inicio" class="desk-nav-home" tabindex="-1" aria-hidden="true">
+          <img src="/assets/menu.png" alt="">
+        </a>
+        <ul class="desk-nav-links">
+          <li><a href="/inicio" class="desk-nav-link" data-nav="inicio">INICIO</a></li>
+          <li><a href="/reservas" class="desk-nav-link" data-nav="reservas">RESERVAR</a></li>
+          <li><a href="/standings" class="desk-nav-link" data-nav="standings">RESULTADOS</a></li>
+          <li><a href="/contacto" class="desk-nav-link" data-nav="contacto">CONTACTO</a></li>
+        </ul>
+        <span class="desk-nav-sep" aria-hidden="true"></span>
+        <a href="/suscripcion" class="desk-nav-cta" data-nav="suscripcion">SUSCRIBITE</a>
+      </div>
     </nav>
 
 
@@ -996,6 +1013,11 @@
     <script
         type="module"
         src="/js/menu.js"
+    ></script>
+
+    <script
+        type="module"
+        src="/js/navbar.js"
     ></script>
 
     <script

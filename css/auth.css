@@ -961,4 +961,60 @@ body.auth-modal-open {
 .forgot-password-modal
 .auth-message {
     margin-top: 4px;
+}/* =========================================================
+   PROFILE MENU ITEMS (PERFIL + CERRAR SESIÓN)
+   ========================================================= */
+
+#profileBtn {
+    width: 100%;
+
+    margin-top: 12px;
+    padding: 10px 4px;
+
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+
+    background: transparent;
+    color: #f4f4f4;
+
+    font-family: var(--font-display, 'Kenyan Coffee', sans-serif);
+    font-size: 17px;
+    text-align: left;
+
+    cursor: pointer;
+
+    transition: color .2s ease, padding-left .25s ease;
+}
+
+#profileBtn + #logoutBtn {
+    margin-top: 2px;
+}
+
+#profileBtn:hover,
+#profileBtn:focus-visible {
+    color: var(--orange, #ff8b00);
+    padding-left: 10px;
+}
+
+.profile-menu-item:focus {
+    outline: none;
+}
+
+.profile-menu-item:focus-visible {
+    outline: 2px solid var(--orange, #ff8b00);
+    outline-offset: 2px;
+}
+
+#logoutBtn:focus-visible {
+    color: #fff;
+}
+
+/* Desktop: line the menu up with the navbar's right edge (css/navbar.css
+   sizes the header row the same on every page). */
+@media (min-width: 860px) {
+
+    .profile-menu {
+        top: 80px;
+        right: max(32px, calc((100vw - 1080px) / 2));
+    }
 }
