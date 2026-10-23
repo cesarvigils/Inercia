@@ -368,7 +368,7 @@ function renderEvents(result) {
 
 function focusables() {
     return [...root.querySelectorAll('button, a[href], [tabindex="0"]')]
-        .filter((node) => !node.disabled && node.offsetParent !== null);
+        .filter((node) => !node.disabled && node.tabIndex !== -1 && node.getClientRects().length > 0);
 }
 
 function onKeydown(event) {

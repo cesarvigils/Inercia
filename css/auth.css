@@ -1009,6 +1009,15 @@ body.auth-modal-open {
     color: #fff;
 }
 
+/* Become visible at once when opening (still fading in), so the first
+   item can take focus right away for keyboard users. */
+.profile-menu.open {
+    transition:
+        opacity .18s ease,
+        transform .18s ease,
+        visibility 0s;
+}
+
 /* Desktop: line the menu up with the navbar's right edge (css/navbar.css
    sizes the header row the same on every page). */
 @media (min-width: 860px) {
