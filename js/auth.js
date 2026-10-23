@@ -315,6 +315,7 @@ const profileMenuName = document.getElementById('profileMenuName');
 const profileMenuEmail = document.getElementById('profileMenuEmail');
 
 const logoutBtn = document.getElementById('logoutBtn');
+const profileBtn = document.getElementById('profileBtn');
 
 
 const DEFAULT_PFP =
@@ -1749,6 +1750,41 @@ googleRegisterBtn?.addEventListener(
     'click',
     continueWithGoogle
 );
+
+
+/* =========================================================
+   PERFIL
+   The profile overlay (js/profile/profile-view.js) is loaded on first
+   use, so pages that never open it don't download it.
+   ========================================================= */
+
+let profileView = null;
+
+function loadProfileView() {
+    profileView = profileView || import('./profile/profile-view.js');
+    return profileView;
+}
+
+profileBtn?.addEventListener('click', async () => {
+
+    closeProfileMenu();
+
+    if (!auth.currentUser) return;
+
+    try {
+        const view = await loadProfileView();
+        view.openProfile(auth.currentUser);
+    } catch (error) {
+        console.error('Error abriendo el perfil:', error);
+    }
+});
+
+// Signing out (here or in another tab) closes an open profile.
+onAuthStateChanged(auth, (user) => {
+    if (!user && profileView) {
+        profileView.then((view) => view.closeProfile());
+    }
+});
 
 
 /* =========================================================

@@ -85,6 +85,7 @@ export default [
         cancelAnimationFrame: 'readonly',
         IntersectionObserver: 'readonly',
         queueMicrotask: 'readonly',
+        AbortController: 'readonly',
       },
     },
     rules: {
