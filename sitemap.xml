@@ -2,7 +2,7 @@
 
 <!--
   sitemap.xml — Static, hand-maintained sitemap for inerciahn.com (referenced from robots.txt).
-  Lists the 4 real pages of the site (home, reservas, standings, contacto — matching the Vite entry
+  Lists the 5 real pages of the site (home, reservas, standings, contacto, suscripcion — matching the Vite entry
   points in vite.config.js). This is NOT generated automatically: if a new top-level page is ever added,
   it needs to be added here by hand too, or it won't be included for search engines.
 -->
@@ -28,6 +28,12 @@
 
     <url>
         <loc>https://inerciahn.com/contacto</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+
+    <url>
+        <loc>https://inerciahn.com/suscripcion</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>

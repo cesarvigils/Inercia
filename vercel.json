@@ -13,6 +13,10 @@
       "destination": "/reservas.html"
     },
     {
+      "source": "/suscripcion",
+      "destination": "/suscripcion.html"
+    },
+    {
       "source": "/inicio",
       "destination": "/index.html"
     }

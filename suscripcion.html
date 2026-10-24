@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!--
+  suscripcion.html — Membership plans (Gold / Platino / Zafiro) and PayPal sign-up.
+  Scripts: js/suscripcion.js (lists /api/subscription/plans, starts the PayPal subscription and
+  confirms it when PayPal sends the buyer back), js/auth.js, js/menu.js, js/navbar.js.
+  Styles: css/style.css (shared base), css/menu.css, css/navbar.css, css/auth.css, css/suscripcion.css.
+  Vite entry point: registered under `suscripcion` in vite.config.js; served at /suscripcion (vercel.json).
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Membresías | Simuladores Inercia</title>
+<meta name="description" content="Membresías Gold, Platino y Zafiro de Simuladores Inercia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Alumni+Sans:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/menu.css">
+<link rel="stylesheet" href="/css/navbar.css">
+<link rel="stylesheet" href="/css/auth.css">
+<link rel="stylesheet" href="/css/suscripcion.css">
+<link rel="icon" type="image/png" href="/favicon.png">
+<script type="module" src="/js/auth.js"></script>
+</head>
+
+<body>
+
+  <div class="header-wrap">
+    <header class="header">
+<button
+  class="menu-btn"
+  id="menuBtn"
+  type="button"
+  aria-label="Abrir menú"
+  aria-expanded="false"
+  aria-controls="sideMenu"
+>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M4 6H20M4 12H20M4 18H20"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+  </svg>
+</button>
+      <div class="logo">
+        <img class="logo-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Simuladores Inercia">
+      </div>
+      <button class="auth-btn" id="authBtn" type="button" aria-label="Iniciar sesión">
+    <img
+        src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fdefaultpfp3.jpg?alt=media&token=a0435be5-f789-41ec-9d50-ab24fed4b9ec"
+        alt="Perfil"
+        class="auth-pfp"
+        id="authPfp"
+    >
+</button>
+    </header>   
+<div class="menu-overlay" id="menuOverlay"></div>
+<nav class="side-menu" id="sideMenu" aria-hidden="true">
+  <div class="side-menu-header">
+<img src="/assets/menu.png" alt="Menú" class="menu-title-img">
+    <button class="menu-close" id="menuClose" type="button" aria-label="Cerrar menú">
+      &times;
+    </button>
+  </div>
+  <div class="side-menu-links">
+        <a href="/inicio" class="side-menu-link">
+      INICIO
+    </a>
+    <a href="/reservas" class="side-menu-link">
+      RESERVAR
+    </a>
+    <a href="/standings" class="side-menu-link">
+      RESULTADOS
+    </a>
+    <a href="/contacto" class="side-menu-link">
+      CONTACTO
+    </a>
+    <a href="/suscripcion" class="side-menu-link">
+      SUSCRIBITE
+    </a>
+  </div>
+  <div class="side-menu-footer">
+    <span>SIMULADORES INERCIA</span>
+  </div>
+</nav>
+
+  </div>
+
+  <nav class="desk-nav" id="deskNav" aria-label="Navegación principal">
+    <div class="desk-nav-inner">
+      <a href="/inicio" class="desk-nav-home" tabindex="-1" aria-hidden="true">
+        <img src="/assets/menu.png" alt="">
+      </a>
+      <ul class="desk-nav-links">
+        <li><a href="/inicio" class="desk-nav-link" data-nav="inicio">INICIO</a></li>
+        <li><a href="/reservas" class="desk-nav-link" data-nav="reservas">RESERVAR</a></li>
+        <li><a href="/standings" class="desk-nav-link" data-nav="standings">RESULTADOS</a></li>
+        <li><a href="/contacto" class="desk-nav-link" data-nav="contacto">CONTACTO</a></li>
+      </ul>
+      <span class="desk-nav-sep" aria-hidden="true"></span>
+      <a href="/suscripcion" class="desk-nav-cta" data-nav="suscripcion">SUSCRIBITE</a>
+    </div>
+  </nav>
+
+  <main class="sub-page">
+
+    <header class="sub-heading">
+      <p class="sub-eyebrow">SIMULADORES INERCIA</p>
+      <h1 class="sub-title">MEMBRESÍAS</h1>
+      <p class="sub-lead">Elegí tu plan y cada cuánto querés pagarlo. El cobro es automático con PayPal.</p>
+    </header>
+
+    <div class="sub-notice" id="subNotice" role="status" hidden></div>
+
+    <section class="sub-plans" aria-labelledby="subPeriodLabel">
+      <div class="sub-plans-head">
+        <p class="sub-label" id="subPeriodLabel">FRECUENCIA DE PAGO</p>
+        <div class="sub-periods" id="subPeriods" role="tablist" aria-labelledby="subPeriodLabel"></div>
+      </div>
+
+      <div class="sub-tiers" id="subTiers" aria-live="polite">
+        <p class="sub-state">CARGANDO PLANES…</p>
+      </div>
+    </section>
+
+    <p class="sub-footnote">Con una membresía activa podés pagar tus reservas en efectivo.</p>
+
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> Simuladores Inercia — Todos los derechos reservados</p>
+  </footer>
+
+<script type="module" src="/js/menu.js"></script>
+<script type="module" src="/js/navbar.js"></script>
+<script type="module" src="/js/suscripcion.js"></script>
+</body>
+<video class="page-bg-video" autoplay muted loop playsinline>
+    <source src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fbackground1.mp4?alt=media&token=cc4f4fcf-328b-4e9f-a13e-e90faa3ae8ce" type="video/mp4">
+</video>
+</html>

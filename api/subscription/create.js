@@ -9,7 +9,7 @@
  * Works with either PayPal flow:
  *   - PayPal Buttons: return `subscriptionID` from createSubscription.
  *   - Redirect: send the buyer to `approveUrl`. PayPal sends them back to
- *     SITE_URL/reservas?membresia=aprobada (or =cancelada) when SITE_URL is
+ *     SITE_URL/suscripcion?membresia=aprobada (or =cancelada) when SITE_URL is
  *     set.
  * Either way, the browser then calls POST /api/subscription/activate; if it
  * never does, the BILLING.SUBSCRIPTION.ACTIVATED webhook records it.
@@ -35,8 +35,8 @@ function returnUrls() {
     const site = String(process.env.SITE_URL || '').trim().replace(/\/+$/, '');
     if (!/^https?:\/\//.test(site)) return {};
     return {
-        return_url: `${site}/reservas?membresia=aprobada`,
-        cancel_url: `${site}/reservas?membresia=cancelada`
+        return_url: `${site}/suscripcion?membresia=aprobada`,
+        cancel_url: `${site}/suscripcion?membresia=cancelada`
     };
 }
 

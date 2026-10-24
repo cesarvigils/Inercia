@@ -226,15 +226,16 @@ if (!document.getElementById('forgotPasswordModal')) {
 }
     if (!document.getElementById('profileMenu')) {
         document.body.insertAdjacentHTML('beforeend', `
-<div class="profile-menu" id="profileMenu" aria-hidden="true">
+<div class="profile-menu" id="profileMenu" role="menu" aria-label="Cuenta" aria-hidden="true">
   <div class="profile-menu-user">
-    <img id="profileMenuPfp" src="" alt="Perfil">
+    <img id="profileMenuPfp" src="" alt="">
     <div>
       <strong id="profileMenuName">USUARIO</strong>
       <span id="profileMenuEmail"></span>
     </div>
   </div>
-  <button id="logoutBtn" type="button">CERRAR SESIÓN</button>
+  <button id="profileBtn" class="profile-menu-item" type="button" role="menuitem" tabindex="-1">PERFIL</button>
+  <button id="logoutBtn" class="profile-menu-item" type="button" role="menuitem" tabindex="-1">CERRAR SESIÓN</button>
 </div>`);
     }
 
@@ -314,6 +315,7 @@ const profileMenuName = document.getElementById('profileMenuName');
 const profileMenuEmail = document.getElementById('profileMenuEmail');
 
 const logoutBtn = document.getElementById('logoutBtn');
+const profileBtn = document.getElementById('profileBtn');
 
 
 const DEFAULT_PFP =
@@ -587,28 +589,63 @@ function closeForgotPasswordModal(
    PROFILE MENU
    ========================================================= */
 
-function openProfileMenu() {
+function profileMenuItems() {
+    return profileMenu
+        ? [...profileMenu.querySelectorAll('[role="menuitem"]')]
+        : [];
+}
+
+
+function openProfileMenu({ focusFirst = false } = {}) {
     profileMenu?.classList.add('open');
     profileMenu?.setAttribute('aria-hidden', 'false');
-}
+    authBtn?.setAttribute('aria-expanded', 'true');
 
-
-function closeProfileMenu() {
-    profileMenu?.classList.remove('open');
-    profileMenu?.setAttribute('aria-hidden', 'true');
-}
-
-
-function toggleProfileMenu() {
-
-    if (!profileMenu) return;
-
-    if (profileMenu.classList.contains('open')) {
-        closeProfileMenu();
-    } else {
-        openProfileMenu();
+    if (focusFirst) {
+        profileMenuItems()[0]?.focus();
     }
 }
+
+
+function closeProfileMenu({ returnFocus = false } = {}) {
+    if (!profileMenu?.classList.contains('open')) return;
+
+    profileMenu.classList.remove('open');
+    profileMenu.setAttribute('aria-hidden', 'true');
+    authBtn?.setAttribute('aria-expanded', 'false');
+
+    if (returnFocus) {
+        authBtn?.focus();
+    }
+}
+
+
+/*
+ * Keyboard support inside the open menu: arrow keys / Home / End move
+ * between items, Tab closes it (focus moves on naturally). Escape is
+ * handled by the document-level listener below.
+ */
+profileMenu?.addEventListener('keydown', (event) => {
+
+    const items = profileMenuItems();
+    const index = items.indexOf(document.activeElement);
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+
+        items[(index + step + items.length) % items.length]?.focus();
+    } else if (event.key === 'Home') {
+        event.preventDefault();
+        items[0]?.focus();
+    } else if (event.key === 'End') {
+        event.preventDefault();
+        items[items.length - 1]?.focus();
+    } else if (event.key === 'Tab') {
+        closeProfileMenu();
+    }
+});
 
 
 /* =========================================================
@@ -620,7 +657,12 @@ authBtn?.addEventListener('click', (event) => {
     event.stopPropagation();
 
     if (auth.currentUser) {
-        toggleProfileMenu();
+        // event.detail is 0 for keyboard activation (Enter / Space).
+        if (profileMenu?.classList.contains('open')) {
+            closeProfileMenu();
+        } else {
+            openProfileMenu({ focusFirst: event.detail === 0 });
+        }
     } else {
         openAuthModal();
     }
@@ -684,7 +726,9 @@ document.addEventListener(
         ) {
             closeAuthModal();
         }
-        closeProfileMenu();
+        closeProfileMenu({
+            returnFocus: profileMenu?.contains(document.activeElement)
+        });
     }
 );
 
@@ -1181,6 +1225,11 @@ onAuthStateChanged(auth, (user) => {
             'logged-in'
         );
 
+        authBtn?.setAttribute('aria-label', 'Cuenta');
+        authBtn?.setAttribute('aria-haspopup', 'menu');
+        authBtn?.setAttribute('aria-controls', 'profileMenu');
+        authBtn?.setAttribute('aria-expanded', 'false');
+
 
     } else {
 
@@ -1207,6 +1256,11 @@ onAuthStateChanged(auth, (user) => {
         authBtn?.classList.remove(
             'logged-in'
         );
+
+        authBtn?.setAttribute('aria-label', 'Iniciar sesión');
+        authBtn?.removeAttribute('aria-haspopup');
+        authBtn?.removeAttribute('aria-controls');
+        authBtn?.removeAttribute('aria-expanded');
 
 
         closeProfileMenu();
@@ -1696,6 +1750,41 @@ googleRegisterBtn?.addEventListener(
     'click',
     continueWithGoogle
 );
+
+
+/* =========================================================
+   PERFIL
+   The profile overlay (js/profile/profile-view.js) is loaded on first
+   use, so pages that never open it don't download it.
+   ========================================================= */
+
+let profileView = null;
+
+function loadProfileView() {
+    profileView = profileView || import('./profile/profile-view.js');
+    return profileView;
+}
+
+profileBtn?.addEventListener('click', async () => {
+
+    closeProfileMenu();
+
+    if (!auth.currentUser) return;
+
+    try {
+        const view = await loadProfileView();
+        view.openProfile(auth.currentUser);
+    } catch (error) {
+        console.error('Error abriendo el perfil:', error);
+    }
+});
+
+// Signing out (here or in another tab) closes an open profile.
+onAuthStateChanged(auth, (user) => {
+    if (!user && profileView) {
+        profileView.then((view) => view.closeProfile());
+    }
+});
 
 
 /* =========================================================

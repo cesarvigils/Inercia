@@ -1,0 +1,371 @@
+/*
+ * css/suscripcion.css
+ *
+ * Membership page (suscripcion.html). Loaded after css/style.css, whose
+ * tokens (--orange, --ink, --font-display...) and header/footer it uses.
+ * Same pieces as the rest of the site: the contacto page heading, a
+ * reservas-style panel with an orange left rail, the login modal's tabs
+ * (for the billing period) and its .auth-submit button.
+ */
+
+.sub-page {
+    width: calc(100% - 40px);
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 34px 0 10px;
+}
+
+
+/* ---------------------- heading ---------------------- */
+
+.sub-eyebrow {
+    margin: 0;
+
+    color: var(--orange);
+
+    font-family: var(--font-display);
+    font-size: 20px;
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+.sub-title {
+    margin: 4px 0 12px;
+
+    color: #fff;
+
+    font-family: var(--font-display);
+    font-size: 54px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    line-height: 0.9;
+}
+
+.sub-lead {
+    max-width: 520px;
+    margin: 0;
+
+    color: var(--ink-dim);
+
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* ---------------------- notice ---------------------- */
+
+.sub-notice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 16px;
+
+    margin-top: 26px;
+    padding: 16px 22px;
+
+    background: rgba(14, 14, 14, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 3px solid var(--orange);
+}
+
+.sub-notice[hidden] {
+    display: none;
+}
+
+.sub-notice strong {
+    color: #fff;
+
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+.sub-notice[data-kind="member"] strong,
+.sub-notice[data-kind="success"] strong {
+    color: var(--orange);
+}
+
+.sub-notice[data-kind="error"] {
+    border-left-color: #ff5252;
+}
+
+.sub-notice span {
+    color: #9a9a9a;
+
+    font-size: 12px;
+}
+
+
+/* ---------------------- plans panel ---------------------- */
+
+.sub-plans {
+    margin-top: 26px;
+
+    background: rgba(14, 14, 14, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 3px solid var(--orange);
+}
+
+.sub-plans-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 24px;
+
+    padding: 24px 28px 0;
+}
+
+.sub-label {
+    margin: 0 0 12px;
+
+    color: #ddd;
+
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+/* Same as .auth-tabs in the login modal. */
+.sub-periods {
+    display: flex;
+    gap: 24px;
+
+    max-width: 100%;
+    overflow-x: auto;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sub-period {
+    position: relative;
+    flex: none;
+
+    padding: 8px 2px 10px;
+
+    border: 0;
+    background: transparent;
+
+    color: #777;
+
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 0.5px;
+
+    cursor: pointer;
+
+    transition: color 0.2s ease;
+}
+
+.sub-period:hover {
+    color: #ccc;
+}
+
+.sub-period.active {
+    color: #fff;
+}
+
+.sub-period.active::after {
+    content: '';
+
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+
+    height: 3px;
+
+    background: var(--orange);
+}
+
+.sub-period:focus-visible,
+.sub-cta:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+}
+
+.sub-tiers {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    margin-top: 6px;
+}
+
+.sub-tier {
+    display: flex;
+    flex-direction: column;
+
+    padding: 26px 28px 28px;
+}
+
+.sub-tier + .sub-tier {
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sub-tier-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.sub-tier-name {
+    margin: 0;
+
+    color: var(--orange);
+
+    font-family: var(--font-display);
+    font-size: 44px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+/* Same three marks as the profile: Gold 1, Platino 2, Zafiro 3. */
+.sub-ladder {
+    display: flex;
+    gap: 4px;
+}
+
+.sub-ladder i {
+    width: 22px;
+    height: 5px;
+
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.sub-ladder i.is-on {
+    background: var(--orange);
+}
+
+.sub-price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+
+    margin: 22px 0 24px;
+}
+
+.sub-price strong {
+    color: #fff;
+
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+.sub-price span {
+    color: #9a9a9a;
+
+    font-size: 12px;
+}
+
+.sub-tier-missing {
+    margin: 22px 0 0;
+
+    color: #777;
+
+    font-size: 12px;
+}
+
+/* Same as .auth-submit. */
+.sub-cta {
+    width: 100%;
+    margin-top: auto;
+    padding: 13px 15px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: var(--orange);
+    color: #111;
+
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 0.5px;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.sub-cta:hover:not(:disabled) {
+    background: #ff9d22;
+    transform: translateY(-1px);
+}
+
+.sub-cta:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.sub-state {
+    grid-column: 1 / -1;
+
+    margin: 0;
+    padding: 30px 28px 34px;
+
+    color: #777;
+
+    font-family: var(--font-display);
+    font-size: 17px;
+    letter-spacing: 1px;
+}
+
+.sub-footnote {
+    margin: 16px 0 0;
+
+    color: #8a8a8a;
+
+    font-size: 12px;
+}
+
+
+/* ---------------------- desktop ---------------------- */
+
+@media (min-width: 860px) {
+
+    .sub-page {
+        width: calc(100% - 64px);
+        padding-top: 40px;
+    }
+
+    .sub-title {
+        font-size: 72px;
+    }
+}
+
+
+/* ---------------------- phones ---------------------- */
+
+@media (max-width: 759px) {
+
+    .sub-tiers {
+        grid-template-columns: 1fr;
+    }
+
+    .sub-tier {
+        padding: 22px 20px 24px;
+    }
+
+    .sub-tier + .sub-tier {
+        border-left: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .sub-plans-head {
+        padding: 20px 20px 0;
+    }
+
+    .sub-price {
+        margin: 16px 0 18px;
+    }
+
+    .sub-price strong {
+        font-size: 46px;
+    }
+}

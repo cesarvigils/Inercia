@@ -1,0 +1,267 @@
+/*
+ * css/navbar.css
+ *
+ * Desktop navigation (>= 860px). The header row keeps the centered logo
+ * and the profile button; the horizontal bar below it (#deskNav) replaces
+ * the hamburger + slide-out side menu on desktop. Below 860px nothing
+ * here applies and the side menu (css/menu.css) works as before.
+ *
+ * Loaded on every page after that page's own stylesheet, so the header
+ * row looks the same everywhere on desktop (each page used to size the
+ * logo differently). js/navbar.js marks the current page and the
+ * stuck-on-scroll state.
+ */
+
+.desk-nav {
+    display: none;
+}
+
+@media (min-width: 860px) {
+
+    /* ---------------------- header row ---------------------- */
+
+    .header-wrap {
+        width: 100%;
+        max-width: none;
+    }
+
+    .header-wrap .header {
+        width: calc(100% - 64px);
+        max-width: 1080px;
+        height: 88px;
+        margin: 0 auto;
+        padding: 16px 0 10px;
+        border-radius: 0;
+    }
+
+    .header-wrap .menu-btn {
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .header-wrap .auth-btn {
+        justify-self: end;
+    }
+
+    .header-wrap .logo-img {
+        width: 100%;
+        max-width: 220px;
+        height: auto;
+    }
+
+    .menu-overlay,
+    .side-menu {
+        display: none;
+    }
+
+
+    /* ---------------------- bar ---------------------- */
+
+    .desk-nav {
+        position: sticky;
+        top: 0;
+        z-index: 80;
+
+        display: block;
+
+        transition: background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .desk-nav-inner {
+        position: relative;
+
+        width: calc(100% - 64px);
+        max-width: 1080px;
+        height: 54px;
+        margin: 0 auto;
+
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        gap: 34px;
+
+    }
+
+    .desk-nav-links {
+        display: flex;
+        align-items: stretch;
+        gap: 34px;
+
+        margin: 0;
+        padding: 0;
+
+        list-style: none;
+    }
+
+    .desk-nav-links li {
+        display: flex;
+    }
+
+    .desk-nav-link {
+        position: relative;
+
+        display: flex;
+        align-items: center;
+
+        color: #f4f4f4;
+        text-decoration: none;
+
+        font-family: 'Kenyan Coffee', 'Anton', 'Arial Narrow', sans-serif;
+        font-size: 21px;
+        font-weight: 400;
+        letter-spacing: 1px;
+        line-height: 1;
+
+        transition: color 0.2s ease;
+    }
+
+    /* Same 3px orange bar the auth tabs use for their active tab. */
+    .desk-nav-link::after {
+        content: '';
+
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        height: 3px;
+
+        background: #ff8b00;
+
+        transform: scaleX(0);
+        transform-origin: left center;
+
+        transition: transform 0.25s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .desk-nav-link:hover,
+    .desk-nav-link:focus-visible {
+        color: #ff8b00;
+    }
+
+    .desk-nav-link:hover::after {
+        transform: scaleX(1);
+    }
+
+    .desk-nav-link[aria-current="page"] {
+        color: #ff8b00;
+    }
+
+    .desk-nav-link[aria-current="page"]::after {
+        transform: scaleX(1);
+    }
+
+    .desk-nav-link:focus-visible,
+    .desk-nav-cta:focus-visible,
+    .desk-nav-home:focus-visible {
+        outline: 2px solid #ff8b00;
+        outline-offset: 4px;
+    }
+
+    /* SUSCRIBITE: the bar's one solid action, styled like .auth-submit. */
+    .desk-nav-cta {
+        align-self: center;
+
+        display: inline-flex;
+        align-items: center;
+
+        padding: 8px 16px 7px;
+
+        border-radius: 8px;
+
+        background: #ff8b00;
+        color: #111;
+        text-decoration: none;
+
+        font-family: 'Kenyan Coffee', 'Anton', 'Arial Narrow', sans-serif;
+        font-size: 18px;
+        letter-spacing: 1px;
+        line-height: 1;
+
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .desk-nav-cta:hover {
+        background: #ff9d22;
+        transform: translateY(-1px);
+    }
+
+    .desk-nav-cta[aria-current="page"] {
+        background: transparent;
+        color: #ff8b00;
+        box-shadow: inset 0 0 0 1px #ff8b00;
+    }
+
+    .desk-nav-sep {
+        align-self: center;
+
+        width: 1px;
+        height: 22px;
+
+        background: rgba(255, 255, 255, 0.16);
+    }
+
+    /* Small logo that only shows once the header row has scrolled away. */
+    .desk-nav-home {
+        position: absolute;
+        left: 0;
+        top: 50%;
+
+        opacity: 0;
+        visibility: hidden;
+
+        transform: translate(-8px, -50%);
+
+        transition:
+            opacity 0.25s ease,
+            transform 0.25s ease,
+            visibility 0.25s ease;
+    }
+
+    .desk-nav-home img {
+        width: 104px;
+        height: auto;
+    }
+
+
+    /* ---------------------- stuck ---------------------- */
+
+    .desk-nav.is-stuck {
+        background: rgba(18, 18, 18, 0.96);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    .desk-nav.is-stuck .desk-nav-home {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(0, -50%);
+    }
+}
+
+/* Smaller laptops: tighten spacing before anything can collide with the
+   stuck-state logo on the left. */
+@media (min-width: 860px) and (max-width: 1099px) {
+
+    .desk-nav-inner,
+    .desk-nav-links {
+        gap: 24px;
+    }
+
+    .desk-nav-link {
+        font-size: 19px;
+    }
+
+    .desk-nav-home img {
+        width: 86px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .desk-nav,
+    .desk-nav-link::after,
+    .desk-nav-home,
+    .desk-nav-cta {
+        transition: none;
+    }
+}

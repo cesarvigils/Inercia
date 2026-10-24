@@ -10,8 +10,13 @@
  * past its renewal date — it re-checks PayPal before answering; if PayPal
  * can't be reached, the stored copy is used as is.
  *
- * Response: { active, status, subscriptionId, nextBillingTime, paidThrough }
+ * Response: { active, status, subscriptionId, nextBillingTime, paidThrough,
+ *             tier, period }
  *   status is PayPal's subscription status, or 'NONE' with no membership.
+ *   tier is 'Nula' | 'Gold' | 'Platino' | 'Zafiro', or null when an active
+ *   membership's plan can't be read from PayPal right now; period is the
+ *   plan's billing period ('mensual', 'trimestral', 'semestral', 'anual')
+ *   or null. See api/_lib/membership-plans.js.
  */
 
 import { method, json, fail, requireUser, rateLimit } from '../_lib/http.js';
@@ -21,6 +26,7 @@ import {
     syncSubscription,
     membershipPayload
 } from '../_lib/membership.js';
+import { getPlan, membershipTier } from '../_lib/membership-plans.js';
 
 export default async function handler(req, res) {
     try {
@@ -41,7 +47,16 @@ export default async function handler(req, res) {
             }
         }
 
-        return json(res, 200, membershipPayload(membership));
+        const payload = membershipPayload(membership);
+        const plan = payload.active && membership?.planId
+            ? await getPlan(membership.planId)
+            : null;
+
+        return json(res, 200, {
+            ...payload,
+            tier: membershipTier(membership, plan),
+            period: payload.active ? plan?.period || null : null
+        });
     } catch (error) {
         return fail(res, error);
     }
