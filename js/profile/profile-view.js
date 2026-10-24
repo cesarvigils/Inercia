@@ -77,7 +77,6 @@ function build() {
     const page = el('div', 'pf-page');
 
     const top = el('div', 'pf-top');
-    top.append(el('span', 'pf-brand', 'SIMULADORES INERCIA'));
     const close = el('button', 'pf-close', '×');
     close.type = 'button';
     close.setAttribute('aria-label', 'Cerrar perfil');
