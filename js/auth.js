@@ -245,6 +245,103 @@ injectAuthMarkup();
 
 
 /* =========================================================
+   SHOW / HIDE PASSWORD
+
+   Adds an eye button inside every password field of the auth
+   modal so people typing on a phone can check what they typed.
+   Passwords go back to hidden whenever the modal closes
+   (see closeAuthModal()).
+   ========================================================= */
+
+const EYE_ICON =
+    '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5Zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9Zm0-2.3a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4Z"/></svg>';
+
+const EYE_OFF_ICON =
+    '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.3 2 2 3.3l3.2 3.2C3.3 7.9 2.1 9.9 1.5 12c1.2 2.6 5 7 10.5 7 1.9 0 3.6-.5 5-1.3l3.7 3.7 1.3-1.3L3.3 2ZM12 16.5A4.5 4.5 0 0 1 7.5 12c0-.8.2-1.5.5-2.1l1.7 1.7a2.2 2.2 0 0 0 2.7 2.7l1.7 1.7c-.6.3-1.3.5-2.1.5Zm0-11.5c5.5 0 9.3 4.4 10.5 7-.6 1.3-1.6 2.8-3 4.1l-3.3-3.3c.2-.5.3-1.1.3-1.8A4.5 4.5 0 0 0 12 7.5c-.6 0-1.2.1-1.8.3L7.9 5.6C9.2 5.2 10.5 5 12 5Z"/></svg>';
+
+function setPasswordVisible(
+    input,
+    button,
+    visible
+) {
+
+    input.type =
+        visible
+            ? 'text'
+            : 'password';
+
+    button.innerHTML =
+        visible
+            ? EYE_OFF_ICON
+            : EYE_ICON;
+
+    button.setAttribute(
+        'aria-label',
+        visible
+            ? 'Ocultar contraseña'
+            : 'Mostrar contraseña'
+    );
+
+    button.setAttribute(
+        'aria-pressed',
+        String(visible)
+    );
+}
+
+const passwordToggles = [];
+
+document
+    .querySelectorAll('#authModal input[type="password"]')
+    .forEach((input) => {
+
+        const wrap =
+            document.createElement('span');
+
+        wrap.className =
+            'auth-password-wrap';
+
+        input.replaceWith(wrap);
+        wrap.appendChild(input);
+
+        const button =
+            document.createElement('button');
+
+        button.type =
+            'button';
+
+        button.className =
+            'auth-password-toggle';
+
+        setPasswordVisible(input, button, false);
+
+        button.addEventListener('click', (event) => {
+
+            // The field lives inside a <label>; don't let the click
+            // bounce focus around or trigger anything else.
+            event.preventDefault();
+
+            setPasswordVisible(
+                input,
+                button,
+                input.type === 'password'
+            );
+
+            input.focus();
+        });
+
+        wrap.appendChild(button);
+
+        passwordToggles.push({ input, button });
+    });
+
+function hideAllPasswords() {
+    passwordToggles.forEach(({ input, button }) => {
+        setPasswordVisible(input, button, false);
+    });
+}
+
+
+/* =========================================================
    ELEMENTS
    ========================================================= */
 
@@ -355,6 +452,8 @@ function openAuthModal() {
 
 
 function closeAuthModal() {
+
+    hideAllPasswords();
 
     if (
         authModal

@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "seed:reservas": "node scripts/seed.mjs",
+    "cleanup:comprobantes": "node scripts/cleanup-proofs.mjs",
     "test": "node --experimental-test-module-mocks --import ./tests/setup-env.mjs --test tests/*.test.mjs",
     "lint": "eslint ."
   },

@@ -2310,288 +2310,242 @@ body {
     height: 18px;
 }
 /* =========================================================
-   LOGIN REQUIRED MODAL
+   INERCIA DIALOG
+   "Iniciá sesión" modal + success notices (js/notice.js).
+   Same look as the login modal in css/auth.css: rounded
+   gradient panel, orange hairline border, blurred backdrop.
    ========================================================= */
 
 body.reservation-login-modal-open {
     overflow: hidden;
 }
 
-
-/* =========================================================
-   LOGIN REQUIRED
-   ========================================================= */
-
-.reservation-login-required {
+.inercia-dialog {
     position: fixed;
     inset: 0;
-    z-index: 99999;
+    z-index: 1100;
 
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     padding: 20px;
 
-    opacity: 0;
     visibility: hidden;
-    pointer-events: none;
+    opacity: 0;
 
     transition:
-        opacity .16s ease,
-        visibility .16s ease;
+        opacity .25s ease,
+        visibility .25s ease;
 }
 
-.reservation-login-required.open {
-    opacity: 1;
+.inercia-dialog.open {
     visibility: visible;
-    pointer-events: auto;
+    opacity: 1;
 }
 
-.reservation-login-backdrop {
+.inercia-dialog-backdrop {
     position: absolute;
     inset: 0;
 
-    background: rgba(0, 0, 0, .72);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, .76);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
-.reservation-login-panel {
+.inercia-dialog-panel {
     position: relative;
-    z-index: 2;
+    z-index: 1;
 
-    width: min(420px, 100%);
+    width: 100%;
+    max-width: 400px;
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
 
-    background: #111;
-    border: 1px solid #292929;
+    padding: 32px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 30, 30, .98),
+            rgba(12, 12, 12, .99)
+        );
+
+    border: 1px solid rgba(255, 139, 0, .35);
+    border-radius: 18px;
 
     box-shadow:
-        0 20px 70px rgba(0, 0, 0, .45);
+        0 30px 80px rgba(0, 0, 0, .65),
+        0 0 35px rgba(255, 139, 0, .08);
 
-    overflow: hidden;
+    text-align: center;
+
+    transform: translateY(15px) scale(.98);
+    transition: transform .25s ease;
 }
 
-.reservation-login-panel::before {
-    content: "";
+.inercia-dialog.open .inercia-dialog-panel {
+    transform: translateY(0) scale(1);
+}
 
+.inercia-dialog-close {
+    position: absolute;
+    top: 13px;
+    right: 17px;
+
+    padding: 0;
+
+    border: 0;
+    background: transparent;
+
+    color: #aaa;
+
+    font-size: 30px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.inercia-dialog-close:hover,
+.inercia-dialog-close:focus-visible {
+    color: #fff;
+}
+
+.inercia-dialog-brand {
+    display: flex;
+    justify-content: center;
+
+    margin-bottom: 22px;
+}
+
+.inercia-dialog-brand img {
+    display: block;
+
+    width: 190px;
+    max-width: 65%;
+}
+
+.inercia-dialog-title {
+    margin: 0 0 8px;
+
+    color: var(--orange, #ff8b00);
+
+    font-family: var(--font-display, 'Anton', 'Arial Narrow', sans-serif);
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1;
+
+    text-transform: uppercase;
+}
+
+.inercia-dialog-text {
+    margin: 0 auto 22px;
+
+    max-width: 300px;
+
+    color: #aaa;
+
+    font-family: var(--font-body, 'Poppins', sans-serif);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.inercia-dialog-text--pre {
+    max-width: none;
+
+    color: #ddd;
+
+    text-align: left;
+    white-space: pre-line;
+}
+
+.inercia-dialog-primary {
     display: block;
 
     width: 100%;
-    height: 2px;
 
-    background: #ff8b00;
-}
+    padding: 13px 15px;
 
-.reservation-login-eyebrow {
-    display: block;
+    border: 0;
+    border-radius: 8px;
 
-    margin: 24px 26px 8px;
-
-    color: #6f6f6f;
-
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    letter-spacing: 1.4px;
-}
-
-.reservation-login-panel h2 {
-    margin: 0 26px;
-
-    color: #f2f2f2;
-
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size: 34px;
-    font-weight: 700;
-
-    line-height: 1;
-    letter-spacing: .1px;
-}
-
-.reservation-login-panel h2 span {
-    display: inline;
-
-    color: inherit;
-}
-
-.reservation-login-panel p {
-    margin: 12px 26px 24px;
-
-    max-width: 320px;
-
-    color: #8a8a8a;
-
-    font-family:
-        'Poppins',
-        sans-serif;
-
-    font-size: 12px;
-    line-height: 1.6;
-}
-
-.reservation-login-primary {
-    width: auto;
-
-    min-height: 40px;
-
-    margin:
-        0 8px 16px 26px;
-
-    padding:
-        0 18px;
-
-    border:
-        1px solid #ff8b00;
-
-    background: #ff8b00;
-
+    background: var(--orange, #ff8b00);
     color: #111;
 
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size: 15px;
-    font-weight: 700;
-
-    letter-spacing: .5px;
+    font-family: var(--font-display, 'Anton', 'Arial Narrow', sans-serif);
+    font-size: 18px;
 
     cursor: pointer;
 
     transition:
-        background .15s ease,
-        border-color .15s ease,
-        transform .15s ease;
+        background .2s ease,
+        transform .2s ease;
 }
 
-.reservation-login-primary:hover {
-    background: #ff9a1e;
-    border-color: #ff9a1e;
-
+.inercia-dialog-primary:hover,
+.inercia-dialog-primary:focus-visible {
+    background: var(--orange-light, #ff9d22);
     transform: translateY(-1px);
 }
 
-.reservation-login-primary:active {
-    transform: translateY(0);
-}
-
-.reservation-login-primary:focus-visible {
+.inercia-dialog-primary:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 3px;
 }
 
-.reservation-login-back {
-    display: inline-flex;
-    align-items: center;
+.inercia-dialog-switch {
+    margin: 18px 0 0;
 
-    min-height: 40px;
+    color: #888;
 
-    margin-bottom: 16px;
+    font-family: var(--font-body, 'Poppins', sans-serif);
+    font-size: 12px;
+}
 
-    padding:
-        0 14px;
+.inercia-dialog-switch button {
+    padding: 0;
+    margin-left: 4px;
 
-    color: #777;
+    border: 0;
+    background: transparent;
 
-    border:
-        1px solid #303030;
+    color: var(--orange, #ff8b00);
 
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
+    font-family: var(--font-display, 'Anton', 'Arial Narrow', sans-serif);
     font-size: 14px;
-    font-weight: 600;
+    letter-spacing: .3px;
 
-    letter-spacing: .5px;
-
-    text-decoration: none;
-
-    transition:
-        color .15s ease,
-        border-color .15s ease;
+    cursor: pointer;
 }
 
-.reservation-login-back:hover {
-    color: #ddd;
-    border-color: #4a4a4a;
-}
-.reservation-login-panel {
-    width: min(380px, 100%);
+.inercia-dialog-switch button:hover,
+.inercia-dialog-switch button:focus-visible {
+    color: var(--orange-light, #ff9d22);
+    text-decoration: underline;
 }
 
-.reservation-login-eyebrow {
-    margin: 16px 22px 6px;
-}
+@media (max-width: 600px) {
 
-.reservation-login-panel h2 {
-    margin: 0 22px 14px;
-    font-size: 28px;
-}
-
-.reservation-login-panel p {
-    margin: 0 22px 18px;
-}
-
-.reservation-login-primary {
-    margin: 0 6px 14px 22px;
-}
-
-.reservation-login-back {
-    margin-bottom: 14px;
-}
-@media (max-width: 500px) {
-
-    .reservation-login-panel {
-        width: 100%;
+    .inercia-dialog {
+        padding: 12px;
     }
 
-    .reservation-login-eyebrow {
-        margin:
-            22px 20px 7px;
+    .inercia-dialog-panel {
+        max-height: calc(100dvh - 24px);
+        padding: 27px 20px 23px;
+        border-radius: 15px;
     }
 
-    .reservation-login-panel h2 {
-        margin:
-            0 20px;
-
-        font-size: 30px;
-    }
-
-    .reservation-login-panel p {
-        margin:
-            11px 20px 20px;
-    }
-
-    .reservation-login-primary {
-        margin-left: 20px;
+    .inercia-dialog-brand img {
+        width: 170px;
     }
 }
 
-@media (
-    max-width: 520px
-) {
+@media (prefers-reduced-motion: reduce) {
 
-    .reservation-login-required {
-        padding:
-            18px;
-    }
-
-
-    .reservation-login-panel {
-        padding:
-            32px 24px 28px;
+    .inercia-dialog,
+    .inercia-dialog-panel {
+        transition: none;
     }
 }
 
