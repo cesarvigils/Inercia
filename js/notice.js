@@ -6,7 +6,7 @@
  * browser ("prevent this page from creating more dialogs", some webviews)
  * with no way to detect it, so a successful booking could go unannounced.
  * This is a plain <div> we control, styled like the login modal
- * (.inercia-dialog in css/reservas.css).
+ * (same auth-modal classes as css/auth.css).
  *
  * showNotice(text, { title, onClose, autoCloseMs })
  *   - text is rendered with textContent (never HTML) and keeps line breaks.
@@ -34,21 +34,23 @@ export function showNotice(
 
     const overlay = document.createElement('div');
     overlay.id = NOTICE_ID;
-    overlay.className = 'inercia-dialog';
+    overlay.className = 'auth-modal';
 
     overlay.innerHTML = `
-        <div class="inercia-dialog-backdrop"></div>
-        <div class="inercia-dialog-panel" role="alertdialog" aria-modal="true"
+        <div class="auth-modal-backdrop"></div>
+        <div class="auth-modal-panel" role="alertdialog" aria-modal="true"
              aria-labelledby="${NOTICE_ID}-title" aria-describedby="${NOTICE_ID}-text">
-            <button type="button" class="inercia-dialog-close" aria-label="Cerrar">&times;</button>
-            <h2 class="inercia-dialog-title" id="${NOTICE_ID}-title"></h2>
-            <p class="inercia-dialog-text inercia-dialog-text--pre" id="${NOTICE_ID}-text"></p>
-            <button type="button" class="inercia-dialog-primary">ACEPTAR</button>
+            <button type="button" class="auth-modal-close" aria-label="Cerrar">&times;</button>
+            <div class="auth-heading">
+                <h2 id="${NOTICE_ID}-title"></h2>
+                <p class="notice-text" id="${NOTICE_ID}-text"></p>
+            </div>
+            <button type="button" class="auth-submit">ACEPTAR</button>
         </div>
     `;
 
-    overlay.querySelector('.inercia-dialog-title').textContent = title;
-    overlay.querySelector('.inercia-dialog-text').textContent = text;
+    overlay.querySelector('.auth-heading h2').textContent = title;
+    overlay.querySelector('.notice-text').textContent = text;
 
     const close = () => {
         if (closed) return;
@@ -75,16 +77,16 @@ export function showNotice(
         if (event.key === 'Escape') close();
     };
 
-    overlay.querySelector('.inercia-dialog-primary').addEventListener('click', close);
-    overlay.querySelector('.inercia-dialog-close').addEventListener('click', close);
-    overlay.querySelector('.inercia-dialog-backdrop').addEventListener('click', close);
+    overlay.querySelector('.auth-submit').addEventListener('click', close);
+    overlay.querySelector('.auth-modal-close').addEventListener('click', close);
+    overlay.querySelector('.auth-modal-backdrop').addEventListener('click', close);
     document.addEventListener('keydown', onKeydown);
 
     document.body.appendChild(overlay);
 
     requestAnimationFrame(() => {
         overlay.classList.add('open');
-        overlay.querySelector('.inercia-dialog-primary')?.focus();
+        overlay.querySelector('.auth-submit')?.focus();
     });
 
     if (autoCloseMs > 0) {
