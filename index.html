@@ -45,9 +45,9 @@
     />
   </svg>
 </button>
-      <div class="logo">
+      <a class="logo" href="/inicio" aria-label="Simuladores Inercia, ir al inicio">
         <img class="logo-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Simuladores Inercia">
-      </div>
+      </a>
       <button class="auth-btn" id="authBtn" type="button" aria-label="Iniciar sesión">
     <img
         src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fdefaultpfp3.jpg?alt=media&token=a0435be5-f789-41ec-9d50-ab24fed4b9ec"
@@ -60,7 +60,7 @@
 <div class="menu-overlay" id="menuOverlay"></div>
 <nav class="side-menu" id="sideMenu" aria-hidden="true">
   <div class="side-menu-header">
-<img src="/assets/menu.png" alt="Menú" class="menu-title-img" href="/inicio">
+<img src="/assets/menu.png" alt="Menú" class="menu-title-img">
     <button class="menu-close" id="menuClose" type="button" aria-label="Cerrar menú">
       &times;
     </button>
@@ -106,7 +106,7 @@
   </nav>
 
   <section class="hero reveal">
-    <div class="hero-art" role="img">
+    <div class="hero-art">
       <img class="hero-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fpanoramicarigs.jpg?alt=media&token=4b312fec-49b1-4239-ab79-4c143d6531ca" alt="Sala de simuladores de carreras con luces de neón">
       <div class="hero-vignette"></div>
     </div>
@@ -114,12 +114,13 @@
     <div class="hero-copy">
       <h1 class="reveal-up d1">RESERVÁ TU SIMULADOR</h1>
       <p class="reveal-up d2">TENEMOS SIMULADORES QUE SE AJUSTAN A UNA EXPERIENCIA ÚNICA</p>
+      <div class="reveal-up d3"><a href="/reservas" class="hero-cta">RESERVAR AHORA</a></div>
     </div>
   </section>
   <main id="reserva" class="packages">
     <a href="/reservas" class="card reveal card-link">
       <div class="card-art" aria-hidden="true">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2F5001286758620138666.jpg?alt=media&token=0e5c0141-83f3-4f19-b9ab-31a01e131778" alt="Simulador Standard">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2F5001286758620138666.jpg?alt=media&token=0e5c0141-83f3-4f19-b9ab-31a01e131778" loading="lazy" alt="Simulador Standard">
       </div>
       <div class="card-body">
         <p class="eyebrow reveal-up">SIMULADOR</p>
@@ -130,12 +131,12 @@
 
 <article class="card reveal">
       <div class="card-art" aria-hidden="true">
-        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2F5001286758620138664.jpg?alt=media&token=cba74812-f003-48f6-bee7-8ed878c97117" alt="Simulador Premium">
+        <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2F5001286758620138664.jpg?alt=media&token=cba74812-f003-48f6-bee7-8ed878c97117" loading="lazy" alt="Simulador Premium">
       </div>
       <div class="card-body">
         <p class="eyebrow reveal-up">SIMULADOR</p>
         <h2 class="reveal-up">PREMIUM</h2>
-        <p class="desc reveal-up">Butaca deportiva, triple pantalla y el volante de gama alta direct drive. El preferido por los entusiastras del simracing que buscan la mejor inmersión y precisión para correr.</p>
+        <p class="desc reveal-up">Butaca deportiva, triple pantalla y el volante de gama alta direct drive. El preferido por los entusiastas del simracing que buscan la mejor inmersión y precisión para correr.</p>
         <a href="/reservas" class="card-stretched-link" aria-label="Reservar Simulador Premium"></a>
       </div>
     </article>
@@ -149,8 +150,8 @@
 <script type="module" src="js/home.js"></script>
 <script type="module" src="js/menu.js"></script>
 <script type="module" src="js/navbar.js"></script>
-</body>
-<video class="page-bg-video" autoplay muted loop playsinline>
+<video class="page-bg-video" aria-hidden="true" autoplay muted loop playsinline>
     <source src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fbackground1.mp4?alt=media&token=cc4f4fcf-328b-4e9f-a13e-e90faa3ae8ce" type="video/mp4">
 </video>
+</body>
 </html>

@@ -2326,3 +2326,24 @@ body.reservation-login-modal-open {
     font-size: 13px;
     white-space: pre-line;
 }
+
+
+/* =========================================================
+   KEYBOARD FOCUS
+   The payment radios and the receipt file input are invisible
+   (opacity 0), so focus has to show on their visible card.
+   ========================================================= */
+
+.payment-option input:focus-visible + .payment-card,
+.receipt-upload:has(input:focus-visible) {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+}
+
+.calendar-day:focus-visible,
+.clock-hour:focus-visible,
+.simulator-card:focus-visible,
+.reservation-submit:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+}

@@ -1769,3 +1769,31 @@ body.auth-modal-open {
             50%;
     }
 }
+
+/* "INICIÁ SESIÓN" inside MI TIEMPO when signed out (js/standings.js). */
+
+.my-time-login {
+    padding: 0;
+
+    border: 0;
+    background: transparent;
+
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+
+    cursor: pointer;
+}
+
+.my-time-login:hover,
+.my-time-login:focus-visible {
+    color: var(--orange, #ff8b00);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.my-time-login:focus-visible {
+    outline: 2px solid var(--orange, #ff8b00);
+    outline-offset: 4px;
+    border-radius: 4px;
+}

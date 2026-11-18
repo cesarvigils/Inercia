@@ -371,8 +371,30 @@ function updateMyTime() {
 
     if (!standingsUserName) {
 
-        value.textContent =
+        /*
+         * Botón en vez de texto plano: abre el modal de login
+         * (js/auth.js) en vez de solo decir qué hacer.
+         */
+        const loginButton =
+            document.createElement('button');
+
+        loginButton.type =
+            'button';
+
+        loginButton.className =
+            'my-time-login';
+
+        loginButton.textContent =
             'INICIÁ SESIÓN';
+
+        loginButton.addEventListener(
+            'click',
+            () => document.getElementById('authBtn')?.click()
+        );
+
+        value.replaceChildren(
+            loginButton
+        );
 
 
         driver.textContent =

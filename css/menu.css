@@ -168,6 +168,23 @@
 .side-menu-link:hover::before {
     height: 28px;
 }
+
+/* Current page (set by js/menu.js) and keyboard focus look like hover. */
+
+.side-menu-link[aria-current="page"],
+.side-menu-link:focus-visible {
+    color: var(--orange);
+    padding-left: 10px;
+}
+
+.side-menu-link[aria-current="page"]::before,
+.side-menu-link:focus-visible::before {
+    height: 28px;
+}
+
+.side-menu-link:focus-visible {
+    outline: none;
+}
 .side-menu-footer {
     margin-top: auto;
     padding-top: 20px;
@@ -299,4 +316,16 @@ body.menu-open {
 
 .logo {
     z-index: 10;
+}
+
+/* Header logo links home on every page. */
+
+a.logo {
+    text-decoration: none;
+}
+
+a.logo:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 4px;
+    border-radius: 6px;
 }
