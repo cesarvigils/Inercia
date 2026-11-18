@@ -15,16 +15,17 @@
  * This only handles the "tarjeta"/PayPal payment path; the bank-transfer
  * path is handled separately in js/reservas.js + api/reservations/create.js.
  *
- * safeAlert() exists instead of a plain window.alert() specifically so
- * that a successful payment is never hidden behind a blocked/ignored
- * native alert dialog: the reservation is already confirmed server-side
+ * The success notice is showNotice() from js/notice.js, never a native
+ * window.alert(), so a successful payment is never hidden behind a
+ * blocked/ignored dialog: the reservation is already confirmed server-side
  * by the time this shows anything, so the on-screen success message
- * (reservationMessage) is set FIRST, and this modal (with an 8s auto-
+ * (reservationMessage) is set FIRST, and the notice (with an 8s auto-
  * close fallback) is just a friendlier way to prompt the page reload —
  * it deliberately cannot make a successful payment look like it failed.
  */
 
 import { auth } from '../firebase-config.js';
+import { showNotice } from './notice.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -40,110 +41,6 @@ function reservationMessage(text, type = 'info') {
     element.textContent = text || '';
     element.dataset.type = type;
     element.hidden = !text;
-}
-
-function safeAlert(text, onClose) {
-
-    let closed = false;
-    const runOnClose = () => {
-        if (closed) return;
-        closed = true;
-        if (typeof onClose === 'function') {
-            try {
-                onClose();
-            } catch (error) {
-                console.error('[PAYPAL] Error en onClose del modal:', error);
-            }
-        }
-    };
-
-    try {
-        const existing = document.getElementById('inercia-success-modal');
-        if (existing) existing.remove();
-
-        const overlay = document.createElement('div');
-        overlay.id = 'inercia-success-modal';
-        overlay.style.cssText = `
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        `;
-
-        const box = document.createElement('div');
-        box.style.cssText = `
-            background: #ffffff;
-            color: #111111;
-            border-radius: 12px;
-            padding: 24px;
-            max-width: 420px;
-            width: 100%;
-            font-family: system-ui, -apple-system, sans-serif;
-            font-size: 15px;
-            line-height: 1.5;
-            white-space: pre-line;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
-        `;
-        box.textContent = text;
-
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = 'Aceptar';
-        button.style.cssText = `
-            margin-top: 20px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #111111;
-            color: #ffffff;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            width: 100%;
-        `;
-
-        const closeModal = () => {
-            overlay.remove();
-            clearTimeout(fallbackTimer);
-            runOnClose();
-        };
-
-        button.addEventListener('click', closeModal);
-
-        overlay.addEventListener('click', (event) => {
-            if (event.target === overlay) closeModal();
-        });
-
-        box.appendChild(button);
-        overlay.appendChild(box);
-        document.body.appendChild(overlay);
-
-        /*
-         * Respaldo: si el usuario nunca toca el botón (se
-         * distrae, cambia de pestaña, etc.), igual queremos
-         * que onClose (por ejemplo el reload) corra tarde o
-         * temprano en vez de quedar esperando para siempre.
-         */
-        const fallbackTimer = setTimeout(() => {
-            overlay.remove();
-            runOnClose();
-        }, 8000);
-    } catch (error) {
-        console.error('[PAYPAL] No se pudo mostrar el modal de éxito:', error);
-
-        // Último recurso.
-        try {
-            window.alert(text);
-        } catch {
-            // Si ni esto funciona, ya quedó el mensaje visible vía reservationMessage().
-        }
-
-        runOnClose();
-    }
 }
 
 async function api(path, options = {}) {
@@ -368,17 +265,19 @@ async function renderPaypalButtons() {
 
                 /*
                  * Corre SIEMPRE que la captura haya sido exitosa,
-                 * sin importar si el alert() nativo falla o es
-                 * bloqueado por el navegador.
+                 * sin importar si el aviso en pantalla falla.
                  */
                 if (captureSucceeded) {
                     reservationMessage(successText, 'success');
 
                     // El reload corre recién cuando el usuario cierra el modal
                     // (o al toque de 8s de respaldo), nunca antes.
-                    safeAlert(successText, () => {
-                        // Recarga limpia: refresca disponibilidad y borra la selección privada de reservas.js.
-                        window.location.reload();
+                    showNotice(successText, {
+                        title: 'PAGO CONFIRMADO',
+                        onClose: () => {
+                            // Recarga limpia: refresca disponibilidad y borra la selección privada de reservas.js.
+                            window.location.reload();
+                        }
                     });
                 }
             },
@@ -439,8 +338,26 @@ function wireReceiptUi() {
     const label = $('receiptUpload');
     const name = $('receiptFileName');
 
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    const maxBytes = 5 * 1024 * 1024;
+
     input?.addEventListener('change', () => {
-        const file = input.files?.[0];
+        let file = input.files?.[0];
+
+        // Avisar en el momento (antes solo se validaba al enviar la reserva).
+        if (file && (file.size > maxBytes || !allowedTypes.includes(file.type))) {
+            reservationMessage(
+                file.size > maxBytes
+                    ? 'El comprobante no puede pesar más de 5 MB.'
+                    : 'El comprobante debe ser JPG, PNG o PDF.',
+                'error'
+            );
+            input.value = '';
+            file = null;
+        } else if (file && $('reservationMessage')?.textContent.startsWith('El comprobante')) {
+            reservationMessage('');
+        }
+
         if (name) {
             name.textContent = file ? file.name : 'SUBÍ TU COMPROBANTE';
         }

@@ -16,9 +16,10 @@
  *                        current payment-access flags, etc.
  *   API                  api() - authenticated fetch() wrapper, same
  *                        pattern as js/paypal-checkout.js's api().
- *   MESSAGE / MODAL DE ÉXITO / MODAL DE "INICIÁ SESIÓN"
- *                        Inline status text + two custom modals (success,
- *                        and "you must log in") used instead of
+ *   MESSAGE / AVISOS / MODAL DE "INICIÁ SESIÓN"
+ *                        Inline status text, the success notice
+ *                        (showNotice() from js/notice.js) and the
+ *                        "you must log in" modal — used instead of
  *                        window.alert()/confirm() for a consistent UI.
  *   CALENDAR + CLOCK / TIME HELPERS / DURATIONS
  *                        Step 01's date and hour pickers: a calendar grid
@@ -78,6 +79,8 @@
 import { auth, db } from '../firebase-config.js';
 
 import { normalizePhone } from '../lib/phone.js';
+
+import { showNotice } from './notice.js';
 
 import {
     doc,
@@ -199,6 +202,17 @@ const counts = {
 
 const selected =
     new Map();
+
+
+/*
+ * Rigs que el usuario tenía elegidos antes de cambiar fecha,
+ * hora o duración. Antes cada cambio borraba la selección;
+ * ahora la guardamos aquí y, cuando llega la nueva
+ * disponibilidad, volvemos a marcar los que siguen libres
+ * (ver holdSelection() / restoreHeldSelection()).
+ */
+const heldRigIds =
+    new Set();
 
 
 let appConfig =
@@ -385,273 +399,83 @@ function message(
 
 
 /* =========================================================
-   MODAL DE ÉXITO (REEMPLAZA window.alert)
+   AVISOS (REEMPLAZA window.alert)
 
-   window.alert() puede ser silenciado por el navegador SIN
-   lanzar ninguna excepción (por ejemplo cuando el usuario
-   tilda "Evitar que este sitio cree más cuadros de diálogo",
-   o dentro de ciertos iframes/webviews). En esos casos no hay
-   forma de detectarlo desde JS: el código sigue corriendo
-   normal, simplemente no aparece nada en pantalla.
-
-   Por eso dejamos de depender de window.alert() y mostramos
-   un modal propio (un <div> que nosotros controlamos). Esto
-   SIEMPRE se ve, sin importar configuración del navegador.
+   El modal de aviso vive en js/notice.js (lo comparte con
+   paypal-checkout.js). window.alert() puede ser silenciado
+   por el navegador sin lanzar ninguna excepción, así que
+   nunca dependemos de él para avisar que una reserva salió.
    ========================================================= */
-
-function safeAlert(
-    text,
-    onClose
-) {
-
-    let closed =
-        false;
-
-
-    const runOnClose =
-        () => {
-
-            if (closed) {
-                return;
-            }
-
-
-            closed =
-                true;
-
-
-            if (
-                typeof onClose ===
-                'function'
-            ) {
-
-                try {
-
-                    onClose();
-
-                } catch (
-                    error
-                ) {
-
-                    console.error(
-                        '[RESERVAS] Error en onClose del modal:',
-                        error
-                    );
-                }
-            }
-        };
-
-
-    try {
-
-        const existing =
-            document.getElementById(
-                'inercia-success-modal'
-            );
-
-
-        if (existing) {
-
-            existing.remove();
-        }
-
-
-        const overlay =
-            document.createElement(
-                'div'
-            );
-
-
-        overlay.id =
-            'inercia-success-modal';
-
-
-        overlay.style.cssText = `
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        `;
-
-
-        const box =
-            document.createElement(
-                'div'
-            );
-
-
-        box.style.cssText = `
-            background: #ffffff;
-            color: #111111;
-            border-radius: 12px;
-            padding: 24px;
-            max-width: 420px;
-            width: 100%;
-            font-family: system-ui, -apple-system, sans-serif;
-            font-size: 15px;
-            line-height: 1.5;
-            white-space: pre-line;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
-        `;
-
-
-        box.textContent =
-            text;
-
-
-        const button =
-            document.createElement(
-                'button'
-            );
-
-
-        button.type =
-            'button';
-
-
-        button.textContent =
-            'Aceptar';
-
-
-        button.style.cssText = `
-            margin-top: 20px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #111111;
-            color: #ffffff;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            width: 100%;
-        `;
-
-
-        const closeModal =
-            () => {
-
-                overlay.remove();
-
-
-                clearTimeout(
-                    fallbackTimer
-                );
-
-
-                runOnClose();
-            };
-
-
-        button.addEventListener(
-            'click',
-            closeModal
-        );
-
-
-        overlay.addEventListener(
-            'click',
-            (
-                event
-            ) => {
-
-                if (
-                    event.target ===
-                    overlay
-                ) {
-
-                    closeModal();
-                }
-            }
-        );
-
-
-        box.appendChild(
-            button
-        );
-
-
-        overlay.appendChild(
-            box
-        );
-
-
-        document.body.appendChild(
-            overlay
-        );
-
-
-        /*
-         * Respaldo: si nadie toca el botón,
-         * igual queremos que onClose corra
-         * tarde o temprano.
-         */
-
-        const fallbackTimer =
-            setTimeout(
-                () => {
-
-                    overlay.remove();
-
-
-                    runOnClose();
-                },
-                8000
-            );
-
-
-    } catch (
-        error
-    ) {
-
-        console.error(
-            '[RESERVAS] No se pudo mostrar el modal de éxito:',
-            error
-        );
-
-
-        /*
-         * Último recurso.
-         */
-
-        try {
-
-            window.alert(
-                text
-            );
-
-        } catch {
-
-            /*
-             * Si ni esto funciona, ya quedó
-             * el mensaje visible vía message().
-             */
-        }
-
-
-        runOnClose();
-    }
-}
 
 
 /* =========================================================
    MODAL DE "INICIÁ SESIÓN"
 
-   Se muestra cuando un usuario sin sesión intenta
-   reservar. Antes esta función no existía en este
-   archivo (se perdió en un revert), por eso el flujo
-   de "iniciá sesión" no aparecía nunca.
+   Se muestra cuando un usuario sin sesión entra a la página
+   o intenta reservar. Usa el mismo estilo que el modal de
+   login (.inercia-dialog en css/reservas.css). Se cierra con
+   ×, Escape o clic afuera — el usuario puede seguir viendo
+   horarios y simuladores sin cuenta.
    ========================================================= */
+
+const LOGO_URL =
+    'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be';
+
+
+function openAuthFromLoginRequired(
+    tab
+) {
+
+    closeLoginRequiredModal();
+
+
+    const authButton =
+        $('authBtn');
+
+
+    if (authButton) {
+
+        authButton.click();
+
+    } else {
+
+        const authModal =
+            $('authModal');
+
+
+        if (authModal) {
+
+            authModal.inert =
+                false;
+
+            authModal.setAttribute(
+                'aria-hidden',
+                'false'
+            );
+
+            authModal.classList.add(
+                'open'
+            );
+
+            document.body.classList.add(
+                'auth-modal-open'
+            );
+        }
+    }
+
+
+    document
+        .querySelector(
+            `#authModal [data-auth-tab="${tab}"]`
+        )
+        ?.click();
+}
+
 
 function createLoginRequiredModal() {
 
     if (
-        document.getElementById(
-            'loginRequiredModal'
-        )
+        $('loginRequiredModal')
     ) {
         return;
     }
@@ -661,47 +485,53 @@ function createLoginRequiredModal() {
         'beforeend',
         `
         <div
-            class="reservation-login-required"
+            class="inercia-dialog"
             id="loginRequiredModal"
             aria-hidden="true"
+            inert
         >
-            <div
-                class="reservation-login-backdrop"
-            ></div>
+            <div class="inercia-dialog-backdrop"></div>
 
             <div
-                class="reservation-login-panel"
+                class="inercia-dialog-panel"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="reservationLoginTitle"
+                aria-describedby="reservationLoginText"
             >
+                <button
+                    type="button"
+                    class="inercia-dialog-close"
+                    aria-label="Cerrar"
+                >&times;</button>
 
-                <span class="reservation-login-eyebrow">
-                    SIMULADORES INERCIA
-                </span>
+                <div class="inercia-dialog-brand">
+                    <img src="${LOGO_URL}" alt="Simuladores Inercia">
+                </div>
 
-                <h2 id="reservationLoginTitle">
+                <h2 class="inercia-dialog-title" id="reservationLoginTitle">
                     INICIÁ SESIÓN
-                    <span>PARA RESERVAR</span>
                 </h2>
 
-
+                <p class="inercia-dialog-text" id="reservationLoginText">
+                    Necesitás una cuenta para reservar. Mientras tanto,
+                    podés ver horarios y simuladores libres.
+                </p>
 
                 <button
                     type="button"
-                    class="reservation-login-primary"
+                    class="inercia-dialog-primary"
                     id="reservationLoginBtn"
                 >
                     INICIAR SESIÓN
                 </button>
 
-                <a
-                    href="/"
-                    class="reservation-login-back"
-                >
-                    VOLVER AL INICIO
-                </a>
-
+                <p class="inercia-dialog-switch">
+                    ¿No tenés cuenta?
+                    <button type="button" id="reservationRegisterBtn">
+                        REGISTRATE
+                    </button>
+                </p>
             </div>
         </div>
         `
@@ -709,85 +539,54 @@ function createLoginRequiredModal() {
 
 
     const modal =
-        document.getElementById(
-            'loginRequiredModal'
+        $('loginRequiredModal');
+
+
+    $('reservationLoginBtn')
+        ?.addEventListener(
+            'click',
+            () => openAuthFromLoginRequired('login')
         );
 
 
-    const loginButton =
-        document.getElementById(
-            'reservationLoginBtn'
+    $('reservationRegisterBtn')
+        ?.addEventListener(
+            'click',
+            () => openAuthFromLoginRequired('register')
         );
-
-
-    loginButton?.addEventListener(
-        'click',
-        () => {
-
-            closeLoginRequiredModal();
-
-
-            /*
-             * Abrimos el sistema de autenticación
-             * que ya tiene la página.
-             */
-
-            const authButton =
-                document.getElementById(
-                    'authBtn'
-                );
-
-
-            if (authButton) {
-
-                authButton.click();
-
-                return;
-            }
-
-
-            /*
-             * Fallback por si el auth button
-             * no existe por alguna razón.
-             */
-
-            const authModal =
-                document.getElementById(
-                    'authModal'
-                );
-
-
-            if (authModal) {
-
-                authModal.inert =
-                    false;
-
-                authModal.setAttribute(
-                    'aria-hidden',
-                    'false'
-                );
-
-                authModal.classList.add(
-                    'open'
-                );
-
-
-                document.body.classList.add(
-                    'auth-modal-open'
-                );
-            }
-        }
-    );
 
 
     modal
-        ?.querySelector(
-            '.reservation-login-backdrop'
-        )
+        ?.querySelector('.inercia-dialog-backdrop')
         ?.addEventListener(
             'click',
             closeLoginRequiredModal
         );
+
+
+    modal
+        ?.querySelector('.inercia-dialog-close')
+        ?.addEventListener(
+            'click',
+            closeLoginRequiredModal
+        );
+
+
+    document.addEventListener(
+        'keydown',
+        (
+            event
+        ) => {
+
+            if (
+                event.key === 'Escape' &&
+                modal?.classList.contains('open')
+            ) {
+
+                closeLoginRequiredModal();
+            }
+        }
+    );
 }
 
 
@@ -797,9 +596,7 @@ function openLoginRequiredModal() {
 
 
     const modal =
-        document.getElementById(
-            'loginRequiredModal'
-        );
+        $('loginRequiredModal');
 
 
     if (!modal) {
@@ -807,9 +604,8 @@ function openLoginRequiredModal() {
     }
 
 
-    modal.classList.add(
-        'open'
-    );
+    modal.inert =
+        false;
 
 
     modal.setAttribute(
@@ -818,8 +614,9 @@ function openLoginRequiredModal() {
     );
 
 
-    modal.inert =
-        false;
+    modal.classList.add(
+        'open'
+    );
 
 
     document.body.classList.add(
@@ -830,10 +627,7 @@ function openLoginRequiredModal() {
     requestAnimationFrame(
         () => {
 
-            document
-                .getElementById(
-                    'reservationLoginBtn'
-                )
+            $('reservationLoginBtn')
                 ?.focus();
         }
     );
@@ -843,9 +637,7 @@ function openLoginRequiredModal() {
 function closeLoginRequiredModal() {
 
     const modal =
-        document.getElementById(
-            'loginRequiredModal'
-        );
+        $('loginRequiredModal');
 
 
     if (!modal) {
@@ -1442,8 +1234,64 @@ clockFace
                     day.hours
                 );
             }
+
+
+            scrollToRigsIfHidden();
         }
     );
+
+
+/*
+ * En pantallas chicas el paso 02 queda fuera de la vista
+ * después de escoger la hora: lo traemos a la vista para
+ * que el usuario no tenga que buscarlo. Si ya se ve, no
+ * movemos nada.
+ */
+
+function scrollToRigsIfHidden() {
+
+    const section =
+        grids.standard
+            ?.closest(
+                '.reservation-section'
+            );
+
+
+    if (!section) {
+        return;
+    }
+
+
+    const top =
+        section
+            .getBoundingClientRect()
+            .top;
+
+
+    if (
+        top <
+        window.innerHeight * 0.75
+    ) {
+        return;
+    }
+
+
+    const reduceMotion =
+        window.matchMedia?.(
+            '(prefers-reduced-motion: reduce)'
+        ).matches;
+
+
+    section.scrollIntoView({
+        behavior:
+            reduceMotion
+                ? 'auto'
+                : 'smooth',
+
+        block:
+            'start'
+    });
+}
 
 
 /*
@@ -1667,17 +1515,9 @@ async function loadConfig() {
      * mostramos los rigs activos.
      */
 
-    render(
-        rigs.map(
-            (
-                rig
-            ) => ({
-                ...rig,
-                available:
-                    true
-            })
-        )
-    );
+    holdSelection();
+
+    renderAllOpen();
 
 
     console.log(
@@ -1798,9 +1638,11 @@ function card(
         );
 
     typeLabel.textContent =
-        String(
-            rig.type || ''
-        ).toUpperCase();
+        rig.available
+            ? String(
+                rig.type || ''
+            ).toUpperCase()
+            : 'OCUPADO';
 
 
     const nameLabel =
@@ -1826,17 +1668,35 @@ function card(
     );
 
 
-    if (
+    /*
+     * .unavailable (css/reservas.css) quita el efecto hover en
+     * los rigs ocupados; la etiqueta dice OCUPADO en vez del tipo.
+     */
+    button.classList.toggle(
+        'unavailable',
+        !rig.available
+    );
+
+
+    const isSelected =
         selected.has(
             rig.id
         ) &&
-        rig.available
-    ) {
+        rig.available;
 
-        button.classList.add(
-            'selected'
-        );
-    }
+
+    button.classList.toggle(
+        'selected',
+        isSelected
+    );
+
+
+    button.setAttribute(
+        'aria-pressed',
+        String(
+            isSelected
+        )
+    );
 
 
     button.addEventListener(
@@ -1874,6 +1734,16 @@ function card(
                 'selected',
                 selected.has(
                     rig.id
+                )
+            );
+
+
+            button.setAttribute(
+                'aria-pressed',
+                String(
+                    selected.has(
+                        rig.id
+                    )
                 )
             );
 
@@ -1995,6 +1865,138 @@ function render(
 
 
 /* =========================================================
+   KEEP SELECTION ACROSS CHANGES
+   ========================================================= */
+
+function holdSelection() {
+
+    for (
+        const id
+        of selected.keys()
+    ) {
+
+        heldRigIds.add(
+            id
+        );
+    }
+
+
+    selected.clear();
+}
+
+
+/*
+ * Vuelve a marcar los rigs guardados que sigan libres en
+ * `list`. Devuelve los nombres de los que ya no lo están.
+ */
+
+function restoreHeldSelection(
+    list
+) {
+
+    const dropped =
+        [];
+
+
+    for (
+        const id
+        of heldRigIds
+    ) {
+
+        const rig =
+            list.find(
+                (
+                    item
+                ) =>
+                    item.id ===
+                    id
+            );
+
+
+        if (
+            rig?.available
+        ) {
+
+            selected.set(
+                id,
+                rig
+            );
+
+        } else {
+
+            dropped.push(
+                rig?.name ||
+                id
+            );
+        }
+    }
+
+
+    heldRigIds.clear();
+
+
+    return dropped;
+}
+
+
+/*
+ * Sin fecha/hora todavía: mostramos todos los rigs como
+ * libres, con los que el usuario ya había elegido marcados.
+ */
+
+function renderAllOpen() {
+
+    const list =
+        rigs.map(
+            (
+                rig
+            ) => ({
+                ...rig,
+                available:
+                    true
+            })
+        );
+
+
+    restoreHeldSelection(
+        list
+    );
+
+
+    render(
+        list
+    );
+}
+
+
+function resetReceipt() {
+
+    const input =
+        $('paymentReceipt');
+
+
+    if (input) {
+
+        input.value =
+            '';
+    }
+
+
+    $('receiptUpload')
+        ?.classList
+        .remove(
+            'has-file'
+        );
+
+
+    setText(
+        'receiptFileName',
+        'SUBÍ TU COMPROBANTE'
+    );
+}
+
+
+/* =========================================================
    AVAILABILITY
    ========================================================= */
 
@@ -2008,7 +2010,7 @@ async function availability() {
     }
 
 
-    selected.clear();
+    holdSelection();
 
 
     /*
@@ -2021,17 +2023,7 @@ async function availability() {
         !durationSelect?.value
     ) {
 
-        render(
-            rigs.map(
-                (
-                    rig
-                ) => ({
-                    ...rig,
-                    available:
-                        true
-                })
-            )
-        );
+        renderAllOpen();
 
 
         return;
@@ -2074,13 +2066,36 @@ async function availability() {
             );
 
 
-        render(
+        const list =
             Array.isArray(
                 data.rigs
             )
                 ? data.rigs
-                : []
+                : [];
+
+
+        const dropped =
+            restoreHeldSelection(
+                list
+            );
+
+
+        render(
+            list
         );
+
+
+        if (
+            dropped.length
+        ) {
+
+            message(
+                dropped.length === 1
+                    ? `${dropped[0]} no está libre en ese horario. Elegí otro simulador.`
+                    : `${dropped.join(', ')} no están libres en ese horario. Elegí otros simuladores.`,
+                'info'
+            );
+        }
 
 
     } catch (
@@ -2694,7 +2709,7 @@ dateSelect
 
         async () => {
 
-            selected.clear();
+            holdSelection();
 
 
             /*
@@ -2739,7 +2754,7 @@ timeSelect
 
         async () => {
 
-            selected.clear();
+            holdSelection();
 
 
             /*
@@ -2750,17 +2765,7 @@ timeSelect
                 !timeSelect.value
             ) {
 
-                render(
-                    rigs.map(
-                        (
-                            rig
-                        ) => ({
-                            ...rig,
-                            available:
-                                true
-                        })
-                    )
-                );
+                renderAllOpen();
 
 
                 summary();
@@ -2790,7 +2795,7 @@ durationSelect
 
         async () => {
 
-            selected.clear();
+            holdSelection();
 
 
             /*
@@ -2811,20 +2816,11 @@ durationSelect
             /*
              * Como loadCalendar/makeTimes dejan
              * la hora sin seleccionar, mostramos
-             * todos los rigs hasta escoger otra hora.
+             * todos los rigs hasta escoger otra hora
+             * (con los que ya tenía elegidos marcados).
              */
 
-            render(
-                rigs.map(
-                    (
-                        rig
-                    ) => ({
-                        ...rig,
-                        available:
-                            true
-                    })
-                )
-            );
+            renderAllOpen();
 
 
             summary();
@@ -3097,6 +3093,14 @@ form
 
                 submitButton.disabled =
                     true;
+
+                submitButton.textContent =
+                    'ENVIANDO…';
+
+                submitButton.setAttribute(
+                    'aria-busy',
+                    'true'
+                );
             }
 
 
@@ -3444,16 +3448,30 @@ form
                 );
 
 
-                /*
-                 * ALERT NATIVO (a prueba de fallos).
-                 */
+                showNotice(
+                    successMessage,
+                    {
+                        title:
+                            payment === 'transferencia'
+                                ? 'RESERVA ENVIADA'
+                                : 'RESERVA CONFIRMADA',
 
-                safeAlert(
-                    successMessage
+                        autoCloseMs:
+                            0
+                    }
                 );
 
 
                 selected.clear();
+
+
+                /*
+                 * El comprobante ya se subió: lo quitamos
+                 * para que una segunda reserva no reuse
+                 * el mismo archivo sin querer.
+                 */
+
+                resetReceipt();
 
 
                 /*
@@ -3490,6 +3508,19 @@ form
                         refreshError
                     );
                 }
+            }
+
+
+            if (
+                submitButton
+            ) {
+
+                submitButton.textContent =
+                    'CONTINUAR RESERVA';
+
+                submitButton.removeAttribute(
+                    'aria-busy'
+                );
             }
 
 

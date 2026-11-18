@@ -325,6 +325,64 @@
 }
 
 
+/* Show/hide password button (added by js/auth.js). */
+
+.auth-password-wrap {
+    position: relative;
+    display: block;
+}
+
+.auth-field .auth-password-wrap input {
+    padding-right: 48px;
+}
+
+.auth-password-toggle,
+.auth-password-toggle:hover,
+.auth-password-toggle:focus {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+
+    display: grid;
+    place-items: center;
+
+    width: 38px;
+    height: 38px;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+
+    color: #888;
+
+    cursor: pointer;
+
+    transform: translateY(-50%);
+
+    opacity: 1;
+    visibility: visible;
+}
+
+.auth-password-toggle:hover,
+.auth-password-toggle[aria-pressed="true"] {
+    color: #fff;
+}
+
+.auth-password-toggle:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: -2px;
+}
+
+.auth-password-toggle svg {
+    width: 19px;
+    height: 19px;
+
+    fill: currentColor;
+}
+
+
 .auth-submit {
     width: 100%;
 
