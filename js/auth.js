@@ -68,7 +68,7 @@ function injectAuthMarkup() {
     <form class="auth-form active" id="loginForm" novalidate>
       <div class="auth-heading">
         <h2 id="authModalTitle">BIENVENIDO</h2>
-        <p>Inicia sesión en tu cuenta de Simuladores Inercia.</p>
+        <p>Iniciá sesión en tu cuenta de Simuladores Inercia.</p>
       </div>
       <label class="auth-field">
         <span>CORREO ELECTRÓNICO</span>
@@ -87,12 +87,12 @@ function injectAuthMarkup() {
 </button>
       <button class="auth-submit" type="submit">INICIAR SESIÓN</button>
       <div class="auth-divider"><span>O</span></div>
-      <p class="auth-switch">¿No tienes una cuenta? <button type="button" data-switch-auth="register">REGÍSTRATE</button></p>
+      <p class="auth-switch">¿No tenés una cuenta? <button type="button" data-switch-auth="register">REGISTRATE</button></p>
     </form>
     <form class="auth-form" id="registerForm">
       <div class="auth-heading">
         <h2>CREAR CUENTA</h2>
-        <p>Regístrate para acceder a Simuladores Inercia.</p>
+        <p>Registrate para acceder a Simuladores Inercia.</p>
       </div>
       <label class="auth-field">
         <span>NOMBRE</span>
@@ -112,10 +112,10 @@ function injectAuthMarkup() {
       </label>
       <label class="auth-field">
         <span>CONFIRMAR CONTRASEÑA</span>
-        <input type="password" id="registerPasswordConfirm" placeholder="Repite tu contraseña" autocomplete="new-password" minlength="6" required>
+        <input type="password" id="registerPasswordConfirm" placeholder="Repetí tu contraseña" autocomplete="new-password" minlength="6" required>
       </label>
       <button class="auth-submit" type="submit">CREAR CUENTA</button>
-      <p class="auth-switch">¿Ya tienes una cuenta? <button type="button" data-switch-auth="login">INICIA SESIÓN</button></p>
+      <p class="auth-switch">¿Ya tenés una cuenta? <button type="button" data-switch-auth="login">INICIÁ SESIÓN</button></p>
     </form>
     <p class="auth-message" id="authMessage"></p>
   </div>
@@ -937,7 +937,7 @@ function friendlyAuthError(error) {
             return 'Correo o contraseña incorrectos.';
 
         case 'auth/too-many-requests':
-            return 'Demasiados intentos. Intenta más tarde.';
+            return 'Demasiados intentos. Intentá más tarde.';
 
         case 'auth/popup-closed-by-user':
             return 'Se cerró la ventana de Google.';
@@ -955,7 +955,7 @@ function friendlyAuthError(error) {
                 error
             );
 
-            return 'Ocurrió un error. Intenta de nuevo.';
+            return 'Ocurrió un error. Intentá de nuevo.';
     }
 
 }
@@ -1224,7 +1224,7 @@ forgotPasswordBtn?.addEventListener('click', async () => {
     if (!email) {
 
         showMessage(
-            'Escribe tu correo electrónico arriba y luego tocá "¿Olvidaste tu contraseña?" de nuevo.'
+            'Escribí tu correo electrónico arriba y luego tocá "¿Olvidaste tu contraseña?" de nuevo.'
         );
 
 
@@ -1396,7 +1396,7 @@ loginForm?.addEventListener('submit', async (event) => {
     if (!email || !password) {
 
         showMessage(
-            'Completa todos los campos.'
+            'Completá todos los campos.'
         );
 
         return;
@@ -1520,7 +1520,7 @@ registerForm?.addEventListener('submit', async (event) => {
     ) {
 
         showMessage(
-            'Completa todos los campos.'
+            'Completá todos los campos.'
         );
 
         return;

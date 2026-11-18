@@ -71,7 +71,7 @@ updateMyTime();
     renderCategory(getSelectedCategory());
   } catch (err) {
     console.error('Error cargando la tabla de tiempos:', err);
-    showError('Ocurrió un error al cargar la tabla de tiempos. Intenta de nuevo más tarde.');
+    showError('Ocurrió un error al cargar la tabla de tiempos. Intentá de nuevo más tarde.');
   }
 }
 
