@@ -8,40 +8,100 @@
  * button/X inside the panel). No exports — this file just wires up event
  * listeners when loaded as a <script type="module">, so it must be
  * loaded on any page that includes that markup (see index.html,
- * contacto.html, reservas.html, standings.html).
+ * contacto.html, reservas.html, standings.html, suscripcion.html).
+ *
+ * Keyboard/screen reader behavior:
+ *   - While closed the panel is `inert`, so Tab never walks through its
+ *     off-screen links (aria-hidden alone left them focusable).
+ *   - Opening moves focus to the first link; closing returns it to the
+ *     hamburger button. Escape closes it only when it's open.
+ *   - The link for the current page gets aria-current="page" (styled in
+ *     css/menu.css), same as the desktop navbar in js/navbar.js.
  */
 const menuBtn = document.getElementById('menuBtn');
 const sideMenu = document.getElementById('sideMenu');
 const menuOverlay = document.getElementById('menuOverlay');
 const menuClose = document.getElementById('menuClose');
 
+function isOpen() {
+    return sideMenu?.classList.contains('active');
+}
+
 function openMenu() {
     sideMenu.classList.add('active');
     menuOverlay.classList.add('active');
     document.body.classList.add('menu-open');
 
+    sideMenu.inert = false;
     sideMenu.setAttribute('aria-hidden', 'false');
     menuBtn.setAttribute('aria-expanded', 'true');
+
+    requestAnimationFrame(() => {
+        sideMenu.querySelector('.side-menu-link')?.focus();
+    });
 }
 
-function closeMenu() {
+function closeMenu({ restoreFocus = true } = {}) {
+    const hadFocus = sideMenu.contains(document.activeElement);
+
     sideMenu.classList.remove('active');
     menuOverlay.classList.remove('active');
     document.body.classList.remove('menu-open');
 
+    sideMenu.inert = true;
     sideMenu.setAttribute('aria-hidden', 'true');
     menuBtn.setAttribute('aria-expanded', 'false');
+
+    if (restoreFocus && hadFocus) {
+        menuBtn.focus();
+    }
 }
 
-menuBtn.addEventListener('click', openMenu);
+function markCurrentPage() {
+    const path = window.location.pathname.replace(/\/+$/, '').replace(/\.html$/, '') || '/inicio';
+    const page = path === '/index' || path === '/' ? '/inicio' : path;
 
-menuClose.addEventListener('click', closeMenu);
+    sideMenu.querySelectorAll('.side-menu-link').forEach((link) => {
+        if (link.getAttribute('href') === page) {
+            link.setAttribute('aria-current', 'page');
+        }
+    });
+}
 
-menuOverlay.addEventListener('click', closeMenu);
+/*
+ * Background video (.page-bg-video, on every page): stop it for people who
+ * asked their OS for reduced motion. CSS can't pause an autoplaying video.
+ */
+const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
 
-/* ESC closes menu */
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-        closeMenu();
-    }
-});
+function syncBackgroundVideo() {
+    document.querySelectorAll('.page-bg-video').forEach((video) => {
+        if (reducedMotion?.matches) {
+            video.removeAttribute('autoplay');
+            video.pause();
+        } else if (video.paused) {
+            video.play().catch(() => {});
+        }
+    });
+}
+
+if (reducedMotion) {
+    syncBackgroundVideo();
+    reducedMotion.addEventListener?.('change', syncBackgroundVideo);
+}
+
+if (menuBtn && sideMenu && menuOverlay) {
+    sideMenu.inert = true;
+    markCurrentPage();
+
+    menuBtn.addEventListener('click', openMenu);
+    menuClose?.addEventListener('click', () => closeMenu());
+    menuOverlay.addEventListener('click', () => closeMenu());
+
+    /* ESC closes menu */
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isOpen()) {
+            closeMenu();
+        }
+    });
+}

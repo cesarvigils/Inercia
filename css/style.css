@@ -89,6 +89,7 @@ img, svg { display: block; max-width: 100%; }
 .hero.reveal { transition-delay: 0s; }
 .hero .reveal-up.d1 { transition-delay: 0.15s; }
 .hero .reveal-up.d2 { transition-delay: 0.32s; }
+.hero .reveal-up.d3 { transition-delay: 0.48s; }
 
 
 .card .reveal-up:nth-child(1) { transition-delay: 0.05s; }
@@ -293,6 +294,32 @@ img, svg { display: block; max-width: 100%; }
   line-height: 0.98;
   letter-spacing: 0.1px;
   color: #fff;
+}
+
+/* Hero call to action: same button style as the login modal. */
+.hero-cta {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 11px 24px;
+  border-radius: 8px;
+  background: var(--orange);
+  color: #111;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.hero-cta:hover,
+.hero-cta:focus-visible {
+  background: var(--orange-light, #ff9d22);
+  transform: translateY(-1px);
+}
+
+.hero-cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 
 /* ---------------------- packages ---------------------- */

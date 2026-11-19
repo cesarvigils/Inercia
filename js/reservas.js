@@ -413,7 +413,7 @@ function message(
 
    Se muestra cuando un usuario sin sesión entra a la página
    o intenta reservar. Usa el mismo estilo que el modal de
-   login (.inercia-dialog en css/reservas.css). Se cierra con
+   login (las mismas clases .auth-modal de css/auth.css). Se cierra con
    ×, Escape o clic afuera — el usuario puede seguir viendo
    horarios y simuladores sin cuenta.
    ========================================================= */
@@ -485,15 +485,15 @@ function createLoginRequiredModal() {
         'beforeend',
         `
         <div
-            class="inercia-dialog"
+            class="auth-modal"
             id="loginRequiredModal"
             aria-hidden="true"
             inert
         >
-            <div class="inercia-dialog-backdrop"></div>
+            <div class="auth-modal-backdrop"></div>
 
             <div
-                class="inercia-dialog-panel"
+                class="auth-modal-panel"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="reservationLoginTitle"
@@ -501,36 +501,35 @@ function createLoginRequiredModal() {
             >
                 <button
                     type="button"
-                    class="inercia-dialog-close"
+                    class="auth-modal-close"
                     aria-label="Cerrar"
                 >&times;</button>
 
-                <div class="inercia-dialog-brand">
+                <div class="auth-modal-brand">
                     <img src="${LOGO_URL}" alt="Simuladores Inercia">
                 </div>
 
-                <h2 class="inercia-dialog-title" id="reservationLoginTitle">
-                    INICIÁ SESIÓN
-                </h2>
-
-                <p class="inercia-dialog-text" id="reservationLoginText">
-                    Necesitás una cuenta para reservar. Mientras tanto,
-                    podés ver horarios y simuladores libres.
-                </p>
+                <div class="auth-heading">
+                    <h2 id="reservationLoginTitle">INICIÁ SESIÓN</h2>
+                    <p id="reservationLoginText">
+                        Necesitás una cuenta de Simuladores Inercia para reservar.
+                        Mientras tanto, podés ver horarios y simuladores libres.
+                    </p>
+                </div>
 
                 <button
                     type="button"
-                    class="inercia-dialog-primary"
+                    class="auth-submit"
                     id="reservationLoginBtn"
                 >
                     INICIAR SESIÓN
                 </button>
 
-                <p class="inercia-dialog-switch">
-                    ¿No tenés cuenta?
-                    <button type="button" id="reservationRegisterBtn">
-                        REGISTRATE
-                    </button>
+                <div class="auth-divider"><span>O</span></div>
+
+                <p class="auth-switch">
+                    ¿No tenés una cuenta?
+                    <button type="button" id="reservationRegisterBtn">REGISTRATE</button>
                 </p>
             </div>
         </div>
@@ -557,7 +556,7 @@ function createLoginRequiredModal() {
 
 
     modal
-        ?.querySelector('.inercia-dialog-backdrop')
+        ?.querySelector('.auth-modal-backdrop')
         ?.addEventListener(
             'click',
             closeLoginRequiredModal
@@ -565,7 +564,7 @@ function createLoginRequiredModal() {
 
 
     modal
-        ?.querySelector('.inercia-dialog-close')
+        ?.querySelector('.auth-modal-close')
         ?.addEventListener(
             'click',
             closeLoginRequiredModal
