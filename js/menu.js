@@ -69,26 +69,39 @@ function markCurrentPage() {
 }
 
 /*
- * Background video (.page-bg-video, on every page): stop it for people who
- * asked their OS for reduced motion. CSS can't pause an autoplaying video.
+ * Background video (.page-bg-video, partials/bg-video.html, on every page).
+ * It ships with preload="none" and no autoplay; this starts it only when
+ * it should play:
+ *   - not for people who asked their OS for reduced motion;
+ *   - not with Data Saver on (navigator.connection.saveData), so phones on
+ *     mobile data don't download a looping video they can barely see;
+ *   - paused while the tab is hidden, to save battery.
  */
 const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+const saveData = Boolean(navigator.connection?.saveData);
 
 function syncBackgroundVideo() {
+    const shouldPlay =
+        !reducedMotion?.matches &&
+        !saveData &&
+        document.visibilityState !== 'hidden';
+
     document.querySelectorAll('.page-bg-video').forEach((video) => {
-        if (reducedMotion?.matches) {
-            video.removeAttribute('autoplay');
+        if (!shouldPlay) {
             video.pause();
-        } else if (video.paused) {
+            return;
+        }
+
+        if (video.paused) {
+            video.preload = 'auto';
             video.play().catch(() => {});
         }
     });
 }
 
-if (reducedMotion) {
-    syncBackgroundVideo();
-    reducedMotion.addEventListener?.('change', syncBackgroundVideo);
-}
+syncBackgroundVideo();
+reducedMotion?.addEventListener?.('change', syncBackgroundVideo);
+document.addEventListener('visibilitychange', syncBackgroundVideo);
 
 if (menuBtn && sideMenu && menuOverlay) {
     sideMenu.inert = true;

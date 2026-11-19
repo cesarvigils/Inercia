@@ -110,6 +110,7 @@
 import crypto from 'node:crypto';
 import { Timestamp, FieldPath, FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin.js';
+import { formatHourRange } from '../../lib/time.js';
 
 export const TZ = 'America/Tegucigalpa';
 const DEFAULT_CONFIG = {
@@ -343,7 +344,7 @@ export function validateWhen(date,time,duration,config){
   duration=Number(duration); if(!Number.isInteger(duration)||duration<config.minDurationHours||duration>config.maxDurationHours) throw bad(`La duración debe ser de ${config.minDurationHours} a ${config.maxDurationHours} horas.`);
   const now=localParts(); const dd=dateDiff(now.date,date); if(dd<0||dd>=config.bookingWindowDays) throw bad(`Solo podés reservar dentro de los próximos ${config.bookingWindowDays} días.`);
   const start=hm(time), end=start+duration*60; const hours=config.hours[dateDay(date)]; if(!hours) throw bad('Ese día no está abierto.');
-  if(start<hm(hours[0])||end>hm(hours[1])) throw bad(`La reserva debe estar dentro del horario ${hours[0]}–${hours[1]}.`);
+  if(start<hm(hours[0])||end>hm(hours[1])) throw bad(`La reserva debe estar dentro del horario ${formatHourRange(hours[0], hours[1])}.`);
   const lead=dd*1440 + start-now.minutes; if(lead<config.minLeadMinutes) throw bad(`La reserva debe hacerse con al menos ${config.minLeadMinutes} minutos de anticipación.`);
   return { start, end, lead };
 }

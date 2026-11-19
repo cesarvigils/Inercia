@@ -9,12 +9,20 @@
  * (`vite build`) output — the dev server (`vite`) serves any file by
  * path regardless, so a missing entry here can go unnoticed until you
  * actually run a production build.
+ *
+ * vite-partials.js inlines the shared header/menu/nav, footer and
+ * background video (partials/*.html) into every page — a new page gets
+ * them with <!-- @partial site-header --> etc.
  */
 
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
+import partials from './vite-partials.js'
 
 export default defineConfig({
+  plugins: [
+    partials({ dir: resolve(__dirname, 'partials') })
+  ],
   build: {
     rollupOptions: {
       input: {

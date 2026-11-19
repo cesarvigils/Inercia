@@ -319,11 +319,18 @@ function syncPaymentPanels() {
     if (transferPanel) transferPanel.hidden = method !== 'transferencia';
     if (paypalPanel) paypalPanel.hidden = method !== 'paypal';
 
-    // Transferencia usa el submit normal; PayPal usa su botón oficial.
+    // Transferencia/efectivo usan el submit normal; PayPal usa su botón oficial.
+    // La etiqueta dice qué pasa al tocarlo (js/reservas.js la reusa al
+    // terminar un envío, vía data-label).
     if (submit) {
         submit.hidden = method === 'paypal';
-        if (method !== 'paypal') {
-            submit.textContent = 'CONTINUAR RESERVA';
+        if (method !== 'paypal' && submit.getAttribute('aria-busy') !== 'true') {
+            const label =
+                method === 'transferencia' ? 'ENVIAR RESERVA'
+                    : method === 'efectivo' ? 'CONFIRMAR RESERVA'
+                        : 'CONTINUAR RESERVA';
+            submit.dataset.label = label;
+            submit.textContent = label;
         }
     }
 

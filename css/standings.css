@@ -1797,3 +1797,65 @@ body.auth-modal-open {
     outline-offset: 4px;
     border-radius: 4px;
 }
+
+
+/* =========================================================
+   YOUR ROW (js/standings.js highlightMyRow)
+   ========================================================= */
+
+.standing-row.is-me {
+    position: relative;
+
+    background: rgba(255, 139, 0, 0.14);
+    box-shadow: inset 3px 0 0 var(--orange);
+}
+
+.standing-row.is-me .driver {
+    color: var(--orange);
+}
+
+.standing-row.flash {
+    animation: standings-flash 1.4s ease;
+}
+
+@keyframes standings-flash {
+    0%, 40% { background: rgba(255, 139, 0, 0.42); }
+    100%    { background: rgba(255, 139, 0, 0.14); }
+}
+
+/* MI TIEMPO card turns into a "jump to my row" button once the row exists. */
+
+.my-time-card.can-jump {
+    cursor: pointer;
+}
+
+.my-time-card.can-jump .my-time-label::after {
+    content: ' · VER EN LA TABLA ↓';
+
+    color: var(--orange);
+}
+
+.my-time-card.can-jump:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+}
+
+/* No map for this month: hidden image takes no space. */
+.track-map[hidden] {
+    display: none !important;
+}
+
+
+/* =========================================================
+   SITE FOOTER spacing on this page
+   ========================================================= */
+
+.standings + .site-footer {
+    margin-top: 32px;
+}
+
+@media (max-width: 500px) {
+    .my-time-card.can-jump .my-time-label::after {
+        content: ' · VER ↓';
+    }
+}

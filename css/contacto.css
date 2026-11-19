@@ -1316,3 +1316,43 @@ a.contact-item:hover {
     opacity: .45;
     cursor: wait;
 }
+
+/* =========================================================
+   HOURS (js/hours.js) — same card as UBICACIÓN, no arrow.
+   The list itself (.hours-list, .hours-status) is styled in
+   css/navbar.css because the home page uses it too.
+   ========================================================= */
+
+.contact-item.contact-hours {
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: start;
+}
+
+@media (min-width: 371px) {
+    .contact-item.contact-hours {
+        grid-template-columns: 44px minmax(0, 1fr);
+    }
+}
+
+.contact-label .hours-status {
+    margin-left: 8px;
+}
+
+/* Undo the one-line ellipsis that .contact-item-copy strong uses. */
+.contact-item-copy .hours-list strong {
+    display: inline;
+
+    overflow: visible;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+
+    white-space: normal;
+}
+
+/* Phone number must never be cut off on small screens. */
+.contact-item-copy strong {
+    text-overflow: clip;
+}

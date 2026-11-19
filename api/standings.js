@@ -83,6 +83,8 @@ export default async function handler(req, res) {  try {
       month: monthName,
       year,
       circuito: trackName,
+      // Optional: set STANDINGS_CAR in Vercel to change the car shown (defaults to the HTML's "F1 2025").
+      auto: process.env.STANDINGS_CAR || null,
       drivers,
     });
   } catch (err) {

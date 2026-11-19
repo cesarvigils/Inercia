@@ -1373,3 +1373,160 @@ body.auth-modal-open {
     height: auto;
     object-fit: contain;
 }
+
+/* =========================================================
+   HOME — card link, price, extras (index.html)
+   ========================================================= */
+
+/* Both cards: one link stretched over the whole card (above the art and
+   text), so tapping anywhere on a card opens /reservas. */
+.card-stretched-link {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+}
+
+.card-stretched-link:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: -4px;
+}
+
+.card:has(.card-stretched-link:focus-visible) {
+  border-color: rgba(255, 139, 0, 0.6);
+}
+
+.card-price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 139, 0, 0.14);
+  border: 1px solid rgba(255, 139, 0, 0.4);
+  color: #ddd;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+}
+
+.card-price strong {
+  color: var(--orange);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.home-extras {
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding: 26px var(--gutter) 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.home-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 20px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  background: linear-gradient(115deg, rgba(28, 28, 28, 0.9), rgba(14, 14, 14, 0.78));
+  color: var(--ink);
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.home-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--orange);
+}
+
+a.home-tile:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 139, 0, 0.55);
+}
+
+a.home-tile:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 3px;
+}
+
+.home-tile-kicker {
+  color: var(--orange);
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+.home-tile-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+}
+
+.home-tile-text {
+  color: #b8b8b8;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.home-tile-cta {
+  margin-top: 6px;
+  color: var(--orange);
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.home-hours .hours-status {
+  margin-left: 6px;
+}
+
+.home-hours .hours-list {
+  margin-top: 4px;
+}
+
+.home-hours-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--orange);
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+}
+
+.home-hours-link:hover,
+.home-hours-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (min-width: 860px) {
+  .home-extras {
+    padding: 34px 32px 10px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+
+  .card-price { font-size: 13px; }
+  .card-price strong { font-size: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-stretched-link,
+  .home-tile {
+    transition: none;
+  }
+}

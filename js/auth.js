@@ -235,6 +235,7 @@ if (!document.getElementById('forgotPasswordModal')) {
     </div>
   </div>
   <button id="profileBtn" class="profile-menu-item" type="button" role="menuitem" tabindex="-1">PERFIL</button>
+  <button id="myBookingsBtn" class="profile-menu-item" type="button" role="menuitem" tabindex="-1">MIS RESERVAS</button>
   <button id="logoutBtn" class="profile-menu-item" type="button" role="menuitem" tabindex="-1">CERRAR SESIÓN</button>
 </div>`);
     }
@@ -1875,6 +1876,21 @@ profileBtn?.addEventListener('click', async () => {
         view.openProfile(auth.currentUser);
     } catch (error) {
         console.error('Error abriendo el perfil:', error);
+    }
+});
+
+// "MIS RESERVAS": same overlay, scrolled to the reservations section.
+document.getElementById('myBookingsBtn')?.addEventListener('click', async () => {
+
+    closeProfileMenu();
+
+    if (!auth.currentUser) return;
+
+    try {
+        const view = await loadProfileView();
+        view.openProfile(auth.currentUser, { section: 'reservations' });
+    } catch (error) {
+        console.error('Error abriendo mis reservas:', error);
     }
 });
 

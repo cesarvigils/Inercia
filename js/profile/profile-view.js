@@ -3,9 +3,10 @@
  *
  * The PERFIL overlay, opened from the account menu (js/auth.js loads this
  * module on first use). Full-screen panel with the user's identity and
- * membership on top, then personal records, race results and upcoming
+ * membership on top (with an inline "cancel membership" confirmation), then
+ * MIS RESERVAS, personal records, race results and upcoming
  * events. Each section asks its own data module (identity.js,
- * membership.js, records.js, events.js) and renders one of: loading,
+ * membership.js, reservations.js, records.js, events.js) and renders one of: loading,
  * pending integration, unavailable, empty, or the data.
  *
  * Everything user- or sheet-provided is written with textContent, never
@@ -17,6 +18,9 @@ import { loadIdentity, identityFromUser } from './identity.js';
 import { loadMembership, PERIOD_LABELS } from './membership.js';
 import { loadRecords, sortByLap } from './records.js';
 import { loadEvents } from './events.js';
+import { loadReservations } from './reservations.js';
+import { postJson } from './api.js';
+import { formatHour, formatDateLong } from '../../lib/time.js';
 
 const DEFAULT_PFP =
     'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fdefaultpfp3.jpg?alt=media&token=a0435be5-f789-41ec-9d50-ab24fed4b9ec';
@@ -24,6 +28,7 @@ const DEFAULT_PFP =
 let root = null;
 let lastFocus = null;
 let openFor = null;
+let currentUser = null;
 
 /* ---------------------------------------------------------
    DOM helpers
@@ -106,17 +111,20 @@ function build() {
 
     hero.append(who, membership);
 
-    const records = section('01', 'TUS TIEMPOS', 'RÉCORDS PERSONALES');
+    const bookings = section('01', 'TUS SESIONES', 'MIS RESERVAS');
+    bookings.node.dataset.slot = 'reservations';
+    bookings.node.id = 'pfReservations';
+    const records = section('02', 'TUS TIEMPOS', 'RÉCORDS PERSONALES');
     records.node.dataset.slot = 'records';
-    const results = section('02', 'COMPETENCIA', 'RESULTADOS DE CARRERA');
+    const results = section('03', 'COMPETENCIA', 'RESULTADOS DE CARRERA');
     results.node.dataset.slot = 'results';
-    const events = section('03', 'CALENDARIO', 'PRÓXIMOS EVENTOS');
+    const events = section('04', 'CALENDARIO', 'PRÓXIMOS EVENTOS');
     events.node.dataset.slot = 'events';
 
     const lower = el('div', 'pf-lower');
     lower.append(results.node, events.node);
 
-    page.append(top, hero, records.node, lower);
+    page.append(top, hero, bookings.node, records.node, lower);
     scroller.append(page);
     root.append(scroller);
     document.body.append(root);
@@ -159,11 +167,17 @@ function tierLadder(level) {
     return ladder;
 }
 
-function renderMembership(result) {
+function renderMembership(result, { cancelled = false } = {}) {
     const box = slot('membership');
     box.replaceChildren();
 
     box.append(el('p', 'pf-label', 'MEMBRESÍA'));
+
+    if (cancelled) {
+        const done = el('p', 'pf-confirm-done', 'Listo: cancelaste tu membresía. No se te va a cobrar más.');
+        done.setAttribute('role', 'status');
+        box.append(done);
+    }
 
     if (result.state !== 'ready') {
         box.append(stateBlock('unavailable', 'NO DISPONIBLE', 'No pudimos consultar tu membresía. Probá de nuevo en un rato.'));
@@ -195,9 +209,178 @@ function renderMembership(result) {
 
     if (details.childElementCount) box.append(details);
 
+    const actions = el('div', 'pf-membership-actions');
     const cta = el('a', result.active ? 'pf-link' : 'pf-cta', result.active ? 'VER PLANES' : 'SUSCRIBITE');
     cta.href = '/suscripcion';
-    box.append(cta);
+    actions.append(cta);
+
+    // Only a renewing membership can be cancelled (PayPal ACTIVE/SUSPENDED);
+    // a cancelled one already shows "ACTIVA HASTA".
+    if (result.active && (result.status === 'ACTIVE' || result.status === 'SUSPENDED')) {
+        const cancel = el('button', 'pf-link pf-link--quiet', 'CANCELAR MEMBRESÍA');
+        cancel.type = 'button';
+        cancel.addEventListener('click', () => showCancelConfirm(box, result));
+        actions.append(cancel);
+    }
+
+    box.append(actions);
+}
+
+/*
+ * Inline confirmation inside the membership box (no modal on top of the
+ * profile overlay — works better on phones). On "SÍ, CANCELAR" it calls
+ * POST /api/subscription/cancel, then re-reads the full status so the box
+ * shows "ACTIVA HASTA …".
+ */
+function showCancelConfirm(box, result) {
+    if (box.querySelector('.pf-confirm')) return;
+
+    const actions = box.querySelector('.pf-membership-actions');
+    if (actions) actions.hidden = true;
+
+    const until = result.nextBillingTime && formatDate(result.nextBillingTime);
+
+    const confirm = el('div', 'pf-confirm');
+    confirm.setAttribute('role', 'alertdialog');
+    confirm.setAttribute('aria-labelledby', 'pfConfirmTitle');
+    confirm.setAttribute('aria-describedby', 'pfConfirmText');
+
+    const title = el('p', 'pf-confirm-title', '¿CANCELAR TU MEMBRESÍA?');
+    title.id = 'pfConfirmTitle';
+    const text = el(
+        'p',
+        'pf-confirm-text',
+        until
+            ? `No se te va a cobrar más. Seguís teniendo los beneficios hasta el ${until.toLowerCase()}.`
+            : 'No se te va a cobrar más. Seguís teniendo los beneficios hasta el final del período que ya pagaste.'
+    );
+    text.id = 'pfConfirmText';
+    const message = el('p', 'pf-confirm-error');
+    message.setAttribute('role', 'alert');
+    message.hidden = true;
+
+    const buttons = el('div', 'pf-confirm-buttons');
+    const yes = el('button', 'pf-confirm-yes', 'SÍ, CANCELAR');
+    yes.type = 'button';
+    const no = el('button', 'pf-confirm-no', 'NO, MANTENERLA');
+    no.type = 'button';
+    buttons.append(no, yes);
+
+    confirm.append(title, text, message, buttons);
+    box.append(confirm);
+    no.focus();
+
+    const close = () => {
+        confirm.remove();
+        if (actions) actions.hidden = false;
+        box.querySelector('.pf-link--quiet')?.focus();
+    };
+
+    no.addEventListener('click', close);
+
+    yes.addEventListener('click', async () => {
+        const user = currentUser;
+        if (!user) return;
+
+        yes.disabled = true;
+        no.disabled = true;
+        yes.textContent = 'CANCELANDO…';
+        yes.setAttribute('aria-busy', 'true');
+        message.hidden = true;
+
+        try {
+            await postJson('/api/subscription/cancel', {}, { user });
+            const fresh = await loadMembership(user);
+            if (openFor === user.uid) renderMembership(fresh, { cancelled: true });
+        } catch (error) {
+            message.textContent = error.message && !error.message.startsWith('HTTP')
+                ? error.message
+                : 'No pudimos cancelarla. Probá de nuevo o escribinos por WhatsApp.';
+            message.hidden = false;
+            yes.disabled = false;
+            no.disabled = false;
+            yes.textContent = 'SÍ, CANCELAR';
+            yes.removeAttribute('aria-busy');
+        }
+    });
+}
+
+/* ---------------------------------------------------------
+   MIS RESERVAS
+   --------------------------------------------------------- */
+
+function rigSummary(item) {
+    const parts = [];
+    if (item.standard) parts.push(`${item.standard} Standard`);
+    if (item.premium) parts.push(`${item.premium} Premium`);
+    return parts.join(' · ') || 'Simuladores';
+}
+
+function money(value) {
+    return `L ${Number(value).toLocaleString('es-HN', { maximumFractionDigits: 2 })}`;
+}
+
+function reservationItem(item) {
+    const row = el('li', `pf-booking pf-booking--${item.status.key}`);
+
+    const day = new Date(`${item.date}T12:00:00`);
+    const date = el('div', 'pf-event-date');
+    date.setAttribute('aria-hidden', 'true');
+    date.append(
+        el('strong', null, Number.isNaN(day.getTime()) ? '—' : String(day.getDate()).padStart(2, '0')),
+        el('span', null, Number.isNaN(day.getTime()) ? '' : day.toLocaleDateString('es-HN', { month: 'short' }).replace('.', '').toUpperCase())
+    );
+
+    const info = el('div', 'pf-event-info');
+    const when = [
+        formatDateLong(item.date),
+        item.time && formatHour(item.time),
+        `${item.duration} ${item.duration === 1 ? 'hora' : 'horas'}`
+    ].filter(Boolean).join(' · ');
+    const what = [
+        rigSummary(item),
+        item.total !== null ? `${money(item.total)} + ISV` : null
+    ].filter(Boolean).join(' · ');
+    info.append(
+        el('span', 'pf-event-name', when),
+        el('span', 'pf-event-meta', what)
+    );
+
+    const status = el('span', 'pf-booking-status', item.status.label);
+
+    row.append(date, info, status);
+    return row;
+}
+
+function renderReservations(result) {
+    const body = sectionBody('reservations');
+    body.replaceChildren();
+
+    if (result.state !== 'ready') {
+        body.append(stateBlock('unavailable', 'NO DISPONIBLE', 'No pudimos cargar tus reservas. Probá de nuevo en un rato.'));
+        return;
+    }
+
+    if (!result.upcoming.length) {
+        body.append(stateBlock('empty', 'SIN RESERVAS PRÓXIMAS', 'Cuando reserves un simulador lo vas a ver acá.'));
+    } else {
+        const list = el('ul', 'pf-events pf-bookings');
+        result.upcoming.forEach((item) => list.append(reservationItem(item)));
+        body.append(list);
+    }
+
+    const book = el('a', result.upcoming.length ? 'pf-link' : 'pf-cta', 'RESERVAR');
+    book.href = '/reservas';
+    body.append(book);
+
+    if (result.past.length) {
+        const history = el('details', 'pf-history');
+        history.append(el('summary', null, `ANTERIORES (${result.past.length})`));
+        const list = el('ul', 'pf-events pf-bookings');
+        result.past.forEach((item) => list.append(reservationItem(item)));
+        history.append(list);
+        body.append(history);
+    }
 }
 
 function recordRow(record) {
@@ -366,7 +549,7 @@ function renderEvents(result) {
    --------------------------------------------------------- */
 
 function focusables() {
-    return [...root.querySelectorAll('button, a[href], [tabindex="0"]')]
+    return [...root.querySelectorAll('button, a[href], summary, [tabindex="0"]')]
         .filter((node) => !node.disabled && node.tabIndex !== -1 && node.getClientRects().length > 0);
 }
 
@@ -394,17 +577,23 @@ function onKeydown(event) {
     }
 }
 
-export function openProfile(user) {
+/*
+ * openProfile(user, { section })
+ *   section: 'reservations' scrolls straight to MIS RESERVAS (the account
+ *   menu's "MIS RESERVAS" item in js/auth.js).
+ */
+export function openProfile(user, { section: focusSection = null } = {}) {
     if (!user) return;
     if (!root) build();
 
     lastFocus = document.activeElement;
     openFor = user.uid;
+    currentUser = user;
 
     // Reset every section so one account's data never lingers for another.
     renderIdentity(identityFromUser(user));
     slot('membership').replaceChildren(el('p', 'pf-label', 'MEMBRESÍA'), stateBlock('loading', 'CARGANDO…'));
-    ['records', 'results', 'events'].forEach((name) => {
+    ['reservations', 'records', 'results', 'events'].forEach((name) => {
         sectionBody(name).replaceChildren(stateBlock('loading', 'CARGANDO…'));
     });
 
@@ -414,11 +603,18 @@ export function openProfile(user) {
     root.querySelector('.pf-close').focus();
     root.querySelector('.pf-scroll').scrollTop = 0;
 
+    if (focusSection === 'reservations') {
+        requestAnimationFrame(() => {
+            slot('reservations')?.scrollIntoView({ block: 'start' });
+        });
+    }
+
     const uid = user.uid;
     const current = () => openFor === uid;
 
     loadIdentity(user).then((identity) => current() && renderIdentity(identity));
     loadMembership(user).then((result) => current() && renderMembership(result));
+    loadReservations(user).then((result) => current() && renderReservations(result));
     loadRecords(user).then((result) => {
         if (!current()) return;
         renderRecords(result);
@@ -431,6 +627,7 @@ export function closeProfile() {
     if (!root || root.hidden) return;
 
     openFor = null;
+    currentUser = null;
     root.classList.remove('open');
     document.body.classList.remove('profile-view-open');
     root.hidden = true;

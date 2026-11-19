@@ -36,7 +36,6 @@ let period = null;
 let membership = null;
 let busy = false;
 
-document.getElementById('year').textContent = new Date().getFullYear();
 
 /* ---------------------------------------------------------
    Helpers

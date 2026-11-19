@@ -80,6 +80,8 @@ import { auth, db } from '../firebase-config.js';
 
 import { normalizePhone } from '../lib/phone.js';
 
+import { formatHour, formatDateLong, formatDateShort } from '../lib/time.js';
+
 import { showNotice } from './notice.js';
 
 import {
@@ -912,20 +914,68 @@ function renderCalendar() {
                         : 'Sin horarios disponibles';
             }
 
-            if (
+            const isSelected =
                 day.date ===
-                dateSelect?.value
-            ) {
+                dateSelect?.value;
+
+            if (isSelected) {
 
                 button.classList.add(
                     'selected'
                 );
             }
 
+            button.setAttribute(
+                'aria-selected',
+                String(isSelected)
+            );
+
+            /*
+             * Martes = 50% (ver localPricing()). Lo marcamos en el
+             * calendario para que la promo se vea al elegir el día.
+             */
+            const isTuesday =
+                new Date(
+                    `${day.date}T12:00:00`
+                ).getDay() === 2;
+
+            const showPromo =
+                isAvailable &&
+                isTuesday;
+
+            if (showPromo) {
+                button.classList.add(
+                    'promo'
+                );
+            }
+
+            const statusText =
+                !isAvailable
+                    ? (day.status === 'closed' ? 'cerrado' : 'completo')
+                    : showPromo
+                        ? '50% de descuento'
+                        : 'disponible';
+
+            button.setAttribute(
+                'aria-label',
+                `${formatDateLong(day.date)}, ${statusText}`
+            );
+
+            const monthLabel =
+                formatDateShort(day.date)
+                    .split(' ')
+                    .pop()
+                    .toUpperCase();
+
             button.innerHTML = `
                 <span class="calendar-day-weekday">${calendarDayLabel(day, index)}</span>
                 <span class="calendar-day-number">${Number(dayNumber)}</span>
-                ${!isAvailable ? `<span class="calendar-day-tag">${day.status === 'closed' ? 'Cerrado' : 'Completo'}</span>` : ''}
+                <span class="calendar-day-month">${monthLabel}</span>
+                ${!isAvailable
+                    ? `<span class="calendar-day-tag">${day.status === 'closed' ? 'Cerrado' : 'Completo'}</span>`
+                    : showPromo
+                        ? '<span class="calendar-day-tag calendar-day-tag--promo">50% OFF</span>'
+                        : ''}
             `;
 
             calendarWidget.appendChild(
@@ -980,27 +1030,10 @@ function formatTime(
     minutes = 0
 ) {
 
-    const date =
-        new Date(
-            2000,
-            0,
-            1,
-            hours,
-            minutes
-        );
-
-
-    return new Intl.DateTimeFormat(
-        'en-US',
-        {
-            hour:
-                'numeric',
-
-            minute:
-                '2-digit'
-        }
-    )
-        .format(date);
+    // Mismo formato que los mensajes del servidor (lib/time.js).
+    return formatHour(
+        `${hours}:${minutes}`
+    );
 }
 /* =========================================================
    CLOCK
@@ -1173,15 +1206,26 @@ function renderClock(
                     'Ya reservado';
             }
 
-            if (
+            const isSelected =
                 hour.time ===
-                timeSelect?.value
-            ) {
+                timeSelect?.value;
+
+            if (isSelected) {
 
                 button.classList.add(
                     'selected'
                 );
             }
+
+            button.setAttribute(
+                'aria-selected',
+                String(isSelected)
+            );
+
+            button.setAttribute(
+                'aria-label',
+                `${formatHour(hour.time)}${hour.available ? '' : ', ya reservado'}`
+            );
 
             clockFace.appendChild(
                 button
@@ -2163,7 +2207,7 @@ function getTuesdayDiscount() {
    LOCAL PRICE PREVIEW
    ========================================================= */
 
-function localPrice() {
+function localPricing() {
 
     const hours =
         Number(
@@ -2310,11 +2354,22 @@ function localPrice() {
         );
 
 
-    return Math.max(
-        0,
-        base -
-        discount
-    );
+    return {
+        base,
+        discount,
+        total:
+            Math.max(
+                0,
+                base -
+                discount
+            )
+    };
+}
+
+
+function localPrice() {
+
+    return localPricing().total;
 }
 
 /* =========================================================
@@ -2378,10 +2433,48 @@ function summary() {
         }`
     );
 
-setText(
-    'reservationTotal',
-    `${money(localPrice())} + ISV`
-);
+    setText(
+        'summaryDate',
+        dateSelect?.value
+            ? formatDateLong(dateSelect.value)
+            : '—'
+    );
+
+    setText(
+        'summaryTime',
+        timeSelect?.value
+            ? formatHour(timeSelect.value)
+            : '—'
+    );
+
+    const pricing =
+        localPricing();
+
+    const discountLine =
+        $('summaryDiscountLine');
+
+    if (discountLine) {
+
+        discountLine.hidden =
+            !(pricing.discount > 0);
+
+        setText(
+            'summaryDiscountLabel',
+            getTuesdayDiscount() && !promos.length
+                ? 'Descuento martes 50%'
+                : 'Descuento'
+        );
+
+        setText(
+            'summaryDiscount',
+            `− ${money(pricing.discount)}`
+        );
+    }
+
+    setText(
+        'reservationTotal',
+        `${money(pricing.total)} + ISV`
+    );
 
     if (
         submitButton
@@ -3514,7 +3607,10 @@ form
                 submitButton
             ) {
 
+                // La etiqueta depende del método de pago
+                // (ver syncPaymentPanels() en paypal-checkout.js).
                 submitButton.textContent =
+                    submitButton.dataset.label ||
                     'CONTINUAR RESERVA';
 
                 submitButton.removeAttribute(
@@ -3638,3 +3734,60 @@ async function init() {
 
 
 init();
+
+/* =========================================================
+   COPY BANK ACCOUNT
+   Botón "COPIAR" junto al número de cuenta (panel de
+   transferencia): en el celular la gente salta a la app del
+   banco, así que copiarlo con un toque ahorra errores.
+   ========================================================= */
+
+const bankCopyBtn =
+    $('bankCopyBtn');
+
+bankCopyBtn?.addEventListener(
+    'click',
+    async () => {
+
+        const value =
+            bankCopyBtn.dataset.copy || '';
+
+        let copied = false;
+
+        try {
+            await navigator.clipboard.writeText(value);
+            copied = true;
+        } catch {
+            // Fallback para navegadores sin Clipboard API (o sin HTTPS).
+            const field = document.createElement('textarea');
+            field.value = value;
+            field.setAttribute('readonly', '');
+            field.style.position = 'fixed';
+            field.style.opacity = '0';
+            document.body.appendChild(field);
+            field.select();
+            try {
+                copied = document.execCommand('copy');
+            } catch {
+                copied = false;
+            }
+            field.remove();
+        }
+
+        bankCopyBtn.textContent =
+            copied ? '¡COPIADO!' : 'NO SE PUDO';
+
+        bankCopyBtn.classList.toggle('is-copied', copied);
+
+        clearTimeout(bankCopyBtn._resetTimer);
+
+        bankCopyBtn._resetTimer =
+            setTimeout(
+                () => {
+                    bankCopyBtn.textContent = 'COPIAR';
+                    bankCopyBtn.classList.remove('is-copied');
+                },
+                2000
+            );
+    }
+);

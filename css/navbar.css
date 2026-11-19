@@ -265,3 +265,181 @@
         transition: none;
     }
 }
+
+
+/* =========================================================
+   SITE FOOTER (partials/site-footer.html) — every page
+   ========================================================= */
+
+.site-footer {
+    position: relative;
+
+    width: 100%;
+    max-width: 1080px;
+    margin: 48px auto 0;
+    padding: 26px 16px calc(36px + env(safe-area-inset-bottom, 0px));
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    text-align: center;
+}
+
+.site-footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 6px;
+
+    margin-bottom: 14px;
+}
+
+.site-footer-links a {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 44px;
+    padding: 0 10px;
+
+    color: #c9c9c9;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.site-footer-links a:hover,
+.site-footer-links a:focus-visible {
+    color: #ff8b00;
+}
+
+.site-footer-links a:focus-visible {
+    outline: 2px solid #ff8b00;
+    outline-offset: 2px;
+}
+
+.site-footer p {
+    margin: 0;
+
+    color: #9a9a9a;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+}
+
+
+/* =========================================================
+   SHARED HELPERS
+   ========================================================= */
+
+.sr-only {
+    position: absolute !important;
+
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+
+    border: 0;
+}
+
+
+/* =========================================================
+   REDUCED MOTION — every page
+   navbar.css is the one stylesheet loaded everywhere, so this
+   covers the animations in reservas/standings/contacto/auth.css
+   too (they had no reduced-motion rules of their own).
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+/* =========================================================
+   OPENING HOURS (js/hours.js) — home + contacto
+   ========================================================= */
+
+.hours-status {
+    display: inline-block;
+
+    padding: 2px 8px;
+
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.08);
+    color: #b8b8b8;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
+}
+
+.hours-status.is-open {
+    background: rgba(70, 200, 110, 0.16);
+    color: #6fe08f;
+}
+
+.hours-list {
+    margin: 8px 0 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.hours-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+
+    padding: 6px 0;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    color: #b8b8b8;
+
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+}
+
+.hours-list li:last-child {
+    border-bottom: 0;
+}
+
+.hours-list strong {
+    color: #fff;
+    font-weight: 500;
+}
+
+.hours-list li.is-today span,
+.hours-list li.is-today strong {
+    color: #ff8b00;
+}
+
+.hours-list li.is-closed strong {
+    color: #8a8a8a;
+}
+
+/* The `hidden` attribute must win over component display rules
+   (.summary-line, .hours-status, … set display: flex/inline-block). */
+[hidden] {
+    display: none !important;
+}
