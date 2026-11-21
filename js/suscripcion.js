@@ -220,14 +220,15 @@ function isUpgrade(tier) {
     return TIERS.indexOf(tier) > TIERS.indexOf(membership.tier);
 }
 
-// Only a live PayPal subscription can be revised.
+// An ACTIVE membership can be upgraded: a PayPal one is revised in place, one
+// granted by hand (no subscriptionId) starts a real PayPal subscription on the
+// new plan instead. A cancelled one can't.
 function canUpgrade() {
-    return membership?.status === 'ACTIVE' && Boolean(membership.subscriptionId);
+    return membership?.status === 'ACTIVE';
 }
 
 function upgradeBlockedReason() {
-    if (membership?.status !== 'ACTIVE') return 'Tu membresía está cancelada; podés suscribirte de nuevo cuando termine.';
-    return 'Tu membresía no está asociada a PayPal; escribinos para cambiarla.';
+    return 'Tu membresía está cancelada; podés suscribirte de nuevo cuando termine.';
 }
 
 // Scrolls to the plans and makes the higher tiers pulse once.
@@ -250,6 +251,12 @@ async function upgradeTo(plan) {
 
     const user = auth.currentUser;
     if (!user) return;
+
+    // No PayPal subscription to revise (granted by hand): subscribe for real.
+    if (!membership?.subscriptionId) {
+        subscribe(plan);
+        return;
+    }
 
     busy = true;
     tiersEl.querySelectorAll('.sub-cta').forEach((button) => { button.disabled = true; });

@@ -56,8 +56,11 @@ export default async function handler(req, res) {
         const planId = requestedPlan || planIds[0];
         await assertPaypalEnabled();
 
+        // A membership granted by hand (no PayPal subscription behind it) can be
+        // replaced by a real one: that's how MEJORAR SUSCRIPCIÓN works for it.
+        // Once approved, syncSubscription overwrites memberships/{uid}.
         const existing = await getMembership(user.uid);
-        if (isMembershipActive(existing)) {
+        if (isMembershipActive(existing) && existing.subscriptionId) {
             throw bad('Ya tenés una membresía activa.', 409);
         }
 
