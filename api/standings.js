@@ -31,10 +31,11 @@
  * GET /api/standings?scope=all returns every tab in the sheet (except
  * "Eventos"), for the profile's RÉCORDS (js/profile/records.js):
  *   { currentYear, currentMonth,
- *     tabs: [{ title, monthNumber, month, year, circuito, auto, drivers }] }
- * Month tabs come newest first (see describeTab for the year), other tabs
- * after them. It's one tab listing plus one values:batchGet call, however
- * many tabs there are.
+ *     tabs: [{ title, monthNumber, month, year, circuito, auto, kind, drivers }] }
+ * kind: 'hotlap' (monthly table), 'race' (F1 race tabs like "NOV F1",
+ * parsed by their header row) or 'other'. Dated tabs come newest first
+ * (see describeTab for the year), other tabs after them. It's one tab
+ * listing plus one values:batchGet call, however many tabs there are.
  *
  * Response is cached at the edge for 60s (with a 5 minute
  * stale-while-revalidate) via the Cache-Control header, so changes to the
@@ -130,14 +131,59 @@ async function findSheetTitleForMonth(spreadsheetId, apiKey, monthNumber, monthN
 // Tabs that aren't lap-time tables.
 const NON_STANDINGS_TABS = /^\s*eventos\s*$/i;
 
+// F1 race-event tabs ("NOV F1", "4. ABRIL F1", "3.F1 JPN"): a header row
+// (Piloto, Categoria, LAP, Tiempo...) instead of the hotlap layout.
+// "F1 2026 PTS" is the points table, not lap times.
+const RACE_TAB = /\bF1\b/i;
+const NOT_RACE_TAB = /\bPTS\b/i;
+
+// "NOV", "AGosto", "Septiembre" -> month number (first three letters).
+const MONTH_PREFIXES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+function yearFor(monthNumber, explicitYear, now) {
+  if (explicitYear) return Number(explicitYear);
+  const currentYear = now.getFullYear();
+  return monthNumber > now.getMonth() + 1 ? currentYear - 1 : currentYear;
+}
+
 /*
  * "11. Noviembre Interlagos" -> { monthNumber: 11, month: 'Noviembre',
- * year, circuito: 'Interlagos' }. Titles have no year, so a month later
- * than the current one is last year's ("12. Diciembre" read in November).
- * An explicit year right after the month ("11. Noviembre 2025 Monza") wins.
- * Any other title is kept as is (monthNumber/month/year null).
+ * year, circuito: 'Interlagos', kind: 'hotlap' }. Titles have no year, so a
+ * month later than the current one is last year's ("12. Diciembre" read in
+ * November). An explicit year right after the month ("11. Noviembre 2025
+ * Monza") wins.
+ *
+ * F1 race tabs ("NOV F1", "4. ABRIL F1", "3.F1 JPN") get kind: 'race' and
+ * their month from a leading number or a month name/abbreviation; their
+ * circuito is filled in later from the same month's hotlap tab.
+ *
+ * Any other title is kept as is (monthNumber/month/year null, kind 'other').
  */
 export function describeTab(title, now = new Date()) {
+  if (RACE_TAB.test(title) && !NOT_RACE_TAB.test(title)) {
+    const leading = title.match(/^\s*(\d{1,2})\s*\./);
+    let monthNumber = leading ? Number(leading[1]) : 0;
+
+    if (!(monthNumber >= 1 && monthNumber <= 12)) {
+      const word = (title.match(/[A-Za-zÁÉÍÓÚáéíóúñÑ]{3,}/g) || [])
+        .find((w) => MONTH_PREFIXES.includes(w.slice(0, 3).toLowerCase()));
+      monthNumber = word ? MONTH_PREFIXES.indexOf(word.slice(0, 3).toLowerCase()) + 1 : 0;
+    }
+
+    const explicitYear = (title.match(/\b(20\d{2})\b/) || [])[1];
+
+    return monthNumber
+      ? {
+          title,
+          monthNumber,
+          month: MONTHS_ES[monthNumber],
+          year: yearFor(monthNumber, explicitYear, now),
+          circuito: title.trim(),
+          kind: 'race'
+        }
+      : { title, monthNumber: null, month: null, year: null, circuito: title.trim(), kind: 'race' };
+  }
+
   const match = title.match(/^\s*(\d{1,2})\.\s*([^\s\d]+)\s*(\d{4})?\s*(.*)$/);
   const monthNumber = match ? Number(match[1]) : 0;
 
@@ -147,38 +193,91 @@ export function describeTab(title, now = new Date()) {
     monthNumber <= 12 &&
     MONTHS_ES[monthNumber].toLowerCase() === match[2].toLowerCase()
   ) {
-    const currentYear = now.getFullYear();
-    const year = match[3]
-      ? Number(match[3])
-      : monthNumber > now.getMonth() + 1 ? currentYear - 1 : currentYear;
-
     return {
       title,
       monthNumber,
       month: MONTHS_ES[monthNumber],
-      year,
-      circuito: match[4].trim() || 'N/D'
+      year: yearFor(monthNumber, match[3], now),
+      circuito: match[4].trim() || 'N/D',
+      kind: 'hotlap'
     };
   }
 
-  return { title, monthNumber: null, month: null, year: null, circuito: title.trim() || 'N/D' };
+  return { title, monthNumber: null, month: null, year: null, circuito: title.trim() || 'N/D', kind: 'other' };
+}
+
+/*
+ * Race tabs: find the header row (the one with "Piloto") in the first rows
+ * and read every row under it. Columns are found by name, because they
+ * moved between tabs (Piloto was in D, later in C). The time is "Tiempo"
+ * if it holds a lap time, otherwise "LAP". Gender comes from "Categoria"
+ * (M/F, Masculino/Femenino).
+ */
+export function parseRaceRows(rows) {
+  const norm = (value) => String(value || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+  const headerIndex = rows.slice(0, 20).findIndex((row) => row.some((cell) => norm(cell) === 'piloto'));
+  if (headerIndex < 0) return [];
+
+  const header = rows[headerIndex].map(norm);
+  const col = (name) => header.indexOf(name);
+  const nameCol = col('piloto');
+  const timeCols = [col('tiempo'), col('lap')].filter((index) => index >= 0);
+  const genderCol = col('categoria');
+
+  const drivers = [];
+
+  rows.slice(headerIndex + 1).forEach((row, idx) => {
+    const name = String(row[nameCol] || '').trim();
+    if (!name) return;
+
+    let timeStr = null;
+    let ms = null;
+
+    for (const index of timeCols) {
+      const value = String(row[index] || '').trim();
+      const parsed = value ? parseTimeToMs(value) : null;
+      if (parsed !== null) {
+        timeStr = value;
+        ms = parsed;
+        break;
+      }
+    }
+
+    const genderRaw = genderCol >= 0 ? norm(row[genderCol]) : '';
+    const gender = genderRaw.startsWith('f') ? 'F' : genderRaw.startsWith('m') ? 'M' : null;
+
+    drivers.push({ name, gender, team: /\(s\)/i.test(name), timeStr, ms, rowOrder: idx });
+  });
+
+  return drivers;
 }
 
 /*
  * ?scope=all: every tab in the sheet (except Eventos), read with one
- * values:batchGet. Month tabs newest first, then any other tabs in sheet
+ * values:batchGet. Hotlap month tabs are read like the monthly table
+ * (C15:H168); F1 race tabs are read whole and parsed by their header row
+ * (parseRaceRows), so every entry in them counts. Dated tabs newest first
+ * (a month's hotlap tab before its race tab), then any other tabs in sheet
  * order. A tab with another layout simply yields no valid times.
  */
+const RACE_LAST_ROW = 400;
+
 async function sendAllTabs(res, spreadsheetId, apiKey) {
   const now = new Date();
   const titles = (await listSheetTitles(spreadsheetId, apiKey))
     .filter((title) => !NON_STANDINGS_TABS.test(title));
+  const described = titles.map((title) => describeTab(title, now));
 
   let valueRanges = [];
 
   if (titles.length) {
-    const ranges = titles
-      .map((title) => `ranges=${encodeURIComponent(`'${title}'!C${FIRST_ROW}:H${LAST_ROW}`)}`)
+    const ranges = described
+      .map(({ title, kind }) => kind === 'race'
+        ? `'${title}'!A1:Z${RACE_LAST_ROW}`
+        : `'${title}'!C${FIRST_ROW}:H${LAST_ROW}`)
+      .map((range) => `ranges=${encodeURIComponent(range)}`)
       .join('&');
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
       `/values:batchGet?${ranges}&key=${apiKey}`;
@@ -189,15 +288,27 @@ async function sendAllTabs(res, spreadsheetId, apiKey) {
   }
 
   const dated = (tab) => (tab.year ? tab.year * 100 + tab.monthNumber : -1);
+  const hotlapCircuit = (year, monthNumber) =>
+    described.find((tab) => tab.kind === 'hotlap' && tab.year === year && tab.monthNumber === monthNumber)?.circuito;
 
-  const tabs = titles
-    .map((title, index) => ({
-      ...describeTab(title, now),
-      auto: process.env.STANDINGS_CAR || null,
-      drivers: parseDrivers(valueRanges[index]?.values || []),
-      sheetOrder: index
-    }))
-    .sort((a, b) => dated(b) - dated(a) || a.sheetOrder - b.sheetOrder)
+  const tabs = described
+    .map((tab, index) => {
+      const values = valueRanges[index]?.values || [];
+      const isRace = tab.kind === 'race';
+
+      return {
+        ...tab,
+        // A race tab is named "NOV F1"; show the month's track instead when there is one.
+        circuito: (isRace && tab.year && hotlapCircuit(tab.year, tab.monthNumber)) || tab.circuito,
+        auto: isRace ? 'F1 · Carrera' : process.env.STANDINGS_CAR || null,
+        drivers: isRace ? parseRaceRows(values) : parseDrivers(values),
+        sheetOrder: index
+      };
+    })
+    .sort((a, b) =>
+      dated(b) - dated(a) ||
+      (a.kind === 'race') - (b.kind === 'race') ||
+      a.sheetOrder - b.sheetOrder)
     .map(({ sheetOrder: _sheetOrder, ...tab }) => tab);
 
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
@@ -259,10 +370,11 @@ function parseDrivers(rows) {
 }
 
 function parseTimeToMs(timeStr) {
-  const match = timeStr.match(/^(\d{1,2}):(\d{2})\.(\d{1,3})$/);
+  // "1:23.456", or "83.456" (seconds only, as some race tabs write it).
+  const match = timeStr.match(/^(?:(\d{1,2}):)?(\d{1,2})\.(\d{1,3})$/);
   if (!match) return null;
 
-  const minutes = parseInt(match[1], 10);
+  const minutes = match[1] ? parseInt(match[1], 10) : 0;
   const seconds = parseInt(match[2], 10);
   const millis = parseInt(match[3].padEnd(3, '0'), 10);
 

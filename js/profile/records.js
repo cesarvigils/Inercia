@@ -58,10 +58,11 @@ export function normalizeDriverName(value) {
  * sheet (except Eventos), month tabs newest first. The account is matched
  * by name exactly like MI TIEMPO on /standings.
  *
- *   current     this month's time
- *   historical  every time you have in any tab, in the API's order (newest
- *               month first, other tabs after); tabs where you have no
- *               time are left out
+ *   current     this month's hotlap time
+ *   historical  every entry of yours with a time in any tab — hotlap month
+ *               tabs and F1 race tabs ("NOV F1"...), all rows, not one per
+ *               tab — in the API's order (newest month first, other tabs
+ *               after)
  *
  * The sheet has no race sessions, so no record carries a `race` yet.
  * Records also get `period` ("Noviembre 2026", or the tab's title for a
@@ -76,17 +77,21 @@ export async function loadRecords(user) {
 
         const mine = normalizeDriverName(identity.name);
         const tabs = Array.isArray(data.tabs) ? data.tabs : [];
+        // ACTUALES is this month's hotlap table; race tabs only go to HISTÓRICOS.
         const isCurrent = (tab) =>
-            tab.monthNumber === data.currentMonth && tab.year === data.currentYear;
+            tab.kind !== 'race' &&
+            tab.monthNumber === data.currentMonth &&
+            tab.year === data.currentYear;
 
         const historical = mine
-            ? tabs
-                .map((tab) => {
-                    const drivers = Array.isArray(tab.drivers) ? tab.drivers : [];
-                    const row = drivers.find((driver) => normalizeDriverName(driver.name) === mine);
-                    if (!row || !Number.isFinite(row.ms)) return null;
+            ? tabs.flatMap((tab) => {
+                const drivers = Array.isArray(tab.drivers) ? tab.drivers : [];
 
-                    return {
+                // Every row of yours with a time, not just the first one.
+                return drivers
+                    .filter((driver) =>
+                        normalizeDriverName(driver.name) === mine && Number.isFinite(driver.ms))
+                    .map((row) => ({
                         track: tab.circuito || '—',
                         category: tab.auto || 'F1 2025',
                         lapTime: row.timeStr,
@@ -95,9 +100,8 @@ export async function loadRecords(user) {
                         period: tab.month ? `${tab.month} ${tab.year}` : tab.title,
                         status: isCurrent(tab) ? 'vigente' : 'superado',
                         race: null
-                    };
-                })
-                .filter(Boolean)
+                    }));
+            })
             : [];
 
         const current = historical.filter((record) => record.status === 'vigente');
