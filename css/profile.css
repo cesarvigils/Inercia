@@ -148,6 +148,292 @@ body.profile-view-open {
     object-fit: cover;
 }
 
+/* ---------------------- avatar: click to change ---------------------- */
+
+.pf-avatar-wrap {
+    position: relative;
+
+    flex: none;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pf-avatar-btn {
+    position: relative;
+
+    display: block;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: transparent;
+    cursor: pointer;
+
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pf-avatar-btn .pf-avatar {
+    display: block;
+
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+
+    transition: filter 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pf-avatar-btn:hover,
+.pf-avatar-btn:focus-visible {
+    transform: scale(1.04);
+}
+
+.pf-avatar-btn:hover .pf-avatar,
+.pf-avatar-btn:focus-visible .pf-avatar {
+    box-shadow: 0 0 0 2px var(--pf-orange), 0 10px 30px rgba(255, 139, 0, 0.25);
+}
+
+.pf-avatar-btn:active {
+    transform: scale(0.97);
+}
+
+.pf-avatar-btn:focus-visible {
+    outline: 2px solid var(--pf-orange);
+    outline-offset: 6px;
+}
+
+/* Hover overlay: camera + CAMBIAR */
+.pf-avatar-overlay {
+    position: absolute;
+    inset: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+
+    opacity: 0;
+
+    transition: opacity 0.25s ease;
+}
+
+.pf-avatar-icon {
+    width: 26%;
+    height: 26%;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+
+    transform: translateY(6px);
+
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pf-avatar-label {
+    font-family: var(--pf-display);
+    font-size: 13px;
+    letter-spacing: 1px;
+
+    opacity: 0;
+    transform: translateY(6px);
+
+    transition: opacity 0.25s ease 0.05s, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s;
+}
+
+.pf-avatar-btn:hover .pf-avatar-overlay,
+.pf-avatar-btn:focus-visible .pf-avatar-overlay {
+    opacity: 1;
+}
+
+.pf-avatar-btn:hover .pf-avatar-icon,
+.pf-avatar-btn:focus-visible .pf-avatar-icon,
+.pf-avatar-btn:hover .pf-avatar-label,
+.pf-avatar-btn:focus-visible .pf-avatar-label {
+    opacity: 1;
+    transform: none;
+}
+
+/* Small pencil badge: tells touch users the picture is editable */
+.pf-avatar-badge {
+    position: absolute;
+    right: 2%;
+    bottom: 2%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+
+    border: 2px solid #0b0b0b;
+    border-radius: 50%;
+
+    background: var(--pf-orange);
+
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pf-avatar-badge svg {
+    width: 14px;
+    height: 14px;
+
+    fill: #111;
+}
+
+.pf-avatar-btn:hover .pf-avatar-badge,
+.pf-avatar-btn:focus-visible .pf-avatar-badge {
+    transform: scale(0) rotate(-90deg);
+}
+
+/* Upload progress ring */
+.pf-avatar-ring {
+    position: absolute;
+    inset: -7px;
+
+    width: calc(100% + 14px);
+    height: calc(100% + 14px);
+
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.92);
+    pointer-events: none;
+
+    transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pf-avatar-ring circle {
+    fill: none;
+    stroke-width: 3;
+}
+
+.pf-avatar-ring-track {
+    stroke: rgba(255, 255, 255, 0.12);
+}
+
+.pf-avatar-ring-bar {
+    stroke: var(--pf-orange);
+    stroke-linecap: round;
+
+    transition: stroke-dashoffset 0.25s ease;
+}
+
+.pf-avatar-btn.is-uploading {
+    cursor: progress;
+    transform: none;
+}
+
+.pf-avatar-btn.is-uploading .pf-avatar {
+    filter: brightness(0.6) saturate(0.6);
+    animation: pf-avatar-breathe 1.4s ease-in-out infinite;
+}
+
+.pf-avatar-btn.is-uploading .pf-avatar-ring {
+    opacity: 1;
+    transform: rotate(-90deg) scale(1);
+}
+
+.pf-avatar-btn.is-uploading .pf-avatar-overlay,
+.pf-avatar-btn.is-uploading .pf-avatar-badge {
+    opacity: 0;
+    transform: scale(0);
+}
+
+/* Done: pop + orange glow ring */
+.pf-avatar-btn.is-done {
+    animation: pf-avatar-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pf-avatar-btn.is-done::after {
+    content: '';
+
+    position: absolute;
+    inset: 0;
+
+    border-radius: 50%;
+
+    box-shadow: 0 0 0 0 rgba(255, 139, 0, 0.7);
+
+    animation: pf-avatar-glow 0.9s ease-out forwards;
+    pointer-events: none;
+}
+
+/* Error: shake */
+.pf-avatar-btn.is-error {
+    animation: pf-avatar-shake 0.45s ease;
+}
+
+.pf-avatar-status {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+
+    margin: 0;
+
+    width: max-content;
+    max-width: 220px;
+
+    color: var(--pf-dim);
+
+    font-family: var(--pf-body);
+    font-size: 11px;
+    line-height: 1.35;
+    text-align: left;
+
+    opacity: 0;
+    transform: translateY(-4px);
+}
+
+.pf-avatar-status.is-shown {
+    animation: pf-status-in 0.3s ease forwards;
+}
+
+.pf-avatar-status[data-kind="ok"] {
+    color: #6fe08f;
+}
+
+.pf-avatar-status[data-kind="error"] {
+    color: #ff6b5b;
+}
+
+@keyframes pf-avatar-breathe {
+    50% { transform: scale(0.97); }
+}
+
+@keyframes pf-avatar-pop {
+    0% { transform: scale(0.9); }
+    60% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+@keyframes pf-avatar-glow {
+    0% { box-shadow: 0 0 0 0 rgba(255, 139, 0, 0.7); }
+    100% { box-shadow: 0 0 0 18px rgba(255, 139, 0, 0); }
+}
+
+@keyframes pf-avatar-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+@keyframes pf-status-in {
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
 .pf-names {
     min-width: 0;
 }
@@ -675,6 +961,20 @@ body.profile-view-open {
         height: 72px;
     }
 
+    .pf-avatar-badge {
+        width: 22px;
+        height: 22px;
+    }
+
+    .pf-avatar-badge svg {
+        width: 11px;
+        height: 11px;
+    }
+
+    .pf-avatar-label {
+        font-size: 10px;
+    }
+
     .pf-eyebrow {
         font-size: 17px;
     }
@@ -704,8 +1004,35 @@ body.profile-view-open {
 
     .profile-view,
     .pf-page,
-    .pf-close {
+    .pf-close,
+    .pf-avatar-btn,
+    .pf-avatar-btn .pf-avatar,
+    .pf-avatar-overlay,
+    .pf-avatar-icon,
+    .pf-avatar-label,
+    .pf-avatar-badge,
+    .pf-avatar-ring,
+    .pf-avatar-ring-bar {
         transition: none;
+    }
+
+    .pf-avatar-btn,
+    .pf-avatar-btn.is-done,
+    .pf-avatar-btn.is-error,
+    .pf-avatar-btn.is-uploading .pf-avatar,
+    .pf-avatar-btn.is-done::after {
+        animation: none;
+    }
+
+    .pf-avatar-btn:hover,
+    .pf-avatar-btn:focus-visible {
+        transform: none;
+    }
+
+    .pf-avatar-status.is-shown {
+        animation: none;
+        opacity: 1;
+        transform: none;
     }
 }
 

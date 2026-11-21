@@ -226,7 +226,10 @@ if (!document.getElementById('forgotPasswordModal')) {
         document.body.insertAdjacentHTML('beforeend', `
 <div class="profile-menu" id="profileMenu" role="menu" aria-label="Cuenta" aria-hidden="true">
   <div class="profile-menu-user">
-    <img id="profileMenuPfp" src="" alt="">
+    <button id="profileMenuPfpBtn" class="profile-menu-pfp-btn" type="button" aria-label="Cambiar foto de perfil" title="Cambiar foto">
+      <img id="profileMenuPfp" src="" alt="">
+      <span class="profile-menu-pfp-cam" aria-hidden="true"></span>
+    </button>
     <div>
       <strong id="profileMenuName">USUARIO</strong>
       <span id="profileMenuEmail"></span>
@@ -1878,6 +1881,66 @@ profileBtn?.addEventListener('click', async () => {
     } catch (error) {
         console.error('Error abriendo el perfil:', error);
     }
+});
+
+/* =========================================================
+   CHANGE PROFILE PICTURE from the account menu's avatar
+   (same flow as the PERFIL overlay: js/profile/avatar.js)
+   ========================================================= */
+
+const profileMenuPfpBtn = document.getElementById('profileMenuPfpBtn');
+
+function replayClass(node, className) {
+    node.classList.remove(className);
+    void node.offsetWidth;
+    node.classList.add(className);
+    node.addEventListener('animationend', () => node.classList.remove(className), { once: true });
+}
+
+profileMenuPfpBtn?.addEventListener('click', async () => {
+
+    const user = auth.currentUser;
+    if (!user || profileMenuPfpBtn.classList.contains('is-uploading')) return;
+
+    const { pickImage, uploadAvatar, AvatarError } = await import('./profile/avatar.js');
+    const file = await pickImage();
+    if (!file || auth.currentUser !== user) return;
+
+    const previousSrc = profileMenuPfp?.src;
+    profileMenuPfpBtn.classList.add('is-uploading');
+    profileMenuPfpBtn.setAttribute('aria-busy', 'true');
+
+    try {
+        await uploadAvatar(user, file, {
+            onPreview: (url) => {
+                if (profileMenuPfp) profileMenuPfp.src = url;
+            }
+        });
+        // The 'inercia:avatar' listener below swaps in the uploaded picture.
+    } catch (error) {
+        if (profileMenuPfp && previousSrc) profileMenuPfp.src = previousSrc;
+        replayClass(profileMenuPfpBtn, 'is-error');
+        import('./notice.js').then(({ showNotice }) => showNotice(
+            error instanceof AvatarError ? error.message : 'No se pudo cambiar la foto. Probá de nuevo.',
+            { title: 'FOTO DE PERFIL' }
+        ));
+        if (!(error instanceof AvatarError)) console.error('Error cambiando la foto:', error);
+    } finally {
+        profileMenuPfpBtn.classList.remove('is-uploading');
+        profileMenuPfpBtn.removeAttribute('aria-busy');
+    }
+});
+
+// A new picture (from the menu or the PERFIL overlay): update every avatar here.
+window.addEventListener('inercia:avatar', (event) => {
+    const photoURL = event.detail?.photoURL;
+    if (!photoURL) return;
+
+    [authPfp, profileMenuPfp].forEach((img) => {
+        if (!img) return;
+        img.src = photoURL;
+        replayClass(img, 'pfp-pop');
+    });
 });
 
 // Signing out (here or in another tab) closes an open profile.

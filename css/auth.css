@@ -1085,3 +1085,152 @@ body.auth-modal-open {
         right: max(32px, calc((100vw - 1080px) / 2));
     }
 }
+
+
+/* =========================================================
+   CHANGE PROFILE PICTURE (account menu avatar, js/auth.js)
+   ========================================================= */
+
+.profile-menu-pfp-btn {
+    position: relative;
+
+    flex: none;
+
+    display: block;
+
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: transparent;
+    cursor: pointer;
+
+    transition: transform .2s cubic-bezier(.2, .8, .2, 1);
+}
+
+.profile-menu-pfp-btn img {
+    display: block;
+
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .08);
+
+    transition: filter .25s ease, box-shadow .25s ease;
+}
+
+.profile-menu-user .profile-menu-pfp-cam {
+    position: absolute;
+    inset: 0;
+
+    display: block;
+
+    margin: 0;
+
+    border-radius: 50%;
+
+    background:
+        rgba(0, 0, 0, .55)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z'/%3E%3Ccircle cx='12' cy='13.5' r='3.5'/%3E%3C/svg%3E")
+        center / 18px no-repeat;
+
+    opacity: 0;
+
+    transition: opacity .2s ease;
+}
+
+.profile-menu-pfp-btn:hover,
+.profile-menu-pfp-btn:focus-visible {
+    transform: scale(1.06);
+}
+
+.profile-menu-pfp-btn:hover img,
+.profile-menu-pfp-btn:focus-visible img {
+    box-shadow: 0 0 0 2px var(--orange, #ff8b00);
+}
+
+.profile-menu-pfp-btn:hover .profile-menu-pfp-cam,
+.profile-menu-pfp-btn:focus-visible .profile-menu-pfp-cam {
+    opacity: 1;
+}
+
+.profile-menu-pfp-btn:focus-visible {
+    outline: 2px solid var(--orange, #ff8b00);
+    outline-offset: 3px;
+}
+
+/* Uploading: dimmed picture + spinning orange arc */
+.profile-menu-pfp-btn.is-uploading {
+    cursor: progress;
+    transform: none;
+}
+
+.profile-menu-pfp-btn.is-uploading img {
+    filter: brightness(.55);
+}
+
+.profile-menu-pfp-btn.is-uploading::after {
+    content: '';
+
+    position: absolute;
+    inset: -4px;
+
+    border: 2px solid rgba(255, 255, 255, .12);
+    border-top-color: var(--orange, #ff8b00);
+    border-radius: 50%;
+
+    animation: pfp-spin .8s linear infinite;
+}
+
+.profile-menu-pfp-btn.is-uploading .profile-menu-pfp-cam {
+    opacity: 0;
+}
+
+.profile-menu-pfp-btn.is-error {
+    animation: pfp-shake .45s ease;
+}
+
+/* Header + menu avatars when a new picture lands */
+.pfp-pop {
+    animation: pfp-pop .55s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@keyframes pfp-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pfp-pop {
+    0% { transform: scale(.85); }
+    60% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+}
+
+@keyframes pfp-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+    75% { transform: translateX(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-menu-pfp-btn,
+    .profile-menu-pfp-btn img,
+    .profile-menu-user .profile-menu-pfp-cam {
+        transition: none;
+    }
+
+    .profile-menu-pfp-btn:hover,
+    .profile-menu-pfp-btn:focus-visible {
+        transform: none;
+    }
+
+    .pfp-pop,
+    .profile-menu-pfp-btn.is-error {
+        animation: none;
+    }
+
+    .profile-menu-pfp-btn.is-uploading::after {
+        animation-duration: 2.4s;
+    }
+}

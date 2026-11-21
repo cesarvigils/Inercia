@@ -40,6 +40,19 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/jpeg|image/png|application/pdf');
     }
 
+    // Profile pictures (js/profile/avatar.js): avatars/{uid}/{timestamp}.webp|jpg.
+    // Anyone can view them (they're shown next to the user's name); only the
+    // owner can upload (image, max 2 MB — the browser sends ~50 KB) or delete
+    // their own. Delete is separate because request.resource is null on delete.
+    match /avatars/{uid}/{fileName} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+                            && request.auth.uid == uid
+                            && request.resource.size <= 2 * 1024 * 1024
+                            && request.resource.contentType.matches('image/(webp|jpeg|png)');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Default deny.
     match /{allPaths=**} {
       allow read, write: if false;

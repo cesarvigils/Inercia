@@ -92,9 +92,7 @@ function build() {
     const hero = el('div', 'pf-hero');
 
     const who = el('div', 'pf-who');
-    const avatar = el('img', 'pf-avatar');
-    avatar.alt = '';
-    avatar.dataset.slot = 'avatar';
+    const avatar = buildAvatarButton();
     const names = el('div', 'pf-names');
     const eyebrow = el('p', 'pf-eyebrow', 'PERFIL');
     const name = el('h2', 'pf-name');
@@ -136,6 +134,155 @@ function slot(name) {
     return root.querySelector(`[data-slot="${name}"]`);
 }
 
+/* ---------------------------------------------------------
+   Avatar: click to change the picture (js/profile/avatar.js)
+   --------------------------------------------------------- */
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const RING_LENGTH = 2 * Math.PI * 48; // r=48 in a 100×100 viewBox
+
+function svg(tag, attrs) {
+    const node = document.createElementNS(SVG_NS, tag);
+    Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+    return node;
+}
+
+function buildAvatarButton() {
+    const wrap = el('div', 'pf-avatar-wrap');
+
+    const button = el('button', 'pf-avatar-btn');
+    button.type = 'button';
+    button.dataset.slot = 'avatarButton';
+    button.setAttribute('aria-label', 'Cambiar foto de perfil');
+    button.title = 'Cambiar foto';
+
+    const img = el('img', 'pf-avatar');
+    img.alt = '';
+    img.dataset.slot = 'avatar';
+
+    const overlay = el('span', 'pf-avatar-overlay');
+    overlay.setAttribute('aria-hidden', 'true');
+    const camera = svg('svg', { viewBox: '0 0 24 24', class: 'pf-avatar-icon' });
+    camera.append(
+        svg('path', { d: 'M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z' }),
+        svg('circle', { cx: '12', cy: '13.5', r: '3.5' })
+    );
+    overlay.append(camera, el('span', 'pf-avatar-label', 'CAMBIAR'));
+
+    const ring = svg('svg', { viewBox: '0 0 100 100', class: 'pf-avatar-ring', 'aria-hidden': 'true' });
+    ring.append(
+        svg('circle', { cx: '50', cy: '50', r: '48', class: 'pf-avatar-ring-track' }),
+        svg('circle', {
+            cx: '50', cy: '50', r: '48',
+            class: 'pf-avatar-ring-bar',
+            'stroke-dasharray': RING_LENGTH.toFixed(2),
+            'stroke-dashoffset': RING_LENGTH.toFixed(2)
+        })
+    );
+
+    const badge = el('span', 'pf-avatar-badge');
+    badge.setAttribute('aria-hidden', 'true');
+    const pencil = svg('svg', { viewBox: '0 0 24 24' });
+    pencil.append(svg('path', { d: 'M4 20h4L19 9l-4-4L4 16v4Z' }));
+    badge.append(pencil);
+
+    button.append(img, overlay, ring, badge);
+    button.addEventListener('click', changeAvatar);
+
+    const status = el('p', 'pf-avatar-status');
+    status.dataset.slot = 'avatarStatus';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+
+    wrap.append(button, status);
+    return wrap;
+}
+
+function setAvatarStatus(text, kind = '') {
+    const status = slot('avatarStatus');
+    status.textContent = text;
+    status.dataset.kind = kind;
+    status.classList.remove('is-shown');
+    if (text) {
+        void status.offsetWidth; // restart the fade-in
+        status.classList.add('is-shown');
+    }
+}
+
+function setRingProgress(fraction) {
+    const bar = root.querySelector('.pf-avatar-ring-bar');
+    bar?.setAttribute('stroke-dashoffset', (RING_LENGTH * (1 - Math.min(Math.max(fraction, 0), 1))).toFixed(2));
+}
+
+/* Restarts a one-shot CSS animation class (pop / shake). */
+function play(node, className) {
+    node.classList.remove(className);
+    void node.offsetWidth;
+    node.classList.add(className);
+    node.addEventListener('animationend', () => node.classList.remove(className), { once: true });
+}
+
+let avatarBusy = false;
+
+async function changeAvatar() {
+    if (avatarBusy || !currentUser) return;
+
+    const button = slot('avatarButton');
+    const img = slot('avatar');
+    const user = currentUser;
+
+    const { pickImage, uploadAvatar, AvatarError } = await import('./avatar.js');
+    const file = await pickImage();
+    if (!file || user !== currentUser) return;
+
+    avatarBusy = true;
+    const previousSrc = img.src;
+    let previewUrl = null;
+
+    button.classList.add('is-uploading');
+    button.setAttribute('aria-busy', 'true');
+    setRingProgress(0);
+    setAvatarStatus('Subiendo foto…');
+
+    try {
+        const photoURL = await uploadAvatar(user, file, {
+            onPreview: (url) => {
+                previewUrl = url;
+                img.src = url;
+            },
+            onProgress: setRingProgress
+        });
+
+        setRingProgress(1);
+
+        // Swap the local preview for the uploaded file once it has loaded (no flicker).
+        const remote = new Image();
+        remote.referrerPolicy = 'no-referrer';
+        remote.src = photoURL;
+        await remote.decode().catch(() => {});
+        img.src = photoURL;
+        button.classList.remove('is-uploading');
+        play(button, 'is-done');
+        setAvatarStatus('¡Foto actualizada!', 'ok');
+        setTimeout(() => {
+            if (slot('avatarStatus')?.dataset.kind === 'ok') setAvatarStatus('');
+        }, 3200);
+    } catch (error) {
+        img.src = previousSrc;
+        button.classList.remove('is-uploading');
+        play(button, 'is-error');
+        setAvatarStatus(
+            error instanceof AvatarError ? error.message : 'No se pudo cambiar la foto. Probá de nuevo.',
+            'error'
+        );
+        if (!(error instanceof AvatarError)) console.error('[PERFIL] Error cambiando la foto:', error);
+    } finally {
+        if (previewUrl) setTimeout(() => URL.revokeObjectURL(previewUrl), 5000);
+        button.removeAttribute('aria-busy');
+        avatarBusy = false;
+    }
+}
+
 function sectionBody(name) {
     return slot(name).querySelector('.pf-section-body');
 }
@@ -146,7 +293,8 @@ function sectionBody(name) {
 
 function renderIdentity(identity) {
     const avatar = slot('avatar');
-    avatar.src = identity.photoURL || DEFAULT_PFP;
+    // Don't replace the preview while a new picture is uploading.
+    if (!avatarBusy) avatar.src = identity.photoURL || DEFAULT_PFP;
     avatar.referrerPolicy = 'no-referrer';
 
     slot('name').textContent = (identity.name || 'PILOTO').toUpperCase();
@@ -585,6 +733,7 @@ export function openProfile(user) {
 
     // Reset every section so one account's data never lingers for another.
     renderIdentity(identityFromUser(user));
+    if (!avatarBusy) setAvatarStatus('');
     slot('membership').replaceChildren(el('p', 'pf-label', 'MEMBRESÍA'), stateBlock('loading', 'CARGANDO…'));
     ['reservations', 'records', 'results', 'events'].forEach((name) => {
         sectionBody(name).replaceChildren(stateBlock('loading', 'CARGANDO…'));
