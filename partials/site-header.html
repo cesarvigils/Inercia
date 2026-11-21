@@ -1,0 +1,80 @@
+<!--
+  partials/site-header.html — shared header, side menu and desktop nav.
+  Inlined into every page at build/dev time by vite-partials.js wherever the
+  page has an "@partial site-header" comment. Edit the menu here, once.
+  Scripts that depend on these ids: js/menu.js, js/navbar.js, js/auth.js.
+-->
+<div class="header-wrap">
+  <header class="header">
+    <button
+      class="menu-btn"
+      id="menuBtn"
+      type="button"
+      aria-label="Abrir menú"
+      aria-expanded="false"
+      aria-controls="sideMenu"
+    >
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <a class="logo" href="/inicio" aria-label="Simuladores Inercia, ir al inicio">
+      <img
+        class="logo-img"
+        src="/media/logo.webp"
+        width="800"
+        height="209"
+        alt="Simuladores Inercia"
+      >
+    </a>
+
+    <button class="auth-btn" id="authBtn" type="button" aria-label="Iniciar sesión">
+      <img
+        src="/media/default-avatar.webp"
+        alt="Perfil"
+        class="auth-pfp"
+        id="authPfp"
+      >
+    </button>
+  </header>
+</div>
+
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<nav class="side-menu" id="sideMenu" aria-label="Menú" aria-hidden="true">
+  <div class="side-menu-header">
+    <a href="/inicio" aria-label="Ir al inicio">
+      <img src="/assets/menu.png" alt="Menú" class="menu-title-img">
+    </a>
+    <button class="menu-close" id="menuClose" type="button" aria-label="Cerrar menú">&times;</button>
+  </div>
+
+  <div class="side-menu-links">
+    <a href="/inicio" class="side-menu-link">INICIO</a>
+    <a href="/reservas" class="side-menu-link">RESERVAR</a>
+    <a href="/standings" class="side-menu-link">RESULTADOS</a>
+    <a href="/contacto" class="side-menu-link">CONTACTO</a>
+    <a href="/suscripcion" class="side-menu-link">SUSCRIBITE</a>
+  </div>
+
+  <div class="side-menu-footer">
+    <span>SIMULADORES INERCIA</span>
+  </div>
+</nav>
+
+<nav class="desk-nav" id="deskNav" aria-label="Navegación principal">
+  <div class="desk-nav-inner">
+    <a href="/inicio" class="desk-nav-home" tabindex="-1" aria-hidden="true">
+      <img src="/assets/menu.png" alt="">
+    </a>
+    <ul class="desk-nav-links">
+      <li><a href="/inicio" class="desk-nav-link" data-nav="inicio">INICIO</a></li>
+      <li><a href="/reservas" class="desk-nav-link" data-nav="reservas">RESERVAR</a></li>
+      <li><a href="/standings" class="desk-nav-link" data-nav="standings">RESULTADOS</a></li>
+      <li><a href="/contacto" class="desk-nav-link" data-nav="contacto">CONTACTO</a></li>
+    </ul>
+    <span class="desk-nav-sep" aria-hidden="true"></span>
+    <a href="/suscripcion" class="desk-nav-cta" data-nav="suscripcion">SUSCRIBITE</a>
+  </div>
+</nav>

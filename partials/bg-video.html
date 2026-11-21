@@ -1,0 +1,9 @@
+<!--
+  partials/bg-video.html — the looping background video every page uses.
+  preload="none": js/menu.js starts it only when it should play (not with
+  reduced motion or Data Saver), so phones on mobile data don't download it
+  for nothing. Inlined by vite-partials.js.
+-->
+<video class="page-bg-video" aria-hidden="true" muted loop playsinline preload="none" data-autoplay>
+  <source src="/media/background.mp4" type="video/mp4">
+</video>

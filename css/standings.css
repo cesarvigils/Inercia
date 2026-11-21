@@ -452,6 +452,8 @@ body {
 
 /* Header */
 
+/* Every row (and the head) has the same side padding, so the highlighted
+   rows (.is-me, MI TIEMPO) get room inside without shifting any column. */
 .leaderboard-head,
 .standing-row {
     display: grid;
@@ -463,6 +465,8 @@ body {
         64px;
 
     column-gap: 10px;
+
+    padding-inline: 8px;
 
     align-items: center;
 }
@@ -506,7 +510,7 @@ body {
 
 
 .standing-row {
-    min-height: 26px;
+    min-height: 30px;
     color: #fff;
     font-family: var(--font-display);
     font-weight: 500;
@@ -569,67 +573,21 @@ body {
 }
 
 
+/* Phones: the page scrolls normally (it used to be a fixed 100dvh screen
+   with the table scrolling inside, which left room for only ~6 drivers once
+   the footer was added). The column header sticks to the top while the
+   list scrolls under it. */
 @media (max-width: 859px) {
 
-    html,
-    body {
-        height: 100%;
-    }
-
-
-    body {
-        display: flex;
-        flex-direction: column;
-
-        height: 100dvh;
-        min-height: 100dvh;
-
-        overflow: hidden;
-    }
-
-
-    .header-wrap {
-        flex: 0 0 auto;
-    }
-
-
-    .standings {
-        display: flex;
-        flex-direction: column;
-
-        flex: 1 1 auto;
-        min-height: 0;
-
-        padding-bottom: 10px;
-    }
-
-
-    .event-header,
-    .orange-line {
-        flex: 0 0 auto;
-    }
-
-
-    .leaderboard {
-        display: flex;
-        flex-direction: column;
-
-        flex: 1 1 auto;
-        min-height: 0;
-    }
-
-
     .leaderboard-head {
-        flex: 0 0 auto;
-    }
+        position: sticky;
+        top: 0;
+        z-index: 2;
 
+        padding-top: 8px;
+        padding-bottom: 8px;
 
-    .leaderboard-body {
-        flex: 1 1 auto;
-        min-height: 0;
-
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        background: rgba(10, 10, 10, 0.94);
     }
 }
 
@@ -671,6 +629,8 @@ body {
             58px;
 
         column-gap: 8px;
+
+        padding-inline: 6px;
     }
 
 
@@ -912,23 +872,27 @@ body {
         margin-bottom: 12px;
     }
 
-    /* DON'T STRETCH TABLE ACROSS PAGE */
-    .leaderboard {
-        width: 820px;
+    /* Table (and MI TIEMPO) exactly as wide as the orange line, so the
+       highlighted rows end where the line ends. */
+    .leaderboard,
+    .my-time-row {
+        width: 600px;
         max-width: 100%;
-        margin: 0;
+        margin-left: 0;
+        margin-right: 0;
     }
 
-    /* BRING PILOTO + TIEMPO CLOSER */
     .leaderboard-head,
     .standing-row {
         grid-template-columns:
-            70px
-            280px
-            130px
-            150px;
+            56px
+            minmax(0, 1fr)
+            120px
+            120px;
 
-        column-gap: 6px;
+        column-gap: 8px;
+
+        padding-inline: 12px;
     }
 
     .leaderboard-head span,
@@ -1628,145 +1592,69 @@ body.auth-modal-open {
     object-fit: contain;
 }
 /* =========================================================
-   MY TIME
+   MI TIEMPO — a leaderboard row above the orange line
+   (standings.html #myTimeRow, js/standings.js renderMyTimeRow)
    ========================================================= */
 
-.my-time-card {
-    width: 100%;
-
-    margin:
-        0 0 18px;
-
-    padding:
-        15px 18px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 18px;
-
-    background:
-        rgba(255, 255, 255, 0.035);
-
-    border:
-        1px solid
-        rgba(255, 255, 255, 0.08);
-
-    border-left:
-        3px solid
-        #ff8b00;
+.my-time-row {
+    margin-top: 14px;
 }
 
-.my-time-copy {
-    display: flex;
-    flex-direction: column;
-
-    gap: 2px;
+.my-time-row + .orange-line {
+    margin-top: 10px;
 }
 
-.my-time-label {
-    color:
-        #8a8a8a;
-
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size:
-        12px;
-
-    font-weight:
-        700;
-
-    letter-spacing:
-        1.4px;
+/* No time yet / signed out / loading: dim time + gap. */
+.my-time-row.is-empty .time,
+.my-time-row.is-empty .difference {
+    color: #8a8a8a;
 }
 
-.my-time-value {
-    color:
-        #f5f5f5;
-
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size:
-        30px;
-
-    font-weight:
-        700;
-
-    line-height:
-        1;
+.my-time-row.can-jump {
+    cursor: pointer;
 }
 
-.my-time-driver {
-    max-width:
-        45%;
-
-    color:
-        #ff8b00;
-
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    letter-spacing:
-        .5px;
-
-    text-align:
-        right;
-
-    overflow:
-        hidden;
-
-    text-overflow:
-        ellipsis;
-
-    white-space:
-        nowrap;
+.my-time-row.can-jump:hover {
+    background: rgba(255, 139, 0, 0.22);
 }
 
-.my-time-card.no-record
-.my-time-value {
-    color:
-        #777;
+.my-time-row:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
 }
 
-.my-time-card.found
-.my-time-value {
-    color:
-        #ff8b00;
+/* Small "MI TIEMPO:" title above the row (same look as the month eyebrow,
+   a step smaller). It takes the row's top spacing. */
+.my-time-title {
+    margin: 14px 0 6px;
+
+    color: var(--orange);
+
+    font-family: var(--font-display);
+    font-size: 15px;
+    line-height: 1;
+    letter-spacing: 0.5px;
+
+    text-transform: uppercase;
 }
 
+.my-time-title + .my-time-row {
+    margin-top: 0;
+}
 
-@media (
-    max-width: 500px
-) {
-
-    .my-time-card {
-        padding:
-            13px 15px;
+@media (min-width: 860px) {
+    .my-time-row {
+        margin-top: 22px;
     }
 
-    .my-time-value {
-        font-size:
-            27px;
+    .my-time-title {
+        margin: 22px 0 8px;
+
+        font-size: 18px;
     }
 
-    .my-time-driver {
-        max-width:
-            50%;
+    .my-time-row + .orange-line {
+        margin-top: 12px;
     }
 }
 
@@ -1797,3 +1685,45 @@ body.auth-modal-open {
     outline-offset: 4px;
     border-radius: 4px;
 }
+
+
+/* =========================================================
+   YOUR ROW (js/standings.js highlightMyRow)
+   ========================================================= */
+
+.standing-row.is-me {
+    position: relative;
+
+    border-radius: 0 4px 4px 0;
+
+    background: rgba(255, 139, 0, 0.14);
+    box-shadow: inset 3px 0 0 var(--orange);
+}
+
+.standing-row.is-me .driver {
+    color: var(--orange);
+}
+
+.standing-row.flash {
+    animation: standings-flash 1.4s ease;
+}
+
+@keyframes standings-flash {
+    0%, 40% { background: rgba(255, 139, 0, 0.42); }
+    100%    { background: rgba(255, 139, 0, 0.14); }
+}
+
+/* No map for this month: hidden image takes no space. */
+.track-map[hidden] {
+    display: none !important;
+}
+
+
+/* =========================================================
+   SITE FOOTER spacing on this page
+   ========================================================= */
+
+.standings + .site-footer {
+    margin-top: 32px;
+}
+

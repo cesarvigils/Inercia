@@ -9,13 +9,13 @@
  *     #categorySelect dropdown — see filterByCategory().
  *   - fastest-first sort with "NT" (no time) entries pushed to the
  *     bottom — see buildStandings().
- *   - the "MI TIEMPO" card, which matches the signed-in Firebase user's
+ *   - the "MI TIEMPO" row (#myTimeRow), which matches the signed-in Firebase user's
  *     display name against the Sheet's driver names (see
  *     normalizeDriverName/updateMyTime) to highlight their own result.
  *     This is a best-effort NAME match (case/accent-insensitive, ignores
  *     a trailing "(S)" team marker) — there's no other link between a
  *     Firebase account and a Sheet row, so a typo'd/different name in the
- *     Sheet vs. the account's display name will show "SIN REGISTRO" even
+ *     Sheet vs. the account's display name will show "NT" in MI TIEMPO even
  *     if that person is actually on the sheet.
  *
  * Also loads /data/tracks.json (a plain "month number" -> track image URL
@@ -23,18 +23,13 @@
  */
 
 import {
-    auth,
-    db
+    auth
 } from '../firebase-config.js';
 
 import {
     onAuthStateChanged
 } from 'firebase/auth';
 
-import {
-    doc,
-    getDoc
-} from 'firebase/firestore';
 let standingsUserName = null;
 let currentStandingsRows = [];
 
@@ -47,12 +42,29 @@ document.addEventListener('DOMContentLoaded', () => {
   initStandings();
 });
 
+const MONTHS_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+/** If the API fails, don't leave "Cargando..." / a stale month on screen. */
+function showHeaderFallback() {
+  const circuitoEl = document.getElementById('circuitoName');
+  if (circuitoEl) circuitoEl.textContent = 'N/D';
+}
+
 async function initStandings() {
+  // Current month right away (the API confirms it below), instead of a
+  // hardcoded month in the HTML that goes stale.
+  const now = new Date();
+  setMonthLabel(MONTHS_ES[now.getMonth()], now.getFullYear());
+
   try {
     const res = await fetch('/api/standings');
     const data = await res.json();
 
     if (!res.ok) {
+      showHeaderFallback();
       showError(data.error || 'Ocurrió un error al cargar la tabla de tiempos.');
       return;
     }
@@ -63,14 +75,18 @@ async function initStandings() {
     const circuitoEl = document.getElementById('circuitoName');
     if (circuitoEl) circuitoEl.textContent = data.circuito || 'N/D';
 
-    allDrivers = data.drivers || [];
-currentStandingsRows = allDrivers;
+    const carEl = document.getElementById('carName');
+    if (carEl && data.auto) carEl.textContent = data.auto;
 
-updateMyTime();
+    allDrivers = data.drivers || [];
+    currentStandingsRows = allDrivers;
+
+    updateMyTime();
     setupCategorySelect();
     renderCategory(getSelectedCategory());
   } catch (err) {
     console.error('Error cargando la tabla de tiempos:', err);
+    showHeaderFallback();
     showError('Ocurrió un error al cargar la tabla de tiempos. Intentá de nuevo más tarde.');
   }
 }
@@ -123,7 +139,7 @@ function buildStandings(drivers) {
     time: d.ms !== null ? d.timeStr : 'NT',
     difference: d.ms === null
       ? '----'
-      : (d.ms === fastestMs ? 'LEADER' : formatDifference(d.ms - fastestMs)),
+      : (d.ms === fastestMs ? 'LÍDER' : formatDifference(d.ms - fastestMs)),
   }));
 }
 
@@ -132,7 +148,7 @@ function renderCategory(category) {
 
   if (filtered.length === 0) {
     renderRecord(null);
-    showError('No hay pilotos registrados en esta categoría todavía.');
+    showError('Todavía no hay tiempos en esta categoría este mes.');
     return;
   }
 
@@ -168,12 +184,157 @@ async function renderTrackMap(monthNumber) {
     if (!res.ok) throw new Error(`No se pudo cargar ${TRACKS_JSON_PATH}`);
     const tracksByMonth = await res.json();
     const trackUrl = tracksByMonth[String(monthNumber)];
-    if (trackUrl) trackImgEl.src = trackUrl;
+
+    // Placeholder entries in tracks.json still say token=REEMPLAZAR.
+    if (!trackUrl || trackUrl.includes('REEMPLAZAR')) return;
+
+    // Only show the image once it actually loads, so a bad URL never
+    // shows a broken-image icon.
+    trackImgEl.addEventListener('load', () => { trackImgEl.hidden = false; }, { once: true });
+    trackImgEl.addEventListener('error', () => { trackImgEl.hidden = true; }, { once: true });
+    trackImgEl.src = trackUrl;
   } catch (err) {
-    // Non-fatal: leave whichever image is already in the HTML as a fallback.
+    // Non-fatal: the map just stays hidden.
     console.error('Error cargando el mapa del circuito:', err);
   }
 }
+
+/* ---------------------------------------------------------
+   MI TIEMPO + "your row"
+
+   #myTimeRow (standings.html, above the orange line) is a
+   leaderboard row like any other — POS · PILOTO · TIEMPO ·
+   DIFERENCIA, no header — showing the signed-in user's result.
+   Their row in the table gets the same highlight, and tapping
+   MI TIEMPO scrolls to it (handy on phones with a long list).
+   Same name match as before: normalizeDriverName().
+   --------------------------------------------------------- */
+
+// False until Firebase says whether someone is signed in, so a signed-in
+// user doesn't see "INICIÁ SESIÓN" flash first.
+let authResolved = false;
+
+function findMyRow() {
+  if (!standingsUserName) return null;
+  const mine = normalizeDriverName(standingsUserName);
+  return [...document.querySelectorAll('#leaderboard .standing-row')]
+    .find((row) => row.dataset.match === mine) || null;
+}
+
+function setMyTimeCells(cells) {
+  const row = document.getElementById('myTimeRow');
+  if (!row) return null;
+
+  ['position', 'driver', 'time', 'difference'].forEach((name) => {
+    const cell = row.querySelector(`.${name}`);
+    const value = cells[name] ?? '';
+    if (cell) cell.replaceChildren(value);
+  });
+
+  return row;
+}
+
+function loginButton() {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'my-time-login';
+  button.textContent = 'INICIÁ SESIÓN';
+  button.addEventListener('click', () => document.getElementById('authBtn')?.click());
+  return button;
+}
+
+function renderMyTimeRow(tableRow) {
+  const row = document.getElementById('myTimeRow');
+  if (!row) return;
+
+  row.classList.remove('can-jump', 'is-empty');
+  row.removeAttribute('role');
+  row.removeAttribute('tabindex');
+  row.setAttribute('aria-label', 'Mi tiempo');
+
+  if (!authResolved) {
+    setMyTimeCells({ position: '–', driver: 'CARGANDO…' });
+    row.classList.add('is-empty');
+    return;
+  }
+
+  if (!standingsUserName) {
+    setMyTimeCells({ position: '–', driver: loginButton(), time: '--', difference: '' });
+    row.classList.add('is-empty');
+    return;
+  }
+
+  // In the table for the selected category: copy that row as is.
+  if (tableRow) {
+    const text = (name) => tableRow.querySelector(`.${name}`)?.textContent || '';
+    setMyTimeCells({
+      position: text('position'),
+      driver: text('driver'),
+      time: text('time'),
+      difference: text('difference')
+    });
+    row.classList.add('can-jump');
+    row.setAttribute('role', 'button');
+    row.tabIndex = 0;
+    row.setAttribute('aria-label', 'Mi tiempo: ver en la tabla');
+    return;
+  }
+
+  // On the sheet but not in this category, or not on the sheet at all.
+  const mine = normalizeDriverName(standingsUserName);
+  const sheetRow = currentStandingsRows.find((driver) => normalizeDriverName(driver.name) === mine);
+  const hasTime = sheetRow && sheetRow.ms !== null && sheetRow.ms !== undefined;
+
+  setMyTimeCells({
+    position: '–',
+    driver: sheetRow?.name || standingsUserName,
+    time: hasTime ? sheetRow.timeStr : 'NT',
+    difference: '----'
+  });
+
+  if (!hasTime) row.classList.add('is-empty');
+}
+
+function highlightMyRow() {
+  document
+    .querySelectorAll('#leaderboard .standing-row.is-me')
+    .forEach((row) => {
+      row.classList.remove('is-me');
+      row.removeAttribute('aria-current');
+    });
+
+  const row = findMyRow();
+
+  if (row) {
+    row.classList.add('is-me');
+    row.setAttribute('aria-current', 'true');
+  }
+
+  renderMyTimeRow(row);
+}
+
+function jumpToMyRow(event) {
+  // The login button inside the row has its own job.
+  if (event.target.closest('button')) return;
+
+  const row = findMyRow();
+  if (!row) return;
+
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  row.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+  row.classList.remove('flash');
+  void row.offsetWidth;
+  row.classList.add('flash');
+}
+
+const myTimeRowEl = document.getElementById('myTimeRow');
+myTimeRowEl?.addEventListener('click', jumpToMyRow);
+myTimeRowEl?.addEventListener('keydown', (event) => {
+  if ((event.key === 'Enter' || event.key === ' ') && myTimeRowEl.classList.contains('can-jump')) {
+    event.preventDefault();
+    jumpToMyRow(event);
+  }
+});
 
 /** Builds the leaderboard rows in #leaderboard from a standings array. */
 function renderLeaderboard(drivers) {
@@ -185,6 +346,8 @@ function renderLeaderboard(drivers) {
   drivers.forEach((driver) => {
     const row = document.createElement('div');
     row.className = 'standing-row' + (driver.position === 1 && driver.hasTime ? ' leader' : '');
+    row.setAttribute('role', 'row');
+    row.dataset.match = normalizeDriverName(driver.name);
 
     const positionSpan = document.createElement('span');
     positionSpan.className = 'position';
@@ -202,9 +365,13 @@ function renderLeaderboard(drivers) {
     diffSpan.className = 'difference';
     diffSpan.textContent = driver.difference;
 
+    [positionSpan, driverSpan, timeSpan, diffSpan].forEach((cell) => cell.setAttribute('role', 'cell'));
+
     row.append(positionSpan, driverSpan, timeSpan, diffSpan);
     leaderboardEl.appendChild(row);
   });
+
+  highlightMyRow();
 }
 
 /** Formats a millisecond gap as "+M:SS.mmm" or "+SS.mmm" to match the leaderboard style. */
@@ -255,266 +422,9 @@ function normalizeDriverName(value) {
         .toLocaleLowerCase('es');
 }
 
-function ensureMyTimeCard() {
-
-    let card =
-        document.getElementById(
-            'myTimeCard'
-        );
-
-    if (card) {
-        return card;
-    }
-
-    card =
-        document.createElement(
-            'div'
-        );
-
-    card.id =
-        'myTimeCard';
-
-    card.className =
-        'my-time-card';
-
-    card.innerHTML = `
-        <div class="my-time-copy">
-            <span class="my-time-label">
-                MI TIEMPO
-            </span>
-
-            <strong
-                class="my-time-value"
-                id="myTimeValue"
-            >
-                --
-            </strong>
-        </div>
-
-        <span
-            class="my-time-driver"
-            id="myTimeDriver"
-        ></span>
-    `;
-
-    const leaderboard =
-        document.getElementById(
-            'leaderboard'
-        );
-
-    if (leaderboard?.parentNode) {
-        leaderboard.parentNode.insertBefore(
-            card,
-            leaderboard
-        );
-    } else {
-        document.body.appendChild(
-            card
-        );
-    }
-
-    return card;
-}
-
+/* Signed-in user or the data changed: refresh MI TIEMPO + the highlight. */
 function updateMyTime() {
-
-    ensureMyTimeCard();
-
-
-    const card =
-        document.getElementById(
-            'myTimeCard'
-        );
-
-
-    const value =
-        document.getElementById(
-            'myTimeValue'
-        );
-
-
-    const driver =
-        document.getElementById(
-            'myTimeDriver'
-        );
-
-
-    if (
-        !card ||
-        !value ||
-        !driver
-    ) {
-
-        console.error(
-            '[STANDINGS] No se pudieron crear los elementos de Mi Tiempo.'
-        );
-
-        return;
-    }
-
-
-    card.classList.remove(
-        'found',
-        'no-record'
-    );
-
-
-    /*
-     * DEBUG
-     */
-
-
-
-    /* =====================================================
-       NO LOGUEADO
-       ===================================================== */
-
-    if (!standingsUserName) {
-
-        /*
-         * Botón en vez de texto plano: abre el modal de login
-         * (js/auth.js) en vez de solo decir qué hacer.
-         */
-        const loginButton =
-            document.createElement('button');
-
-        loginButton.type =
-            'button';
-
-        loginButton.className =
-            'my-time-login';
-
-        loginButton.textContent =
-            'INICIÁ SESIÓN';
-
-        loginButton.addEventListener(
-            'click',
-            () => document.getElementById('authBtn')?.click()
-        );
-
-        value.replaceChildren(
-            loginButton
-        );
-
-
-        driver.textContent =
-            '';
-
-
-        card.classList.add(
-            'no-record'
-        );
-
-
-        return;
-    }
-
-
-    const firebaseName =
-        normalizeDriverName(
-            standingsUserName
-        );
-
-
-    /* =====================================================
-       BUSCAR EN DATOS DEL SHEETS
-       ===================================================== */
-
-    const sheetRow =
-        currentStandingsRows.find(
-            row => {
-
-                /*
-                 * TU API REAL USA row.name.
-                 */
-
-                const sheetName =
-                    normalizeDriverName(
-                        row.name
-                    );
-
-
-            
-
-                return (
-                    sheetName ===
-                    firebaseName
-                );
-            }
-        );
-
-
-    /* =====================================================
-       NO ENCONTRADO
-       ===================================================== */
-
-    if (!sheetRow) {
-
-        console.warn(
-            '[STANDINGS] No encontramos al usuario en Sheets:',
-            standingsUserName
-        );
-
-
-        value.textContent =
-            'SIN REGISTRO';
-
-
-        driver.textContent =
-            standingsUserName;
-
-
-        card.classList.add(
-            'no-record'
-        );
-
-
-        return;
-    }
-
-
-    /* =====================================================
-       ENCONTRADO
-       ===================================================== */
-
-
-
-
-    /*
-     * TU API REAL USA:
-     *
-     * row.ms
-     * row.timeStr
-     */
-
-    value.textContent =
-        sheetRow.ms !== null &&
-        sheetRow.ms !== undefined
-
-            ? (
-                sheetRow.timeStr ||
-                '--'
-            )
-
-            : 'NT';
-
-
-    /*
-     * Enseñamos exactamente el nombre del Sheets.
-     *
-     * Ej:
-     *
-     * Cesar Vigil (S)
-     */
-
-    driver.textContent =
-        sheetRow.name ||
-        standingsUserName;
-
-
-    card.classList.add(
-        'found'
-    );
+    highlightMyRow();
 }
 /* =========================================================
    FIREBASE USER
@@ -524,6 +434,9 @@ onAuthStateChanged(
     auth,
 
     async user => {
+
+        authResolved =
+            true;
 
         if (!user) {
 
@@ -537,6 +450,9 @@ onAuthStateChanged(
 
 
         try {
+
+            const { db, doc, getDoc } =
+                await import('../firebase-db.js');
 
             const snapshot =
                 await getDoc(

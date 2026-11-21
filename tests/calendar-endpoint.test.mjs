@@ -69,8 +69,8 @@ test('calendar: an open day with no locks has every candidate hour available', a
   fake.setDocs('reservationLocks', []);
   const { res, payload } = await callCalendar({ duration: '1' });
   assert.equal(res.statusCode, 200);
-  assert.equal(payload.bookingWindowDays, 7);
-  assert.equal(payload.days.length, 7);
+  assert.equal(payload.bookingWindowDays, 10);
+  assert.equal(payload.days.length, 10);
 
   const day = payload.days.find((d) => d.date === testDate);
   assert.equal(day.status, 'available');

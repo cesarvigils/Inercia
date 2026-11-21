@@ -15,13 +15,19 @@ const { default: eventsHandler } = await import('../api/events.js');
 // 46341 is 2026-11-15 as a Google Sheets serial date; .75 is 18:00.
 const NOV_15 = 46341;
 
-test('parseSheetDate: serial numbers and the two text formats', () => {
-  assert.equal(parseSheetDate(NOV_15), '2026-11-15');
-  assert.equal(parseSheetDate('15/11/2026'), '2026-11-15');
-  assert.equal(parseSheetDate('2026-11-15'), '2026-11-15');
-  assert.equal(parseSheetDate('31/02/2026'), null);
-  assert.equal(parseSheetDate('mañana'), null);
-  assert.equal(parseSheetDate(''), null);
+test('parseSheetDate: MM/DD (year inferred), MM/DD/YYYY, ISO and serial numbers', () => {
+  const today = '2026-11-15';
+  assert.equal(parseSheetDate('12/05', today), '2026-12-05');
+  assert.equal(parseSheetDate('11/15', today), '2026-11-15');
+  assert.equal(parseSheetDate('10/01', today), '2026-10-01', 'recently past stays this year');
+  assert.equal(parseSheetDate('01/10', today), '2027-01-10', 'more than 90 days gone -> next year');
+  assert.equal(parseSheetDate('11/20/2026', today), '2026-11-20');
+  assert.equal(parseSheetDate('2026-11-15', today), '2026-11-15');
+  assert.equal(parseSheetDate(NOV_15, today), '2026-11-15');
+  assert.equal(parseSheetDate('02/31', today), null);
+  assert.equal(parseSheetDate('15/11', today), null, 'DD/MM is not accepted');
+  assert.equal(parseSheetDate('mañana', today), null);
+  assert.equal(parseSheetDate('', today), null);
 });
 
 test('parseSheetTime: time fractions and HH:MM text', () => {
@@ -41,7 +47,7 @@ test('parseEventRows: upcoming only, soonest first, optional columns left null',
   const rows = [
     ['Copa Inercia - Fecha 3', NOV_15 + 7, 0.75, 'Monza', 'F1 2025', 'Inscripciones abiertas', 'https://inerciahn.com/reservas'],
     ['Evento pasado', NOV_15 - 30, 0.5, 'Spa'],
-    ['Noche GT3', '20/11/2026', '20:30', '', 'GT3', '', 'javascript:alert(1)'],
+    ['Noche GT3', '11/20', '20:30', '', 'GT3', '', 'javascript:alert(1)'],
     ['', NOV_15 + 1],
     ['Sin fecha', ''],
     ['Hoy', NOV_15]
@@ -83,6 +89,7 @@ test('events endpoint: 404 when the Eventos tab does not exist, 200 with events 
   let tabExists = false;
   globalThis.fetch = async (url) => {
     assert.match(String(url), /Eventos/);
+    assert.match(decodeURIComponent(String(url)), /!A2:B15/);
     return tabExists
       ? { ok: true, status: 200, json: async () => ({ values: [['Futuro', '01/01/2099']] }) }
       : { ok: false, status: 400, json: async () => ({}) };

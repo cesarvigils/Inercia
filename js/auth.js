@@ -26,7 +26,7 @@
  * updating too.
  */
 
-import { auth, db } from '../firebase-config.js';
+import { auth } from '../firebase-config.js';
 
 import { normalizePhone } from '../lib/phone.js';
 
@@ -44,11 +44,9 @@ import {
 
 } from 'firebase/auth';
 
-import {
-    doc,
-    setDoc,
-    serverTimestamp
-} from 'firebase/firestore';
+// Firestore (users/{uid}) is only needed right after sign-up / Google
+// sign-in, so it's loaded then instead of with every page.
+const loadDb = () => import('../firebase-db.js');
 
 function injectAuthMarkup() {
 
@@ -59,7 +57,7 @@ function injectAuthMarkup() {
   <div class="auth-modal-panel" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
     <button class="auth-modal-close" id="authModalClose" type="button" aria-label="Cerrar">&times;</button>
     <div class="auth-modal-brand">
-      <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be" alt="Simuladores Inercia">
+      <img src="/media/logo.webp" alt="Simuladores Inercia">
     </div>
     <div class="auth-tabs">
       <button class="auth-tab active" type="button" data-auth-tab="login">INICIAR SESIÓN</button>
@@ -156,7 +154,7 @@ if (!document.getElementById('forgotPasswordModal')) {
                 <div class="auth-modal-brand">
 
                     <img
-                        src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be"
+                        src="/media/logo.webp"
                         alt="Simuladores Inercia"
                     >
 
@@ -416,7 +414,7 @@ const profileBtn = document.getElementById('profileBtn');
 
 
 const DEFAULT_PFP =
-    'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fdefaultpfp3.jpg?alt=media&token=a0435be5-f789-41ec-9d50-ab24fed4b9ec';
+    '/media/default-avatar.webp';
 
 setPersistence(auth, browserLocalPersistence)
     .catch((error) => {
@@ -1639,6 +1637,8 @@ registerForm?.addEventListener('submit', async (event) => {
 
 
 
+        const { db, doc, setDoc, serverTimestamp } = await loadDb();
+
         await setDoc(
             doc(
                 db,
@@ -1782,6 +1782,8 @@ async function continueWithGoogle() {
          * usuario que ya lo tenga guardado.
          */
 
+
+        const { db, doc, setDoc, serverTimestamp } = await loadDb();
 
         await setDoc(
             doc(

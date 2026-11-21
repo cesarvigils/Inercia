@@ -1373,3 +1373,31 @@ body.auth-modal-open {
     height: auto;
     object-fit: contain;
 }
+
+/* =========================================================
+   HOME — card link, price, extras (index.html)
+   ========================================================= */
+
+/* Both cards: one link stretched over the whole card (above the art and
+   text), so tapping anywhere on a card opens /reservas. */
+.card-stretched-link {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+}
+
+.card-stretched-link:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: -4px;
+}
+
+.card:has(.card-stretched-link:focus-visible) {
+  border-color: rgba(255, 139, 0, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-stretched-link {
+    transition: none;
+  }
+}

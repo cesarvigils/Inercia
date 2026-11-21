@@ -27,7 +27,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://*.paypal.com https://*.paypalobjects.com https://*.venmo.com https://apis.google.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.paypal.com https://*.paypalobjects.com; font-src 'self' data: https://fonts.gstatic.com https://*.paypalobjects.com; img-src 'self' data: blob: https:; media-src 'self' https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.paypal.com https://*.paypalobjects.com https://apis.google.com https://www.google.com; frame-src 'self' https://*.firebaseapp.com https://*.paypal.com https://*.venmo.com https://www.google.com https://apis.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' https://vercel.live https://*.paypal.com https://*.paypalobjects.com https://*.venmo.com https://apis.google.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://vercel.live https://fonts.googleapis.com https://*.paypal.com https://*.paypalobjects.com; font-src 'self' data: https://vercel.live https://assets.vercel.com https://fonts.gstatic.com https://*.paypalobjects.com; img-src 'self' data: blob: https:; media-src 'self' https://firebasestorage.googleapis.com; connect-src 'self' https://vercel.live wss://ws-us3.pusher.com https://*.googleapis.com https://*.paypal.com https://*.paypalobjects.com https://apis.google.com https://www.google.com; frame-src 'self' https://vercel.live https://*.firebaseapp.com https://*.paypal.com https://*.venmo.com https://www.google.com https://apis.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
         },
         {
           "key": "X-Content-Type-Options",
@@ -46,6 +46,35 @@
           "value": "camera=(), microphone=(), geolocation=()"
         }
       ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/media/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, stale-while-revalidate=2592000"
+        }
+      ]
     }
-  ]
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-proofs",
+      "schedule": "0 9 * * *"
+    }
+  ],
+  "functions": {
+    "api/cron/cleanup-proofs.js": {
+      "maxDuration": 60
+    }
+  }
 }

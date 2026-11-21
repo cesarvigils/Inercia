@@ -708,3 +708,232 @@ body.profile-view-open {
         transition: none;
     }
 }
+
+
+/* ---------------------- MIS RESERVAS ---------------------- */
+
+.pf-booking {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+
+    padding: 12px 0;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.pf-booking .pf-event-name {
+    font-size: 17px;
+}
+
+.pf-booking-status {
+    padding: 4px 10px;
+
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.08);
+    color: #ddd;
+
+    font-family: var(--pf-body);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.pf-booking--approved .pf-booking-status {
+    background: rgba(70, 200, 110, 0.16);
+    color: #6fe08f;
+}
+
+.pf-booking--pending .pf-booking-status {
+    background: rgba(255, 139, 0, 0.16);
+    color: var(--pf-orange);
+}
+
+.pf-booking--cancelled {
+    opacity: 0.6;
+}
+
+.pf-history {
+    margin-top: 18px;
+}
+
+.pf-history summary {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 44px;
+
+    color: var(--pf-dim);
+
+    font-family: var(--pf-display);
+    font-size: 16px;
+    letter-spacing: 0.5px;
+
+    cursor: pointer;
+}
+
+.pf-history summary:hover,
+.pf-history[open] summary {
+    color: var(--pf-ink);
+}
+
+.pf-history summary:focus-visible {
+    outline: 2px solid var(--pf-orange);
+    outline-offset: 2px;
+}
+
+
+/* ---------------------- membership actions + cancel ---------------------- */
+
+.pf-membership-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 22px;
+}
+
+.pf-membership-actions[hidden] {
+    display: none;
+}
+
+button.pf-link {
+    padding: 0;
+
+    border: 0;
+    background: none;
+
+    cursor: pointer;
+}
+
+.pf-link--quiet {
+    color: var(--pf-dim);
+    font-size: 14px;
+}
+
+.pf-link--quiet:hover {
+    color: #ff6b5e;
+}
+
+.pf-link:focus-visible,
+.pf-cta:focus-visible {
+    outline: 2px solid var(--pf-orange);
+    outline-offset: 3px;
+}
+
+.pf-confirm {
+    margin-top: 18px;
+    padding: 16px 16px 14px;
+
+    border: 1px solid rgba(255, 107, 94, 0.45);
+    border-radius: 12px;
+
+    background: rgba(255, 107, 94, 0.07);
+}
+
+.pf-confirm-title {
+    margin: 0 0 6px;
+
+    color: #fff;
+
+    font-family: var(--pf-display);
+    font-size: 19px;
+    letter-spacing: 0.5px;
+}
+
+.pf-confirm-text,
+.pf-confirm-error,
+.pf-confirm-done {
+    margin: 0;
+
+    color: #c9c9c9;
+
+    font-family: var(--pf-body);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.pf-confirm-error {
+    margin-top: 8px;
+    color: #ff8a80;
+}
+
+.pf-confirm-done {
+    margin: 4px 0 10px;
+    color: #6fe08f;
+}
+
+.pf-confirm-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    margin-top: 14px;
+}
+
+.pf-confirm-buttons button {
+    flex: 1 1 140px;
+
+    min-height: 44px;
+    padding: 0 14px;
+
+    border-radius: 8px;
+
+    font-family: var(--pf-display);
+    font-size: 16px;
+    letter-spacing: 0.5px;
+
+    cursor: pointer;
+}
+
+.pf-confirm-no {
+    border: 0;
+    background: var(--pf-orange);
+    color: #111;
+}
+
+.pf-confirm-yes {
+    border: 1px solid rgba(255, 107, 94, 0.7);
+    background: transparent;
+    color: #ff8a80;
+}
+
+.pf-confirm-buttons button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.pf-confirm-buttons button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+
+/* ---------------------- phones ---------------------- */
+
+@media (max-width: 600px) {
+
+    /* Status chip moves under the text instead of squeezing it. */
+    .pf-booking {
+        grid-template-columns: 46px minmax(0, 1fr);
+        gap: 4px 14px;
+    }
+
+    .pf-booking .pf-event-date {
+        grid-row: span 2;
+    }
+
+    .pf-booking .pf-event-date strong {
+        font-size: 28px;
+    }
+
+    .pf-booking-status {
+        justify-self: start;
+    }
+
+    .pf-booking .pf-event-name {
+        font-size: 16px;
+    }
+}

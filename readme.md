@@ -224,6 +224,9 @@ Inercia/
 ├── css/
 ├── fonts/
 ├── js/
+├── lib/                 # código compartido navegador + API (phone.js, time.js)
+├── partials/            # header/menú, footer y video de fondo, una sola vez
+│                         # (vite-partials.js los inserta en cada página)
 │
 ├── public/
 │   └── data/

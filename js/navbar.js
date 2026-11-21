@@ -56,6 +56,11 @@ function onScroll() {
     requestAnimationFrame(updateStuck);
 }
 
+// Footer year (partials/site-footer.html), on every page.
+document.querySelectorAll('[data-year]').forEach((el) => {
+    el.textContent = String(new Date().getFullYear());
+});
+
 if (deskNav) {
     markCurrentPage();
     updateStuck();

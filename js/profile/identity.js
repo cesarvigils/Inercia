@@ -8,8 +8,6 @@
  * Identity: { uid, name, email, photoURL, memberSince: Date | null }
  */
 
-import { db } from '../../firebase-config.js';
-import { doc, getDoc } from 'firebase/firestore';
 
 const PROFILE_TIMEOUT_MS = 6_000;
 
@@ -34,6 +32,7 @@ export async function loadIdentity(user) {
     const identity = identityFromUser(user);
 
     try {
+        const { db, doc, getDoc } = await import('../../firebase-db.js');
         const snapshot = await withTimeout(getDoc(doc(db, 'users', user.uid)), PROFILE_TIMEOUT_MS);
         const profile = snapshot.exists() ? snapshot.data() : null;
 
