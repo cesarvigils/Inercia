@@ -122,10 +122,6 @@ function setValue(
         $(id);
 
     if (!element) {
-        console.warn(
-            `[RESERVAS] No existe el elemento #${id}`
-        );
-
         return;
     }
 
@@ -363,15 +359,6 @@ function message(
 
 
     if (!element) {
-
-        if (text) {
-
-            console.log(
-                `[RESERVAS:${type}]`,
-                text
-            );
-        }
-
 
         return;
     }
@@ -1552,20 +1539,6 @@ async function loadConfig() {
 
     renderAllOpen();
 
-
-    console.log(
-        '[RESERVAS] Configuración cargada:',
-        {
-            config:
-                appConfig,
-
-            rigs:
-                rigs.length,
-
-            promotions:
-                promos.length
-        }
-    );
 }
 
 
@@ -2086,11 +2059,6 @@ async function availability() {
                     durationSelect.value
             });
 
-
-        console.log(
-            '[RESERVAS] Consultando disponibilidad:',
-            params.toString()
-        );
 
 
         const data =
@@ -2640,23 +2608,6 @@ async function profile(
         };
 
 
-        console.log(
-            '[RESERVAS] Perfil cargado:',
-            {
-                name:
-                    currentProfile.name,
-
-                email:
-                    currentProfile.email,
-
-                phoneNumber:
-                    currentProfile
-                        .phoneNumber
-                        ? 'CARGADO'
-                        : 'NO DISPONIBLE'
-            }
-        );
-
 
     } catch (
         error
@@ -2704,11 +2655,6 @@ onAuthStateChanged(
 
         if (user) {
 
-            console.log(
-                '[RESERVAS] Usuario autenticado:',
-                user.uid
-            );
-
 
             await profile(
                 user
@@ -2743,10 +2689,6 @@ onAuthStateChanged(
 
 
         } else {
-
-            console.log(
-                '[RESERVAS] Usuario no autenticado.'
-            );
 
 
             currentProfile =
@@ -3303,10 +3245,6 @@ form
                         `reservation-proofs/${currentUser.uid}/${crypto.randomUUID()}-${safeName}`;
 
 
-                    console.log(
-                        '[RESERVAS] Subiendo comprobante...'
-                    );
-
 
                     const { getStorage, ref, uploadBytes } =
                         await loadStorage();
@@ -3325,11 +3263,6 @@ form
                         }
                     );
 
-
-                    console.log(
-                        '[RESERVAS] Comprobante subido:',
-                        proofPath
-                    );
                 }
 
 
@@ -3434,18 +3367,6 @@ form
                     customer
                 };
 
-
-                console.log(
-                    '[RESERVAS] Creando reserva:',
-                    {
-                        ...body,
-
-                        proofPath:
-                            proofPath
-                                ? '[COMPROBANTE]'
-                                : null
-                    }
-                );
 
 
                 /* =================================================
@@ -3635,10 +3556,6 @@ form
 
 async function init() {
 
-    console.log(
-        '[RESERVAS] Inicializando...'
-    );
-
 
     const requiredElements = {
 
@@ -3711,10 +3628,6 @@ async function init() {
 
         await loadCalendar();
 
-
-        console.log(
-            '[RESERVAS] Inicialización completada.'
-        );
 
 
     } catch (
