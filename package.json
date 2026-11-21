@@ -4,9 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "predev": "node scripts/grant-membership.mjs --auto",
     "dev": "vite",
-    "prebuild": "node scripts/grant-membership.mjs --auto",
     "build": "vite build",
     "preview": "vite preview",
     "seed:reservas": "node scripts/seed.mjs",
