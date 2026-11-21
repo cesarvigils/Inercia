@@ -443,3 +443,110 @@
 [hidden] {
     display: none !important;
 }
+
+
+/* =========================================================
+   MEMBERSHIP TIER instead of SUSCRIBITE (js/nav-membership.js)
+   Desktop nav pill + side menu link, one color per tier.
+   ========================================================= */
+
+.is-member.tier-gold    { --tier: #f2c14e; --tier-soft: rgba(242, 193, 78, 0.14); }
+.is-member.tier-platino { --tier: #d9dee6; --tier-soft: rgba(217, 222, 230, 0.12); }
+.is-member.tier-zafiro  { --tier: #4f8dff; --tier-soft: rgba(79, 141, 255, 0.16); }
+
+.tier-dot {
+    display: inline-block;
+
+    width: 7px;
+    height: 7px;
+
+    margin-right: 8px;
+
+    border-radius: 50%;
+
+    background: var(--tier);
+    box-shadow: 0 0 0 3px var(--tier-soft), 0 0 10px var(--tier);
+
+    vertical-align: middle;
+}
+
+@media (min-width: 860px) {
+
+    /* A status, not a button: tinted outline pill in the tier's color. */
+    .desk-nav-cta.is-member,
+    .desk-nav-cta.is-member[aria-current="page"] {
+        position: relative;
+        overflow: hidden;
+
+        background: var(--tier-soft);
+        color: var(--tier);
+        box-shadow: inset 0 0 0 1px var(--tier);
+    }
+
+    .desk-nav-cta.is-member:hover {
+        background: var(--tier-soft);
+        box-shadow: inset 0 0 0 1px var(--tier), 0 0 18px var(--tier-soft);
+    }
+
+    /* One light sweep across the pill when the tier first appears. */
+    .desk-nav-cta.is-member::after {
+        content: '';
+
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -60%;
+
+        width: 50%;
+
+        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+
+        transform: skewX(-20deg);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .desk-nav-cta.tier-in {
+        animation: tier-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .desk-nav-cta.tier-in::after {
+        animation: tier-shine 0.9s ease 0.15s;
+    }
+}
+
+/* Side menu (phones): same label, tier color, dot. */
+.side-menu-link.is-member {
+    color: var(--tier);
+}
+
+.side-menu-link.is-member:hover {
+    color: var(--tier);
+}
+
+.side-menu-link.tier-in {
+    animation: tier-fade 0.5s ease;
+}
+
+@keyframes tier-pop {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes tier-shine {
+    0% { left: -60%; opacity: 1; }
+    100% { left: 130%; opacity: 1; }
+}
+
+@keyframes tier-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .desk-nav-cta.tier-in,
+    .desk-nav-cta.tier-in::after,
+    .side-menu-link.tier-in {
+        animation: none;
+    }
+}
