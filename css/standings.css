@@ -1628,146 +1628,15 @@ body.auth-modal-open {
     object-fit: contain;
 }
 /* =========================================================
-   MY TIME
+   MY TIME — one line under RECORD ACTUAL / PILOTO (.record p)
    ========================================================= */
 
-.my-time-card {
-    width: 100%;
-
-    margin:
-        0 0 18px;
-
-    padding:
-        15px 18px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 18px;
-
-    background:
-        rgba(255, 255, 255, 0.035);
-
-    border:
-        1px solid
-        rgba(255, 255, 255, 0.08);
-
-    border-left:
-        3px solid
-        #ff8b00;
+.record .my-time-line {
+    margin-top: 8px;
 }
 
-.my-time-copy {
-    display: flex;
-    flex-direction: column;
-
-    gap: 2px;
-}
-
-.my-time-label {
-    color:
-        #8a8a8a;
-
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size:
-        12px;
-
-    font-weight:
-        700;
-
-    letter-spacing:
-        1.4px;
-}
-
-.my-time-value {
-    color:
-        #f5f5f5;
-
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size:
-        30px;
-
-    font-weight:
-        700;
-
-    line-height:
-        1;
-}
-
-.my-time-driver {
-    max-width:
-        45%;
-
-    color:
-        #ff8b00;
-
-    font-family:
-        'Alumni Sans',
-        'Arial Narrow',
-        sans-serif;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    letter-spacing:
-        .5px;
-
-    text-align:
-        right;
-
-    overflow:
-        hidden;
-
-    text-overflow:
-        ellipsis;
-
-    white-space:
-        nowrap;
-}
-
-.my-time-card.no-record
-.my-time-value {
-    color:
-        #777;
-}
-
-.my-time-card.found
-.my-time-value {
-    color:
-        #ff8b00;
-}
-
-
-@media (
-    max-width: 500px
-) {
-
-    .my-time-card {
-        padding:
-            13px 15px;
-    }
-
-    .my-time-value {
-        font-size:
-            27px;
-    }
-
-    .my-time-driver {
-        max-width:
-            50%;
-    }
+.my-time-line.no-record .my-time-value {
+    color: #8a8a8a;
 }
 
 /* "INICIÁ SESIÓN" inside MI TIEMPO when signed out (js/standings.js). */
@@ -1823,21 +1692,26 @@ body.auth-modal-open {
     100%    { background: rgba(255, 139, 0, 0.14); }
 }
 
-/* MI TIEMPO card turns into a "jump to my row" button once the row exists. */
+/* MI TIEMPO turns into a "jump to my row" link once the row exists. */
 
-.my-time-card.can-jump {
+.my-time-line.can-jump {
     cursor: pointer;
 }
 
-.my-time-card.can-jump .my-time-label::after {
-    content: ' · VER EN LA TABLA ↓';
-
-    color: var(--orange);
+.my-time-line.can-jump .my-time-value::after {
+    content: ' ↓';
 }
 
-.my-time-card.can-jump:focus-visible {
+.my-time-line.can-jump:hover .my-time-value,
+.my-time-line.can-jump:focus-visible .my-time-value {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.my-time-line.can-jump:focus-visible {
     outline: 2px solid var(--orange);
     outline-offset: 3px;
+    border-radius: 2px;
 }
 
 /* No map for this month: hidden image takes no space. */
@@ -1854,8 +1728,3 @@ body.auth-modal-open {
     margin-top: 32px;
 }
 
-@media (max-width: 500px) {
-    .my-time-card.can-jump .my-time-label::after {
-        content: ' · VER ↓';
-    }
-}

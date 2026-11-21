@@ -351,71 +351,7 @@ function normalizeDriverName(value) {
         .toLocaleLowerCase('es');
 }
 
-function ensureMyTimeCard() {
-
-    let card =
-        document.getElementById(
-            'myTimeCard'
-        );
-
-    if (card) {
-        return card;
-    }
-
-    card =
-        document.createElement(
-            'div'
-        );
-
-    card.id =
-        'myTimeCard';
-
-    card.className =
-        'my-time-card';
-
-    card.innerHTML = `
-        <div class="my-time-copy">
-            <span class="my-time-label">
-                MI TIEMPO
-            </span>
-
-            <strong
-                class="my-time-value"
-                id="myTimeValue"
-            >
-                --
-            </strong>
-        </div>
-
-        <span
-            class="my-time-driver"
-            id="myTimeDriver"
-        ></span>
-    `;
-
-    const leaderboard =
-        document.getElementById(
-            'leaderboard'
-        );
-
-    if (leaderboard?.parentNode) {
-        leaderboard.parentNode.insertBefore(
-            card,
-            leaderboard
-        );
-    } else {
-        document.body.appendChild(
-            card
-        );
-    }
-
-    return card;
-}
-
 function updateMyTime() {
-
-    ensureMyTimeCard();
-
 
     const card =
         document.getElementById(
@@ -429,20 +365,18 @@ function updateMyTime() {
         );
 
 
-    const driver =
-        document.getElementById(
-            'myTimeDriver'
-        );
+    // One-line version (no driver name shown); kept as a sink so the
+    // assignments below stay simple.
+    const driver = { textContent: '' };
 
 
     if (
         !card ||
-        !value ||
-        !driver
+        !value
     ) {
 
         console.error(
-            '[STANDINGS] No se pudieron crear los elementos de Mi Tiempo.'
+            '[STANDINGS] Falta #myTimeCard / #myTimeValue en standings.html.'
         );
 
         return;

@@ -1325,7 +1325,13 @@ a.contact-item:hover {
 
 /* Same icon column as every other row (34px, see .contact-item above),
    but the copy is taller, so the icon sits next to the label. */
+/* On desktop every row is `flex: 1` with overflow hidden, which let this
+   (taller) row shrink and cut off "Sábado y domingo". It keeps its full
+   height; the other rows share whatever is left. */
 .contact-item.contact-hours {
+    flex: 0 0 auto;
+    overflow: visible;
+
     grid-template-columns: 34px minmax(0, 1fr);
     align-items: start;
     padding-block: 22px;
@@ -1355,9 +1361,10 @@ a.contact-item:hover {
     margin-top: 12px;
 }
 
+/* One line when it fits; on narrow phones the time drops under the day. */
 .contact-hours .hours-list li {
-    flex-wrap: nowrap;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 2px 16px;
 
     padding: 9px 0;
 
@@ -1385,11 +1392,6 @@ a.contact-item:hover {
 }
 
 @media (max-width: 370px) {
-    .contact-hours .hours-list li {
-        flex-wrap: wrap;
-        gap: 2px 12px;
-    }
-
     .contact-item-copy .hours-list strong {
         font-size: 12px;
     }

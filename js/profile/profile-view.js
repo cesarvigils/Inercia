@@ -441,7 +441,7 @@ function renderRecords(result) {
             panel.append(list.length
                 ? recordTable(list)
                 : stateBlock('empty', 'SIN REGISTROS', which === 'current'
-                    ? 'Todavía no tenés récords vigentes.'
+                    ? 'No aparecés en la tabla de este mes. Si ya corriste, revisá que tu nombre ahí sea igual al de tu cuenta.'
                     : 'Todavía no hay tiempos anteriores en tu historial.'));
         }
     };
@@ -478,7 +478,8 @@ function renderResults(result) {
     } else if (result.state === 'unavailable') {
         body.append(stateBlock('unavailable', 'NO DISPONIBLE', 'No pudimos cargar tus resultados.'));
     } else if (!races.length) {
-        body.append(stateBlock('empty', 'SIN CARRERAS', 'Todavía no corriste ninguna carrera registrada.'));
+        // No race-results source is connected yet (records.js only has lap times).
+        body.append(stateBlock('pending', 'PRÓXIMAMENTE', 'Las posiciones de tus carreras van a aparecer acá cuando los resultados estén cargados.'));
     } else {
         const list = el('ol', 'pf-races');
         races.forEach(({ race, lapTime }) => {
