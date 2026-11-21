@@ -41,8 +41,22 @@ const args = process.argv.slice(2);
 const auto = args.includes('--auto');
 const option = (name) => args.find((arg) => arg.startsWith(`--${name}=`))?.split('=')[1];
 
+// The live plans (same list as PAYPAL_MEMBERSHIP_PLAN_ID in .env.example),
+// used when that env var isn't set where this runs (e.g. a Preview build).
+const FALLBACK_PLAN_IDS = [
+    'P-3H637231MP384391XNF57F6A', 'P-03J1825072810773LNF57P6A', 'P-6N456769MV660981WNF57HOY',
+    'P-42W17027ML467104JNF57JSI', 'P-6T1161509V194971FNF57GPI', 'P-9AA882187B812322ANF57PIA',
+    'P-46N98350VG980522RNF57ILY', 'P-99R3547382663964LNF57KVQ', 'P-33809794LP615420HNF57LTI',
+    'P-0059049870315764ENF57ISY', 'P-0AR865304W746182UNF57G3Q', 'P-9CY58642MU7438537NF563ZI'
+];
+
+/*
+ * The plan to attach, so the site shows the right tier. Returns null when
+ * PayPal can't be read at all: the membership is still granted (ACTIVE is
+ * what unlocks cash payment), only the tier label is unknown.
+ */
 async function findPlan({ tier, period, planId }) {
-    const { listPlans, getPlan } = await import('../api/_lib/membership-plans.js');
+    const { getPlan } = await import('../api/_lib/membership-plans.js');
 
     if (planId) {
         const plan = await getPlan(planId);
@@ -50,12 +64,24 @@ async function findPlan({ tier, period, planId }) {
         return plan;
     }
 
-    const plans = await listPlans();
+    const ids = String(process.env.PAYPAL_MEMBERSHIP_PLAN_ID || '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+
+    const plans = (await Promise.all((ids.length ? ids : FALLBACK_PLAN_IDS).map((id) => getPlan(id))))
+        .filter((plan) => plan && plan.tier && plan.period);
+
+    if (!plans.length) {
+        console.warn('[grant-membership] No se pudieron leer los planes en PayPal; la doy sin plan (sin nivel visible).');
+        return null;
+    }
+
     const plan = plans.find((p) => p.tier.toLowerCase() === tier.toLowerCase() && p.period === period);
 
     if (!plan) {
         const available = plans.map((p) => `  ${p.id}  ${p.tier} ${p.period}  (${p.name})`).join('\n');
-        throw new Error(`No hay un plan activo ${tier} ${period}. Planes disponibles:\n${available}`);
+        throw new Error(`No hay un plan ${tier} ${period}. Planes disponibles:\n${available}`);
     }
 
     return plan;
@@ -73,13 +99,14 @@ async function grant(uid, { tier = 'Gold', period = 'mensual', planId = null, sk
         return;
     }
 
-    if (existing && skipExisting) {
+    // Already granted. One granted without a plan (PayPal was unreachable) is retried.
+    if (existing && skipExisting && existing.planId) {
         console.log(`[grant-membership] ${uid}: ya tiene la membresía manual (${existing.status}).`);
         return;
     }
 
     const plan = await findPlan({ tier, period, planId });
-    const months = { mensual: 1, trimestral: 3, semestral: 6, anual: 12 }[plan.period] || 1;
+    const months = { mensual: 1, trimestral: 3, semestral: 6, anual: 12 }[plan?.period || period] || 1;
     const now = new Date();
     const next = new Date(now);
     next.setMonth(next.getMonth() + months);
@@ -87,7 +114,7 @@ async function grant(uid, { tier = 'Gold', period = 'mensual', planId = null, sk
     await ref.set({
         source: 'manual',
         subscriptionId: null,
-        planId: plan.id,
+        planId: plan?.id || null,
         status: 'ACTIVE',
         payerId: null,
         payerEmail: null,
@@ -102,7 +129,11 @@ async function grant(uid, { tier = 'Gold', period = 'mensual', planId = null, sk
         updatedAt: FieldValue.serverTimestamp()
     });
 
-    console.log(`[grant-membership] ${uid}: ahora tiene ${plan.tier} ${plan.period} (${plan.id}), ACTIVE.`);
+    console.log(
+        `[grant-membership] ${uid}: ahora tiene ` +
+        (plan ? `${plan.tier} ${plan.period} (${plan.id})` : 'una membresía sin plan') +
+        ', ACTIVE.'
+    );
 }
 
 async function revoke(uid) {
