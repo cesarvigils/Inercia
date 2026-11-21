@@ -14,6 +14,12 @@
  *      PayPal before recording anything.
  * The current membership (GET /api/subscription/status) is shown above
  * the plans for a signed-in member. Nothing here grants access by itself.
+ *   4. MEJORAR SUSCRIPCIÓN: for a member below Zafiro, the higher tiers'
+ *      buttons (and a shortcut in the member banner) call POST
+ *      /api/subscription/upgrade { planId }, which revises the same PayPal
+ *      subscription to the new plan; PayPal sends the buyer back with
+ *      ?membresia=mejorada (or =mejora-cancelada) and the page re-syncs it
+ *      through /api/subscription/activate.
  */
 
 import { auth } from '../firebase-config.js';
@@ -160,11 +166,25 @@ function renderTiers() {
         column.append(price);
 
         const current = membership?.active && membership.tier === tier && membership.period === period;
-        const button = el('button', 'sub-cta', current ? 'TU PLAN ACTUAL' : 'SUSCRIBIRME');
+        const upgrade = isUpgrade(tier);
+        const button = el(
+            'button',
+            upgrade ? 'sub-cta sub-cta--upgrade' : 'sub-cta',
+            current ? 'TU PLAN ACTUAL' : upgrade ? 'MEJORAR SUSCRIPCIÓN' : 'SUSCRIBIRME'
+        );
         button.type = 'button';
-        button.disabled = Boolean(membership?.active);
-        if (membership?.active && !current) button.title = 'Ya tenés una membresía activa.';
-        button.addEventListener('click', () => subscribe(plan));
+
+        if (upgrade) {
+            column.classList.add('is-upgrade');
+            button.disabled = !canUpgrade();
+            if (button.disabled) button.title = upgradeBlockedReason();
+            button.addEventListener('click', () => upgradeTo(plan));
+        } else {
+            button.disabled = Boolean(membership?.active);
+            if (membership?.active && !current) button.title = 'Ya tenés una membresía activa.';
+            button.addEventListener('click', () => subscribe(plan));
+        }
+
         column.append(button);
 
         tiersEl.append(column);
@@ -180,6 +200,70 @@ function renderMembership() {
         : membership.paidThrough && `Activa hasta ${formatDate(membership.paidThrough)}`;
 
     notice('member', `TU MEMBRESÍA: ${tier}`, until || null);
+
+    // Below Zafiro: a MEJORAR SUSCRIPCIÓN shortcut to the higher tiers.
+    if (TIERS.some((name) => isUpgrade(name))) {
+        const shortcut = el('button', 'sub-notice-action', 'MEJORAR SUSCRIPCIÓN');
+        shortcut.type = 'button';
+        shortcut.addEventListener('click', showUpgrades);
+        noticeEl.append(shortcut);
+    }
+}
+
+/* ---------------------------------------------------------
+   Upgrades (MEJORAR SUSCRIPCIÓN)
+   --------------------------------------------------------- */
+
+// A higher tier than the member's current one.
+function isUpgrade(tier) {
+    if (!membership?.active || !membership.tier) return false;
+    return TIERS.indexOf(tier) > TIERS.indexOf(membership.tier);
+}
+
+// Only a live PayPal subscription can be revised.
+function canUpgrade() {
+    return membership?.status === 'ACTIVE' && Boolean(membership.subscriptionId);
+}
+
+function upgradeBlockedReason() {
+    if (membership?.status !== 'ACTIVE') return 'Tu membresía está cancelada; podés suscribirte de nuevo cuando termine.';
+    return 'Tu membresía no está asociada a PayPal; escribinos para cambiarla.';
+}
+
+// Scrolls to the plans and makes the higher tiers pulse once.
+function showUpgrades() {
+    document.querySelector('.sub-plans')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    tiersEl.querySelectorAll('.sub-tier.is-upgrade').forEach((column, index) => {
+        column.classList.remove('is-highlight');
+        void column.offsetWidth;
+        column.style.animationDelay = `${0.25 + index * 0.12}s`;
+        column.classList.add('is-highlight');
+        column.addEventListener('animationend', () => column.classList.remove('is-highlight'), { once: true });
+    });
+
+    tiersEl.querySelector('.sub-cta--upgrade:not(:disabled)')?.focus({ preventScroll: true });
+}
+
+async function upgradeTo(plan) {
+    if (busy) return;
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    busy = true;
+    tiersEl.querySelectorAll('.sub-cta').forEach((button) => { button.disabled = true; });
+    notice('info', `MEJORANDO A ${plan.tier.toUpperCase()}…`, 'Te llevamos a PayPal para que apruebes el cambio.');
+
+    try {
+        const data = await api('/api/subscription/upgrade', { method: 'POST', body: { planId: plan.id }, user });
+        window.location.assign(data.approveUrl);
+    } catch (error) {
+        console.error('[SUSCRIPCIÓN] No se pudo mejorar:', error);
+        notice('error', 'NO PUDIMOS MEJORAR TU MEMBRESÍA', error.message);
+        busy = false;
+        renderTiers();
+    }
 }
 
 /* ---------------------------------------------------------
@@ -225,6 +309,30 @@ async function confirmReturn(user) {
     if (result === 'cancelada') {
         notice('info', 'PAGO CANCELADO', 'No se hizo ningún cobro.');
         return false;
+    }
+
+    if (result === 'mejora-cancelada') {
+        notice('info', 'MEJORA CANCELADA', 'Tu membresía sigue igual.');
+        return false;
+    }
+
+    if (result === 'mejorada') {
+        notice('info', 'CONFIRMANDO LA MEJORA…');
+
+        try {
+            // PayPal may not add subscription_id after a revise; use the member's own.
+            const status = await api('/api/subscription/status', { user });
+            const id = params.get('subscription_id') || status.subscriptionId;
+            if (!id) throw new Error('Sin suscripción.');
+
+            await api('/api/subscription/activate', { method: 'POST', body: { subscriptionID: id }, user });
+            notice('success', '¡LISTO! TU MEMBRESÍA SE ACTUALIZÓ', 'Puede tardar unos minutos en verse el nuevo nivel.');
+            return true;
+        } catch (error) {
+            console.error('[SUSCRIPCIÓN] No se pudo confirmar la mejora:', error);
+            notice('error', 'NO PUDIMOS CONFIRMAR LA MEJORA', 'Si la aprobaste en PayPal, se va a ver en unos minutos.');
+            return false;
+        }
     }
 
     const subscriptionID = params.get('subscription_id');
