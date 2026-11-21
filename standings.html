@@ -69,12 +69,6 @@
             <strong id="recordPiloto">-</strong>
           </p>
 
-          <!-- Signed-in user's own time (js/standings.js updateMyTime).
-               Once their row is in the table, clicking it scrolls there. -->
-          <p class="my-time-line" id="myTimeCard">
-            <span class="my-time-label">MI TIEMPO:</span>
-            <strong class="my-time-value" id="myTimeValue">--</strong>
-          </p>
 
         </div>
 
@@ -109,6 +103,18 @@
       </div>
 
     </section>
+
+
+    <!-- MI TIEMPO: the signed-in user's result as a regular leaderboard
+         row (no header), filled by js/standings.js renderMyTimeRow().
+         Tapping it scrolls to their highlighted row in the table. -->
+
+    <div class="standing-row my-time-row is-me is-empty" id="myTimeRow" aria-label="Mi tiempo">
+      <span class="position">–</span>
+      <span class="driver">CARGANDO…</span>
+      <span class="time"></span>
+      <span class="difference"></span>
+    </div>
 
 
     <!-- Orange separator -->

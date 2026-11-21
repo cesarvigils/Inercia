@@ -452,6 +452,8 @@ body {
 
 /* Header */
 
+/* Every row (and the head) has the same side padding, so the highlighted
+   rows (.is-me, MI TIEMPO) get room inside without shifting any column. */
 .leaderboard-head,
 .standing-row {
     display: grid;
@@ -463,6 +465,8 @@ body {
         64px;
 
     column-gap: 10px;
+
+    padding-inline: 8px;
 
     align-items: center;
 }
@@ -506,7 +510,7 @@ body {
 
 
 .standing-row {
-    min-height: 26px;
+    min-height: 30px;
     color: #fff;
     font-family: var(--font-display);
     font-weight: 500;
@@ -569,67 +573,21 @@ body {
 }
 
 
+/* Phones: the page scrolls normally (it used to be a fixed 100dvh screen
+   with the table scrolling inside, which left room for only ~6 drivers once
+   the footer was added). The column header sticks to the top while the
+   list scrolls under it. */
 @media (max-width: 859px) {
 
-    html,
-    body {
-        height: 100%;
-    }
-
-
-    body {
-        display: flex;
-        flex-direction: column;
-
-        height: 100dvh;
-        min-height: 100dvh;
-
-        overflow: hidden;
-    }
-
-
-    .header-wrap {
-        flex: 0 0 auto;
-    }
-
-
-    .standings {
-        display: flex;
-        flex-direction: column;
-
-        flex: 1 1 auto;
-        min-height: 0;
-
-        padding-bottom: 10px;
-    }
-
-
-    .event-header,
-    .orange-line {
-        flex: 0 0 auto;
-    }
-
-
-    .leaderboard {
-        display: flex;
-        flex-direction: column;
-
-        flex: 1 1 auto;
-        min-height: 0;
-    }
-
-
     .leaderboard-head {
-        flex: 0 0 auto;
-    }
+        position: sticky;
+        top: 0;
+        z-index: 2;
 
+        padding-top: 8px;
+        padding-bottom: 8px;
 
-    .leaderboard-body {
-        flex: 1 1 auto;
-        min-height: 0;
-
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        background: rgba(10, 10, 10, 0.94);
     }
 }
 
@@ -671,6 +629,8 @@ body {
             58px;
 
         column-gap: 8px;
+
+        padding-inline: 6px;
     }
 
 
@@ -912,23 +872,27 @@ body {
         margin-bottom: 12px;
     }
 
-    /* DON'T STRETCH TABLE ACROSS PAGE */
-    .leaderboard {
-        width: 820px;
+    /* Table (and MI TIEMPO) exactly as wide as the orange line, so the
+       highlighted rows end where the line ends. */
+    .leaderboard,
+    .my-time-row {
+        width: 600px;
         max-width: 100%;
-        margin: 0;
+        margin-left: 0;
+        margin-right: 0;
     }
 
-    /* BRING PILOTO + TIEMPO CLOSER */
     .leaderboard-head,
     .standing-row {
         grid-template-columns:
-            70px
-            280px
-            130px
-            150px;
+            56px
+            minmax(0, 1fr)
+            120px
+            120px;
 
-        column-gap: 6px;
+        column-gap: 8px;
+
+        padding-inline: 12px;
     }
 
     .leaderboard-head span,
@@ -1628,15 +1592,45 @@ body.auth-modal-open {
     object-fit: contain;
 }
 /* =========================================================
-   MY TIME — one line under RECORD ACTUAL / PILOTO (.record p)
+   MI TIEMPO — a leaderboard row above the orange line
+   (standings.html #myTimeRow, js/standings.js renderMyTimeRow)
    ========================================================= */
 
-.record .my-time-line {
-    margin-top: 8px;
+.my-time-row {
+    margin-top: 14px;
 }
 
-.my-time-line.no-record .my-time-value {
+.my-time-row + .orange-line {
+    margin-top: 10px;
+}
+
+/* No time yet / signed out / loading: dim time + gap. */
+.my-time-row.is-empty .time,
+.my-time-row.is-empty .difference {
     color: #8a8a8a;
+}
+
+.my-time-row.can-jump {
+    cursor: pointer;
+}
+
+.my-time-row.can-jump:hover {
+    background: rgba(255, 139, 0, 0.22);
+}
+
+.my-time-row:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+}
+
+@media (min-width: 860px) {
+    .my-time-row {
+        margin-top: 22px;
+    }
+
+    .my-time-row + .orange-line {
+        margin-top: 12px;
+    }
 }
 
 /* "INICIÁ SESIÓN" inside MI TIEMPO when signed out (js/standings.js). */
@@ -1675,6 +1669,8 @@ body.auth-modal-open {
 .standing-row.is-me {
     position: relative;
 
+    border-radius: 0 4px 4px 0;
+
     background: rgba(255, 139, 0, 0.14);
     box-shadow: inset 3px 0 0 var(--orange);
 }
@@ -1690,28 +1686,6 @@ body.auth-modal-open {
 @keyframes standings-flash {
     0%, 40% { background: rgba(255, 139, 0, 0.42); }
     100%    { background: rgba(255, 139, 0, 0.14); }
-}
-
-/* MI TIEMPO turns into a "jump to my row" link once the row exists. */
-
-.my-time-line.can-jump {
-    cursor: pointer;
-}
-
-.my-time-line.can-jump .my-time-value::after {
-    content: ' ↓';
-}
-
-.my-time-line.can-jump:hover .my-time-value,
-.my-time-line.can-jump:focus-visible .my-time-value {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.my-time-line.can-jump:focus-visible {
-    outline: 2px solid var(--orange);
-    outline-offset: 3px;
-    border-radius: 2px;
 }
 
 /* No map for this month: hidden image takes no space. */
