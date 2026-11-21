@@ -4,20 +4,17 @@
  * Reads upcoming events from the "Eventos" tab of the same Google Sheet as
  * the standings (SPREADSHEET_ID / GOOGLE_SHEETS_API_KEY, server-side only).
  *
- * Expected layout of the "Eventos" tab: row 1 is a header, one event per
- * row from row 2, columns A to G:
+ * Layout of the "Eventos" tab: row 1 is a header, events in rows 2 to 15:
  *
- *   A  Nombre      required, e.g. "Copa Inercia - Fecha 3"
- *   B  Fecha       required, a date cell (or text DD/MM/YYYY or YYYY-MM-DD)
- *   C  Hora        optional, a time cell (or text HH:MM, 24h)
- *   D  Circuito    optional
- *   E  Categoría   optional, e.g. "F1 2025", "GT3"
- *   F  Estado      optional, registration status as you want it shown,
- *                  e.g. "Inscripciones abiertas", "Cupo lleno"
- *   G  Link        optional, https link to the event's page or sign-up form
+ *   A  Nombre del evento   e.g. "Copa Inercia - Fecha 3"
+ *   B  Fecha               MM/DD, e.g. "12/05" (a date cell or MM/DD/YYYY
+ *                          / YYYY-MM-DD text work too)
  *
- * Rows without a name or a readable date are skipped. Only events from
- * today on (Honduras time) are returned, soonest first.
+ * MM/DD has no year: it's this year, unless that date is more than 90 days
+ * gone, in which case it's next year (so "01/10" written in November means
+ * next January). Rows without a name or a readable date are skipped. Only
+ * events from today on (Honduras time) are returned, soonest first. The
+ * Event shape keeps time/track/category/status/url, always null for now.
  *
  * Exports:
  *   - EVENTS_SHEET               'Eventos'
@@ -28,8 +25,9 @@
 
 export const EVENTS_SHEET = 'Eventos';
 
-const RANGE = `'${EVENTS_SHEET}'!A2:G200`;
-const MAX_EVENTS = 20;
+const RANGE = `'${EVENTS_SHEET}'!A2:B15`;
+const MAX_EVENTS = 14;
+const ROLL_TO_NEXT_YEAR_DAYS = 90;
 
 // Google Sheets serial dates count days from 1899-12-30.
 const SHEETS_EPOCH_MS = Date.UTC(1899, 11, 30);
@@ -44,7 +42,13 @@ function validDate(y, m, d) {
         : null;
 }
 
-export function parseSheetDate(value) {
+function daysBetween(fromIso, toIso) {
+    return (Date.parse(`${toIso}T00:00:00Z`) - Date.parse(`${fromIso}T00:00:00Z`)) / DAY_MS;
+}
+
+/* parseSheetDate(value, today) -> 'YYYY-MM-DD' | null. `today` ('YYYY-MM-DD')
+   supplies the year for MM/DD text. */
+export function parseSheetDate(value, today = todayInHonduras()) {
     if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
         const date = new Date(SHEETS_EPOCH_MS + Math.floor(value) * DAY_MS);
         return validDate(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
@@ -55,7 +59,17 @@ export function parseSheetDate(value) {
     if (match) return validDate(+match[1], +match[2], +match[3]);
 
     match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (match) return validDate(+match[3], +match[2], +match[1]);
+    if (match) return validDate(+match[3], +match[1], +match[2]);
+
+    match = text.match(/^(\d{1,2})\/(\d{1,2})$/);
+    if (match) {
+        const year = Number(today.slice(0, 4));
+        const thisYear = validDate(year, +match[1], +match[2]);
+        if (thisYear && daysBetween(thisYear, today) > ROLL_TO_NEXT_YEAR_DAYS) {
+            return validDate(year + 1, +match[1], +match[2]);
+        }
+        return thisYear;
+    }
 
     return null;
 }
@@ -98,7 +112,7 @@ export function parseEventRows(rows, today = todayInHonduras()) {
 
     (rows || []).forEach((row, index) => {
         const name = text(row[0]);
-        const date = parseSheetDate(row[1]);
+        const date = parseSheetDate(row[1], today);
         if (!name || !date || date < today) return;
 
         events.push({
@@ -119,11 +133,12 @@ export function parseEventRows(rows, today = todayInHonduras()) {
 }
 
 export async function fetchEventRows(spreadsheetId, apiKey) {
-    // UNFORMATTED + SERIAL_NUMBER returns date/time cells as numbers, so the
-    // sheet's display format (or locale) doesn't matter.
+    // FORMATTED_VALUE: column B is read exactly as the sheet shows it and
+    // parsed as MM/DD. (If Sheets turned "12/05" into a real date cell, its
+    // locale might mean 12 May; the displayed text stays "12/05" either way.)
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
         `/values/${encodeURIComponent(RANGE)}` +
-        `?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER&key=${apiKey}`;
+        `?valueRenderOption=FORMATTED_VALUE&key=${apiKey}`;
 
     const response = await fetch(url);
 

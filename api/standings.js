@@ -28,6 +28,12 @@
  *   4. parseDrivers() turns each row into a driver entry; see its own
  *      comment below for the exact column meanings.
  *
+ * GET /api/standings?scope=year returns every month of the current year
+ * that has a tab (January through this month), for the profile's RÉCORDS
+ * HISTÓRICOS (js/profile/records.js):
+ *   { year, months: [{ monthNumber, month, circuito, auto, drivers }] }
+ * It's one tab listing plus one values:batchGet call, however many months.
+ *
  * Response is cached at the edge for 60s (with a 5 minute
  * stale-while-revalidate) via the Cache-Control header, so changes to the
  * sheet can take up to a minute to show up.
@@ -53,6 +59,13 @@ export default async function handler(req, res) {  try {
       res.status(500).json({
         error: 'Faltan las variables de entorno SPREADSHEET_ID / GOOGLE_SHEETS_API_KEY en Vercel.',
       });
+      return;
+    }
+
+    const scope = req.query?.scope ?? new URL(req.url || '/', 'http://x').searchParams.get('scope');
+
+    if (scope === 'year') {
+      await sendYear(res, SPREADSHEET_ID, GOOGLE_SHEETS_API_KEY);
       return;
     }
 
@@ -93,17 +106,62 @@ export default async function handler(req, res) {  try {
   }
 };
 
-async function findSheetTitleForMonth(spreadsheetId, apiKey, monthNumber, monthName) {
+async function listSheetTitles(spreadsheetId, apiKey) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
     `?key=${apiKey}&fields=sheets.properties.title`;
 
   const r = await fetch(url);
   if (!r.ok) throw new Error(`No se pudo leer la lista de hojas (HTTP ${r.status})`);
   const data = await r.json();
-  const titles = (data.sheets || []).map((s) => s.properties.title);
+  return (data.sheets || []).map((s) => s.properties.title);
+}
 
+function titleForMonth(titles, monthNumber, monthName) {
   const prefixRegex = new RegExp(`^\\s*${monthNumber}\\.\\s*${monthName}\\b`, 'i');
   return titles.find((t) => prefixRegex.test(t)) || null;
+}
+
+async function findSheetTitleForMonth(spreadsheetId, apiKey, monthNumber, monthName) {
+  return titleForMonth(await listSheetTitles(spreadsheetId, apiKey), monthNumber, monthName);
+}
+
+/* ?scope=year: January..this month; months without a tab are skipped. */
+async function sendYear(res, spreadsheetId, apiKey) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const titles = await listSheetTitles(spreadsheetId, apiKey);
+
+  const found = [];
+  for (let monthNumber = 1; monthNumber <= now.getMonth() + 1; monthNumber++) {
+    const monthName = MONTHS_ES[monthNumber];
+    const title = titleForMonth(titles, monthNumber, monthName);
+    if (title) found.push({ monthNumber, month: monthName, title });
+  }
+
+  let valueRanges = [];
+
+  if (found.length) {
+    const ranges = found
+      .map(({ title }) => `ranges=${encodeURIComponent(`'${title}'!C${FIRST_ROW}:H${LAST_ROW}`)}`)
+      .join('&');
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
+      `/values:batchGet?${ranges}&key=${apiKey}`;
+
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`No se pudieron leer los tiempos del año (HTTP ${r.status})`);
+    valueRanges = (await r.json()).valueRanges || [];
+  }
+
+  const months = found.map(({ monthNumber, month, title }, index) => ({
+    monthNumber,
+    month,
+    circuito: extractTrackName(title, monthNumber, month),
+    auto: process.env.STANDINGS_CAR || null,
+    drivers: parseDrivers(valueRanges[index]?.values || [])
+  }));
+
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+  res.status(200).json({ year, months });
 }
 
 function extractTrackName(sheetTitle, monthNumber, monthName) {

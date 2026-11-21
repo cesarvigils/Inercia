@@ -53,41 +53,70 @@ export function normalizeDriverName(value) {
         .toLocaleLowerCase('es');
 }
 
+function currentMonthNumber() {
+    return Number(new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Tegucigalpa',
+        month: 'numeric'
+    }).format(new Date()));
+}
+
 /*
- * Current-month record from the lap-time sheet (GET /api/standings), matched
- * by the account's name exactly like MI TIEMPO on /standings. The sheet only
- * has the current month and no race sessions, so `historical` is empty and
- * no record carries a `race` until a source with that exists.
+ * One request, GET /api/standings?scope=year: every month of this year
+ * that has a tab in the lap-time sheet. The account is matched by name
+ * exactly like MI TIEMPO on /standings.
+ *
+ *   current     this month's time
+ *   historical  every time this year, one per month, newest first (months
+ *               with no tab, or where the driver has no time, are left out)
+ *
+ * The sheet has no race sessions, so no record carries a `race` yet.
+ * Records also get `period` ("Noviembre 2026") and `monthNumber`; the
+ * profile shows `period` in the FECHA column.
  */
 export async function loadRecords(user) {
     try {
-        const [standings, identity] = await Promise.all([
-            getJson('/api/standings'),
+        const [data, identity] = await Promise.all([
+            getJson('/api/standings?scope=year'),
             loadIdentity(user)
         ]);
 
         const mine = normalizeDriverName(identity.name);
-        const drivers = Array.isArray(standings.drivers) ? standings.drivers : [];
-        const row = mine
-            ? drivers.find((driver) => normalizeDriverName(driver.name) === mine)
-            : null;
+        const months = Array.isArray(data.months) ? data.months : [];
 
-        const current = row && Number.isFinite(row.ms)
-            ? [{
-                track: standings.circuito || '—',
-                category: standings.auto || 'F1 2025',
-                lapTime: row.timeStr,
-                lapMs: row.ms,
-                recordedAt: null,
-                status: 'vigente',
-                race: null
-            }]
+        const historical = mine
+            ? months
+                .map((month) => {
+                    const drivers = Array.isArray(month.drivers) ? month.drivers : [];
+                    const row = drivers.find((driver) => normalizeDriverName(driver.name) === mine);
+                    if (!row || !Number.isFinite(row.ms)) return null;
+
+                    return {
+                        track: month.circuito || '—',
+                        category: month.auto || 'F1 2025',
+                        lapTime: row.timeStr,
+                        lapMs: row.ms,
+                        recordedAt: null,
+                        period: `${month.month} ${data.year}`,
+                        monthNumber: month.monthNumber,
+                        status: 'superado',
+                        race: null
+                    };
+                })
+                .filter(Boolean)
+                .sort((a, b) => b.monthNumber - a.monthNumber)
             : [];
 
-        return { state: 'ready', current, historical: [] };
+        const thisMonth = currentMonthNumber();
+        const current = historical
+            .filter((record) => record.monthNumber === thisMonth)
+            .map((record) => ({ ...record, status: 'vigente' }));
+
+        historical.forEach((record) => {
+            if (record.monthNumber === thisMonth) record.status = 'vigente';
+        });
+
+        return { state: 'ready', current, historical };
     } catch (error) {
-        // 404: no sheet tab for this month yet -> simply nothing to show.
-        if (error.status === 404) return { state: 'ready', current: [], historical: [] };
         console.warn('[PERFIL] No se pudieron leer los récords:', error.message);
         return { state: 'unavailable' };
     }

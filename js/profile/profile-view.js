@@ -369,10 +369,6 @@ function renderReservations(result) {
         body.append(list);
     }
 
-    const book = el('a', result.upcoming.length ? 'pf-link' : 'pf-cta', 'RESERVAR');
-    book.href = '/reservas';
-    body.append(book);
-
     if (result.past.length) {
         const history = el('details', 'pf-history');
         history.append(el('summary', null, `ANTERIORES (${result.past.length})`));
@@ -389,20 +385,21 @@ function recordRow(record) {
         el('td', 'pf-cell-track', record.track),
         el('td', 'pf-cell-dim', record.category || '—'),
         el('td', 'pf-cell-time', record.lapTime),
-        el('td', 'pf-cell-dim', (record.recordedAt && formatDate(record.recordedAt)) || '—'),
+        el('td', 'pf-cell-dim', (record.recordedAt && formatDate(record.recordedAt)) || record.period || '—'),
         el('td', 'pf-cell-dim', record.race ? record.race.event : '—')
     );
     return row;
 }
 
-function recordTable(records) {
+/* byLap: fastest first (ACTUALES); otherwise kept as given (HISTÓRICOS, newest month first). */
+function recordTable(records, { byLap = true } = {}) {
     const table = el('table', 'pf-table');
     const head = el('tr');
     ['CIRCUITO', 'CATEGORÍA', 'TIEMPO', 'FECHA', 'CARRERA'].forEach((label) => head.append(el('th', null, label)));
     const thead = el('thead');
     thead.append(head);
     const tbody = el('tbody');
-    sortByLap(records).forEach((record) => tbody.append(recordRow(record)));
+    (byLap ? sortByLap(records) : records).forEach((record) => tbody.append(recordRow(record)));
     table.append(thead, tbody);
     return table;
 }
@@ -439,10 +436,10 @@ function renderRecords(result) {
         } else {
             const list = which === 'current' ? result.current : result.historical;
             panel.append(list.length
-                ? recordTable(list)
+                ? recordTable(list, { byLap: which === 'current' })
                 : stateBlock('empty', 'SIN REGISTROS', which === 'current'
                     ? 'No aparecés en la tabla de este mes. Si ya corriste, revisá que tu nombre ahí sea igual al de tu cuenta.'
-                    : 'Todavía no hay tiempos anteriores en tu historial.'));
+                    : 'Todavía no tenés tiempos registrados este año.'));
         }
     };
 
@@ -524,10 +521,10 @@ function renderEvents(result) {
             el('span', null, Number.isNaN(day.getTime()) ? '' : day.toLocaleDateString('es-HN', { month: 'short' }).replace('.', '').toUpperCase())
         );
         const info = el('div', 'pf-event-info');
-        info.append(
-            el('span', 'pf-event-name', event.name),
-            el('span', 'pf-event-meta', [event.time, event.track, event.category].filter(Boolean).join(' · '))
-        );
+        info.append(el('span', 'pf-event-name', event.name));
+        // The Eventos sheet only has name + date (A/B) today; no empty meta line.
+        const meta = [event.time, event.track, event.category].filter(Boolean).join(' · ');
+        if (meta) info.append(el('span', 'pf-event-meta', meta));
         item.append(date, info);
 
         if (event.url) {
