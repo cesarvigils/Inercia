@@ -479,13 +479,12 @@ body {
     display: grid;
 
     /*
-     * Un número fijo de columnas (no auto-fill) para que la semana
-     * ocupe dos filas en vez de una sola fila angosta arriba del todo
-     * — así ocupa un alto parecido al del reloj en vez de dejar un
-     * hueco vacío debajo en pantallas grandes.
+     * Un número fijo de columnas (no auto-fill): los 10 días de reserva
+     * (config.bookingWindowDays) quedan en dos filas completas de 5, con
+     * un alto parecido al del reloj en vez de una fila angosta arriba.
      */
     grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+        repeat(5, minmax(0, 1fr));
 
     align-content: start;
 
@@ -2373,6 +2372,17 @@ body.reservation-login-modal-open {
     color: #090909;
 
     font-weight: 600;
+    white-space: nowrap;
+}
+
+/* 5 columns on a phone: keep "50% OFF" on one line. */
+@media (max-width: 480px) {
+    .calendar-day .calendar-day-tag--promo {
+        padding: 2px 4px;
+
+        font-size: 8px;
+        letter-spacing: 0;
+    }
 }
 
 .calendar-day.promo {

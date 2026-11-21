@@ -114,8 +114,8 @@ import { formatHourRange } from '../../lib/time.js';
 
 export const TZ = 'America/Tegucigalpa';
 const DEFAULT_CONFIG = {
-  bookingWindowDays: 7, minLeadMinutes: 30, minDurationHours: 1, maxDurationHours: 8, slotMinutes: 30,
-  prices: { standard: 200, premium: 350 },
+  bookingWindowDays: 10, minLeadMinutes: 30, minDurationHours: 1, maxDurationHours: 8, slotMinutes: 30,
+  prices: { standard: 200, premium: 400 },
   // Lunes cerrado (sin entrada = cerrado, ver validateWhen/getConfig).
   // Martes a viernes 14:00-21:00, sábado y domingo 12:00-21:00.
   hours: { 0: ['12:00','21:00'], 2: ['14:00','21:00'], 3: ['14:00','21:00'], 4: ['14:00','21:00'], 5: ['14:00','21:00'], 6: ['12:00','21:00'] },

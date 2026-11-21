@@ -439,7 +439,7 @@ function renderRecords(result) {
                 ? recordTable(list, { byLap: which === 'current' })
                 : stateBlock('empty', 'SIN REGISTROS', which === 'current'
                     ? 'No aparecés en la tabla de este mes. Si ya corriste, revisá que tu nombre ahí sea igual al de tu cuenta.'
-                    : 'Todavía no tenés tiempos registrados este año.'));
+                    : 'Todavía no tenés tiempos registrados en la tabla.'));
         }
     };
 

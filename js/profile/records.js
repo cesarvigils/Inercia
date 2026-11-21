@@ -53,67 +53,54 @@ export function normalizeDriverName(value) {
         .toLocaleLowerCase('es');
 }
 
-function currentMonthNumber() {
-    return Number(new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Tegucigalpa',
-        month: 'numeric'
-    }).format(new Date()));
-}
-
 /*
- * One request, GET /api/standings?scope=year: every month of this year
- * that has a tab in the lap-time sheet. The account is matched by name
- * exactly like MI TIEMPO on /standings.
+ * One request, GET /api/standings?scope=all: every tab in the lap-time
+ * sheet (except Eventos), month tabs newest first. The account is matched
+ * by name exactly like MI TIEMPO on /standings.
  *
  *   current     this month's time
- *   historical  every time this year, one per month, newest first (months
- *               with no tab, or where the driver has no time, are left out)
+ *   historical  every time you have in any tab, in the API's order (newest
+ *               month first, other tabs after); tabs where you have no
+ *               time are left out
  *
  * The sheet has no race sessions, so no record carries a `race` yet.
- * Records also get `period` ("Noviembre 2026") and `monthNumber`; the
- * profile shows `period` in the FECHA column.
+ * Records also get `period` ("Noviembre 2026", or the tab's title for a
+ * non-month tab), shown in the FECHA column.
  */
 export async function loadRecords(user) {
     try {
         const [data, identity] = await Promise.all([
-            getJson('/api/standings?scope=year'),
+            getJson('/api/standings?scope=all'),
             loadIdentity(user)
         ]);
 
         const mine = normalizeDriverName(identity.name);
-        const months = Array.isArray(data.months) ? data.months : [];
+        const tabs = Array.isArray(data.tabs) ? data.tabs : [];
+        const isCurrent = (tab) =>
+            tab.monthNumber === data.currentMonth && tab.year === data.currentYear;
 
         const historical = mine
-            ? months
-                .map((month) => {
-                    const drivers = Array.isArray(month.drivers) ? month.drivers : [];
+            ? tabs
+                .map((tab) => {
+                    const drivers = Array.isArray(tab.drivers) ? tab.drivers : [];
                     const row = drivers.find((driver) => normalizeDriverName(driver.name) === mine);
                     if (!row || !Number.isFinite(row.ms)) return null;
 
                     return {
-                        track: month.circuito || '—',
-                        category: month.auto || 'F1 2025',
+                        track: tab.circuito || '—',
+                        category: tab.auto || 'F1 2025',
                         lapTime: row.timeStr,
                         lapMs: row.ms,
                         recordedAt: null,
-                        period: `${month.month} ${data.year}`,
-                        monthNumber: month.monthNumber,
-                        status: 'superado',
+                        period: tab.month ? `${tab.month} ${tab.year}` : tab.title,
+                        status: isCurrent(tab) ? 'vigente' : 'superado',
                         race: null
                     };
                 })
                 .filter(Boolean)
-                .sort((a, b) => b.monthNumber - a.monthNumber)
             : [];
 
-        const thisMonth = currentMonthNumber();
-        const current = historical
-            .filter((record) => record.monthNumber === thisMonth)
-            .map((record) => ({ ...record, status: 'vigente' }));
-
-        historical.forEach((record) => {
-            if (record.monthNumber === thisMonth) record.status = 'vigente';
-        });
+        const current = historical.filter((record) => record.status === 'vigente');
 
         return { state: 'ready', current, historical };
     } catch (error) {
