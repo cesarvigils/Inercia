@@ -23,18 +23,13 @@
  */
 
 import {
-    auth,
-    db
+    auth
 } from '../firebase-config.js';
 
 import {
     onAuthStateChanged
 } from 'firebase/auth';
 
-import {
-    doc,
-    getDoc
-} from 'firebase/firestore';
 let standingsUserName = null;
 let currentStandingsRows = [];
 
@@ -641,6 +636,9 @@ onAuthStateChanged(
 
 
         try {
+
+            const { db, doc, getDoc } =
+                await import('../firebase-db.js');
 
             const snapshot =
                 await getDoc(

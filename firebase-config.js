@@ -3,7 +3,8 @@
  *
  * Initializes the Firebase client SDK (the browser-side app, as opposed
  * to api/_lib/firebase-admin.js which is the server-side admin SDK) and
- * exports `auth` and `db` for the rest of the frontend to import.
+ * exports `app` and `auth` for the rest of the frontend to import.
+ * Firestore lives in firebase-db.js and is loaded lazily (it's large).
  *
  * All config values come from VITE_FIREBASE_* environment variables (see
  * .env.example) instead of being hardcoded, because this project is
@@ -17,7 +18,6 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -27,7 +27,6 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);

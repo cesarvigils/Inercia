@@ -76,7 +76,7 @@
  *   INITIALIZE           init() - kicks everything off on page load.
  */
 
-import { auth, db } from '../firebase-config.js';
+import { auth } from '../firebase-config.js';
 
 import { normalizePhone } from '../lib/phone.js';
 
@@ -84,24 +84,14 @@ import { formatHour, formatDateLong, formatDateShort } from '../lib/time.js';
 
 import { showNotice } from './notice.js';
 
-import {
-    doc,
-    getDoc
-} from 'firebase/firestore';
-
-import {
-    getStorage,
-    ref,
-    uploadBytes
-} from 'firebase/storage';
 
 import {
     onAuthStateChanged
 } from 'firebase/auth';
 
 
-const storage =
-    getStorage(auth.app);
+// Storage is only needed to upload a bank-transfer proof, so it's loaded then.
+const loadStorage = () => import('firebase/storage');
 
 
 const $ =
@@ -256,7 +246,7 @@ let loginRequiredShown =
 
 
 const wheel =
-    'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Ftimon.svg?alt=media&token=42e46a5a-59d8-450f-92df-104e7f891e49';
+    '/media/timon.svg';
 
 
 /* =========================================================
@@ -421,7 +411,7 @@ function message(
    ========================================================= */
 
 const LOGO_URL =
-    'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fsimuladoresinercia.png?alt=media&token=cc07fe5e-c3a0-449c-a474-8ba1ceb0a0be';
+    '/media/logo.webp';
 
 
 function openAuthFromLoginRequired(
@@ -2422,6 +2412,15 @@ function summary() {
         premium
     );
 
+    // The Premium line only shows once a premium rig is picked.
+    const premiumLine =
+        $('summaryPremiumLine');
+
+    if (premiumLine) {
+        premiumLine.hidden =
+            premium === 0;
+    }
+
 
     setText(
         'summaryDuration',
@@ -2588,6 +2587,9 @@ async function profile(
 
 
     try {
+
+        const { db, doc, getDoc } =
+            await import('../firebase-db.js');
 
         const snapshot =
             await getDoc(
@@ -3306,9 +3308,12 @@ form
                     );
 
 
+                    const { getStorage, ref, uploadBytes } =
+                        await loadStorage();
+
                     await uploadBytes(
                         ref(
-                            storage,
+                            getStorage(auth.app),
                             proofPath
                         ),
 

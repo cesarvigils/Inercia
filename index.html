@@ -8,16 +8,12 @@
 <meta name="description" content="Simuladores de carreras en Honduras: rigs Standard y Premium, reservas en línea, standings y membresías.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Anton&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Alumni+Sans:wght@600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/navbar.css">
 <link rel="stylesheet" href="css/auth.css">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link
-  href="https://fonts.googleapis.com/css2?family=Alumni+Sans:wght@600&display=swap"
-  rel="stylesheet"
->
 <script type="module" src="js/auth.js"></script></head>
 
 <body>
@@ -28,7 +24,7 @@
 
   <section class="hero reveal">
     <div class="hero-art">
-      <img class="hero-img" src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fpanoramicarigs.jpg?alt=media&token=4b312fec-49b1-4239-ab79-4c143d6531ca" alt="Sala de simuladores de carreras con luces de neón">
+      <img class="hero-img" src="/media/hero.webp" width="1920" height="1080" fetchpriority="high" decoding="async" alt="Sala de simuladores de carreras con luces de neón">
       <div class="hero-vignette"></div>
     </div>
 
@@ -42,66 +38,29 @@
     <div class="packages">
       <article class="card reveal">
         <div class="card-art" aria-hidden="true">
-          <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2F5001286758620138666.jpg?alt=media&token=0e5c0141-83f3-4f19-b9ab-31a01e131778" loading="lazy" alt="">
+          <img src="/media/rig-standard.webp" width="960" height="640" loading="lazy" decoding="async" alt="">
         </div>
         <div class="card-body">
           <p class="eyebrow reveal-up">SIMULADOR</p>
           <h2 class="reveal-up">STANDARD</h2>
           <p class="desc reveal-up">Butaca deportiva, volante con feedback y monitor. Ideal para los que se inician en el simracing y buscan experimentar las carreras con periféricos adecuados para el deporte electrónico.</p>
-          <p class="card-price reveal-up"><strong data-price-of="standard">L 200</strong> / hora</p>
         </div>
         <a href="/reservas" class="card-stretched-link" aria-label="Reservar Simulador Standard"></a>
       </article>
 
       <article class="card reveal">
         <div class="card-art" aria-hidden="true">
-          <img src="https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2F5001286758620138664.jpg?alt=media&token=cba74812-f003-48f6-bee7-8ed878c97117" loading="lazy" alt="">
+          <img src="/media/rig-premium.webp" width="960" height="640" loading="lazy" decoding="async" alt="">
         </div>
         <div class="card-body">
           <p class="eyebrow reveal-up">SIMULADOR</p>
           <h2 class="reveal-up">PREMIUM</h2>
           <p class="desc reveal-up">Butaca deportiva, triple pantalla y el volante de gama alta direct drive. El preferido por los entusiastas del simracing que buscan la mejor inmersión y precisión para correr.</p>
-          <p class="card-price reveal-up"><strong data-price-of="premium">L 350</strong> / hora</p>
         </div>
         <a href="/reservas" class="card-stretched-link" aria-label="Reservar Simulador Premium"></a>
       </article>
     </div>
 
-    <section class="home-extras" aria-label="Más de Inercia">
-      <a href="/reservas" class="home-tile reveal">
-        <span class="home-tile-kicker">TODOS LOS MARTES</span>
-        <strong class="home-tile-title">50% DE DESCUENTO</strong>
-        <span class="home-tile-text">En todos los simuladores. Elegí un martes en el calendario.</span>
-        <span class="home-tile-cta" aria-hidden="true">RESERVAR →</span>
-      </a>
-
-      <a href="/standings" class="home-tile reveal">
-        <span class="home-tile-kicker">CIRCUITO DEL MES</span>
-        <strong class="home-tile-title">PONÉ TU TIEMPO</strong>
-        <span class="home-tile-text">Corré el circuito del mes y mirá dónde quedás en la tabla.</span>
-        <span class="home-tile-cta" aria-hidden="true">VER RESULTADOS →</span>
-      </a>
-
-      <a href="/suscripcion" class="home-tile reveal">
-        <span class="home-tile-kicker">MEMBRESÍAS</span>
-        <strong class="home-tile-title">GOLD · PLATINO · ZAFIRO</strong>
-        <span class="home-tile-text">Con una membresía activa pagás tus reservas en efectivo.</span>
-        <span class="home-tile-cta" aria-hidden="true">VER PLANES →</span>
-      </a>
-
-      <div class="home-tile home-hours reveal">
-        <span class="home-tile-kicker">
-          HORARIO
-          <span class="hours-status" data-hours-status hidden></span>
-        </span>
-        <ul class="hours-list" data-hours>
-          <li><span>Lunes</span><strong>Cerrado</strong></li>
-          <li><span>Martes a viernes</span><strong>2:00 p. m. – 9:00 p. m.</strong></li>
-          <li><span>Sábado y domingo</span><strong>12:00 p. m. – 9:00 p. m.</strong></li>
-        </ul>
-        <a href="/contacto" class="home-hours-link">Cómo llegar →</a>
-      </div>
-    </section>
   </main>
 
   <!-- @partial site-footer -->
@@ -109,6 +68,5 @@
 <script type="module" src="js/home.js"></script>
 <script type="module" src="js/menu.js"></script>
 <script type="module" src="js/navbar.js"></script>
-<script type="module" src="js/hours.js"></script>
 </body>
 </html>

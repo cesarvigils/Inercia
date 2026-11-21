@@ -23,7 +23,7 @@ import { postJson } from './api.js';
 import { formatHour, formatDateLong } from '../../lib/time.js';
 
 const DEFAULT_PFP =
-    'https://firebasestorage.googleapis.com/v0/b/inerciaapp-e0cc4.firebasestorage.app/o/assets%2Fdefaultpfp3.jpg?alt=media&token=a0435be5-f789-41ec-9d50-ab24fed4b9ec';
+    '/media/default-avatar.webp';
 
 let root = null;
 let lastFocus = null;
@@ -577,12 +577,7 @@ function onKeydown(event) {
     }
 }
 
-/*
- * openProfile(user, { section })
- *   section: 'reservations' scrolls straight to MIS RESERVAS (the account
- *   menu's "MIS RESERVAS" item in js/auth.js).
- */
-export function openProfile(user, { section: focusSection = null } = {}) {
+export function openProfile(user) {
     if (!user) return;
     if (!root) build();
 
@@ -602,12 +597,6 @@ export function openProfile(user, { section: focusSection = null } = {}) {
     requestAnimationFrame(() => root.classList.add('open'));
     root.querySelector('.pf-close').focus();
     root.querySelector('.pf-scroll').scrollTop = 0;
-
-    if (focusSection === 'reservations') {
-        requestAnimationFrame(() => {
-            slot('reservations')?.scrollIntoView({ block: 'start' });
-        });
-    }
 
     const uid = user.uid;
     const current = () => openFor === uid;
