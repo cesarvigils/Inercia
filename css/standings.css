@@ -1623,9 +1623,34 @@ body.auth-modal-open {
     outline-offset: 2px;
 }
 
+/* Small "MI TIEMPO:" title above the row (same look as the month eyebrow,
+   a step smaller). It takes the row's top spacing. */
+.my-time-title {
+    margin: 14px 0 6px;
+
+    color: var(--orange);
+
+    font-family: var(--font-display);
+    font-size: 15px;
+    line-height: 1;
+    letter-spacing: 0.5px;
+
+    text-transform: uppercase;
+}
+
+.my-time-title + .my-time-row {
+    margin-top: 0;
+}
+
 @media (min-width: 860px) {
     .my-time-row {
         margin-top: 22px;
+    }
+
+    .my-time-title {
+        margin: 22px 0 8px;
+
+        font-size: 18px;
     }
 
     .my-time-row + .orange-line {

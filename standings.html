@@ -109,7 +109,9 @@
          row (no header), filled by js/standings.js renderMyTimeRow().
          Tapping it scrolls to their highlighted row in the table. -->
 
-    <div class="standing-row my-time-row is-me is-empty" id="myTimeRow" aria-label="Mi tiempo">
+    <p class="my-time-title" id="myTimeTitle">MI TIEMPO:</p>
+
+    <div class="standing-row my-time-row is-me is-empty" id="myTimeRow" aria-labelledby="myTimeTitle">
       <span class="position">–</span>
       <span class="driver">CARGANDO…</span>
       <span class="time"></span>
