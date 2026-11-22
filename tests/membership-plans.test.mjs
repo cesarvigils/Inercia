@@ -144,9 +144,11 @@ test('plans endpoint: public, returns the listed plans without PayPal status fie
   assert.deepEqual(Object.keys(result.body.plans[0]).sort(), ['id', 'name', 'period', 'price', 'priceHNL', 'tier']);
 });
 
-test('priceInHnl: USD converted at the HNL/USD rate, rounded to whole lempiras', () => {
+test('priceInHnl: USD converted at the HNL/USD rate, shown to the nearest L 10', () => {
   assert.equal(priceInHnl({ value: '20.00', currency: 'USD' }, 26.5), 530);
-  assert.equal(priceInHnl({ value: '55.00', currency: 'USD' }, 26.47), 1456);
+  assert.equal(priceInHnl({ value: '55.00', currency: 'USD' }, 26.47), 1460); // 1455.85
+  assert.equal(priceInHnl({ value: '25.00', currency: 'USD' }, 26.64), 670); // 666, never shown
+  assert.equal(priceInHnl({ value: '50.00', currency: 'USD' }, 26.5), 1330); // 1325
   assert.equal(priceInHnl({ value: '500', currency: 'HNL' }, null), 500);
   assert.equal(priceInHnl({ value: '20.00', currency: 'USD' }, null), null);
   assert.equal(priceInHnl({ value: '20.00', currency: 'EUR' }, 26.5), null);
