@@ -124,6 +124,26 @@ export async function listPlans() {
         );
 }
 
+/*
+ * A plan's price in lempiras, for display. PayPal can't bill in HNL, so the
+ * plans are priced in USD and the page shows them converted with the same
+ * HNL-per-USD rate reservations use (settings/payments). Rounded to whole
+ * lempiras. null when there's no rate, or the price is in a currency we
+ * can't convert.
+ */
+export function priceInHnl(price, hnlPerUsd) {
+    const value = Number(price?.value);
+    if (!Number.isFinite(value) || value <= 0) return null;
+
+    const currency = String(price?.currency || 'USD').toUpperCase();
+    if (currency === 'HNL') return Math.round(value);
+
+    const rate = Number(hnlPerUsd);
+    if (currency !== 'USD' || !Number.isFinite(rate) || rate <= 0) return null;
+
+    return Math.round(value * rate);
+}
+
 export function membershipTier(membership, plan, now = Date.now()) {
     if (!isMembershipActive(membership, now)) return 'Nula';
     return plan?.tier || null;

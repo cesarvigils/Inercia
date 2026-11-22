@@ -81,7 +81,8 @@ const {
   billingPeriod,
   membershipTier,
   listPlans,
-  clearPlanCache
+  clearPlanCache,
+  priceInHnl
 } = await import('../api/_lib/membership-plans.js');
 const { default: statusHandler } = await import('../api/subscription/status.js');
 const { default: plansHandler } = await import('../api/subscription/plans.js');
@@ -140,7 +141,37 @@ test('plans endpoint: public, returns the listed plans without PayPal status fie
   const result = await call(plansHandler);
   assert.equal(result.status, 200);
   assert.equal(result.body.plans.length, 4);
-  assert.deepEqual(Object.keys(result.body.plans[0]).sort(), ['id', 'name', 'period', 'price', 'tier']);
+  assert.deepEqual(Object.keys(result.body.plans[0]).sort(), ['id', 'name', 'period', 'price', 'priceHNL', 'tier']);
+});
+
+test('priceInHnl: USD converted at the HNL/USD rate, rounded to whole lempiras', () => {
+  assert.equal(priceInHnl({ value: '20.00', currency: 'USD' }, 26.5), 530);
+  assert.equal(priceInHnl({ value: '55.00', currency: 'USD' }, 26.47), 1456);
+  assert.equal(priceInHnl({ value: '500', currency: 'HNL' }, null), 500);
+  assert.equal(priceInHnl({ value: '20.00', currency: 'USD' }, null), null);
+  assert.equal(priceInHnl({ value: '20.00', currency: 'EUR' }, 26.5), null);
+  assert.equal(priceInHnl(null, 26.5), null);
+});
+
+test('plans endpoint: prices in lempiras with the configured rate; null without one', async () => {
+  const before = process.env.PAYPAL_HNL_USD_RATE;
+  try {
+    process.env.PAYPAL_HNL_USD_RATE = '26.5';
+    let result = await call(plansHandler);
+    assert.equal(result.body.hnlPerUsd, 26.5);
+    const gold = result.body.plans.find((p) => p.tier === 'Gold' && p.period === 'mensual');
+    assert.equal(gold.priceHNL, 530);
+    assert.deepEqual(gold.price, { value: '20.00', currency: 'USD' });
+
+    delete process.env.PAYPAL_HNL_USD_RATE;
+    result = await call(plansHandler);
+    assert.equal(result.status, 200);
+    assert.equal(result.body.hnlPerUsd, null);
+    assert.ok(result.body.plans.every((p) => p.priceHNL === null));
+  } finally {
+    if (before === undefined) delete process.env.PAYPAL_HNL_USD_RATE;
+    else process.env.PAYPAL_HNL_USD_RATE = before;
+  }
 });
 
 test('status: no membership is Nula without asking PayPal', async () => {

@@ -82,10 +82,27 @@ function notice(kind, title, text) {
     noticeEl.hidden = false;
 }
 
-function formatPrice(price) {
+function formatUsd(price) {
     const value = Number(price?.value);
     if (!Number.isFinite(value)) return '—';
     return `$${value.toFixed(2)}`;
+}
+
+/*
+ * Prices are shown in lempiras. PayPal bills the plans in USD (it doesn't
+ * support HNL), so the API converts them with the same HNL/USD rate as
+ * reservations (`priceHNL`); the USD amount PayPal will charge goes in the
+ * small print. Without a configured rate it falls back to USD.
+ */
+function planPrice(plan) {
+    const hnl = Number(plan.priceHNL);
+    if (Number.isFinite(hnl) && hnl > 0) {
+        return {
+            main: `L ${hnl.toLocaleString('es-HN')}`,
+            note: plan.price?.value ? `Se cobra ${formatUsd(plan.price)} USD en PayPal` : null
+        };
+    }
+    return { main: formatUsd(plan.price), note: null, currency: plan.price?.currency || 'USD' };
 }
 
 function formatDate(value) {
@@ -158,12 +175,14 @@ function renderTiers() {
             return;
         }
 
+        const shown = planPrice(plan);
         const price = el('p', 'sub-price');
         price.append(
-            el('strong', null, formatPrice(plan.price)),
-            el('span', null, `${plan.price?.currency || 'USD'} ${suffix}`)
+            el('strong', null, shown.main),
+            el('span', null, shown.currency ? `${shown.currency} ${suffix}` : suffix)
         );
         column.append(price);
+        if (shown.note) column.append(el('p', 'sub-price-note', shown.note));
 
         const current = membership?.active && membership.tier === tier && membership.period === period;
         const upgrade = isUpgrade(tier);
