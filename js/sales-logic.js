@@ -4,10 +4,19 @@
  * misma razón que reservation-logic.js: poder probarla en Node.
  */
 
-// ¿Cae `date` dentro del filtro elegido ("day", "week", "month", "year")
+const localDate = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+// ¿Cae `date` dentro del filtro elegido ("day", "week", "month", "year",
+// o "custom" con `custom = { from, to }` en "YYYY-MM-DD", ambos incluidos)
 // contado desde `now`? La semana va de lunes a domingo.
-export function isInSalesRange(date, range, now = new Date()) {
+export function isInSalesRange(date, range, now = new Date(), custom = {}) {
     if (!date) return false;
+
+    if (range === "custom") {
+        const day = localDate(date);
+        return (!custom.from || day >= custom.from) && (!custom.to || day <= custom.to);
+    }
 
     if (range === "year") return date.getFullYear() === now.getFullYear();
 
@@ -48,4 +57,54 @@ export function saleDescription(sale) {
     }
 
     return `${quantity} ${pluralize(name)}`;
+}
+
+export const PAYMENT_LABELS = {
+    efectivo: "EFECTIVO",
+    transferencia: "TRANSFERENCIA",
+    tarjeta: "TARJETA",
+    paypal: "PAYPAL"
+};
+
+export function paymentLabel(method) {
+    const value = typeof method === "string" ? method : method?.method;
+    return PAYMENT_LABELS[String(value || "").toLowerCase()] || String(value || "N/D").toUpperCase();
+}
+
+/*
+ * Total por método de pago, de mayor a menor: cuánto entró en efectivo,
+ * transferencia, tarjeta o PayPal en el período.
+ */
+export function paymentBreakdown(rows) {
+    const totals = new Map();
+    for (const row of rows) {
+        const label = paymentLabel(row.paymentMethod);
+        const entry = totals.get(label) || { label, total: 0, count: 0 };
+        entry.total += Number(row.total) || 0;
+        entry.count += 1;
+        totals.set(label, entry);
+    }
+    return [...totals.values()].sort((a, b) => b.total - a.total);
+}
+
+const csvCell = (value) => {
+    let text = String(value ?? "");
+    // Una celda que empieza con = + - @ la ejecuta Excel como fórmula.
+    if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+    return /[",\n\r;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+// Las filas de la tabla VENTAS como CSV (con BOM para que Excel lea las tildes).
+export function salesCsv(rows) {
+    const lines = [["FECHA", "CONCEPTO", "METODO", "ORIGEN", "TOTAL"]];
+    for (const row of rows) {
+        lines.push([
+            row.date ? localDate(row.date) : "",
+            saleDescription(row),
+            paymentLabel(row.paymentMethod),
+            row.type === "reservation" ? "RESERVA" : "MANUAL",
+            Number(row.total || 0).toFixed(2)
+        ]);
+    }
+    return "﻿" + lines.map((line) => line.map(csvCell).join(",")).join("\r\n");
 }
