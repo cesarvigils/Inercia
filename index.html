@@ -11,6 +11,7 @@
             rel="stylesheet"
         />
         <link rel="stylesheet" href="css/admin.css" />
+        <link rel="stylesheet" href="css/admin-ux.css" />
     </head>
     <body>
         <section id="loginScreen" class="login-screen">
@@ -27,13 +28,13 @@
         </section>
         <div id="adminShell" class="shell" hidden>
             <aside class="sidebar">
-                                <nav>
-                    <button class="nav active" data-view="reservas">RESERVAS</button
-                    ><button class="nav" data-view="rigs">RIGS</button
-                    ><button class="nav" data-view="ventas">VENTAS</button
-                    ><button class="nav" data-view="usuarios">USUARIOS</button
-                    ><button class="nav" data-view="reembolsos">REEMBOLSOS</button
-                    ><button class="nav" data-view="configuracion">CONFIGURACIÓN</button>
+                <nav>
+                    <button class="nav active" data-view="reservas" data-title="RESERVAS">RESERVAS<span id="pendingBadge" class="nav-badge" hidden></span></button
+                    ><button class="nav" data-view="rigs" data-title="RIGS">RIGS</button
+                    ><button class="nav" data-view="ventas" data-title="VENTAS">VENTAS</button
+                    ><button class="nav" data-view="usuarios" data-title="USUARIOS">USUARIOS</button
+                    ><button class="nav" data-view="reembolsos" data-title="REEMBOLSOS">REEMBOLSOS</button
+                    ><button class="nav" data-view="configuracion" data-title="CONFIGURACIÓN">CONFIGURACIÓN</button>
                 </nav>
                 <div class="user"><span id="adminEmail"></span><button id="logoutBtn">CERRAR SESIÓN</button></div>
             </aside>
@@ -46,18 +47,25 @@
                 </header>
                 <section id="view-reservas" class="view active">
                     <div class="toolbar">
-                        <div>
-                            <button id="prevDay" class="ghost">ANTERIOR</button
-                            ><input id="calendarDate" type="date" /><button id="nextDay" class="ghost">
-                                SIGUIENTE
-                            </button>
+                        <div class="date-nav">
+                            <button id="prevDay" class="ghost" title="Anterior (←)">ANTERIOR</button
+                            ><button id="todayBtn" class="ghost">HOY</button
+                            ><input id="calendarDate" type="date" aria-label="Fecha" /><button id="nextDay" class="ghost" title="Siguiente (→)">SIGUIENTE</button>
+                            <div class="segmented" role="group" aria-label="Vista del calendario">
+                                <button class="filter" data-cal-mode="day" type="button">DÍA</button
+                                ><button class="filter" data-cal-mode="week" type="button">SEMANA</button>
+                            </div>
                         </div>
-                        <div class="legend">
-                            <span><i class="pending"></i>PENDIENTE</span><span><i class="approved"></i>APROBADA</span><span><i class="noshow"></i>NO-SHOW</span>
+                        <div class="res-search">
+                            <input id="resSearch" type="search" placeholder="Buscar código, nombre o teléfono" autocomplete="off" aria-label="Buscar reservas" />
+                            <div id="resSearchResults" class="search-results" hidden></div>
                         </div>
-                        <button id="newReservationBtn" class="primary">
-    NUEVA RESERVA
-</button>
+                        <button id="newReservationBtn" class="primary">NUEVA RESERVA</button>
+                    </div>
+                    <div id="daySummary" class="metrics day-summary"></div>
+                    <div class="legend">
+                        <span><i class="pending"></i>PENDIENTE</span><span><i class="approved"></i>APROBADA</span><span><i class="noshow"></i>NO-SHOW</span><span><i class="clash-key"></i>CHOQUE</span><span><i class="closed-key"></i>CERRADO / BLOQUEADO</span>
+                        <span class="legend-hint">Tocá una celda vacía para reservar · ← → cambian de día</span>
                     </div>
                     <div class="calendar" id="reservationCalendar"></div>
                 </section>
@@ -76,62 +84,27 @@
 
     <div class="heading sales-heading">
         <div class="sales-actions">
-            <button
-                id="manageProductsBtn"
-                class="ghost"
-                type="button"
-            >
-                PRODUCTOS
-            </button>
-
-            <button
-                id="newSaleBtn"
-                class="primary"
-                type="button"
-            >
-                NUEVA VENTA
-            </button>
+            <button id="exportSalesBtn" class="ghost" type="button">EXPORTAR CSV</button>
+            <button id="manageProductsBtn" class="ghost" type="button">PRODUCTOS</button>
+            <button id="newSaleBtn" class="primary" type="button">NUEVA VENTA</button>
         </div>
     </div>
 
     <div class="filters">
-        <button
-            class="filter"
-            data-range="day"
-            type="button"
-        >
-            ESTE DÍA
-        </button>
-
-        <button
-            class="filter active"
-            data-range="month"
-            type="button"
-        >
-            ESTE MES
-        </button>
-
-        <button
-            class="filter"
-            data-range="week"
-            type="button"
-        >
-            ESTA SEMANA
-        </button>
-
-        <button
-            class="filter"
-            data-range="year"
-            type="button"
-        >
-            ESTE AÑO
-        </button>
+        <button class="filter" data-range="day" type="button">ESTE DÍA</button>
+        <button class="filter" data-range="week" type="button">ESTA SEMANA</button>
+        <button class="filter active" data-range="month" type="button">ESTE MES</button>
+        <button class="filter" data-range="year" type="button">ESTE AÑO</button>
+        <button class="filter" data-range="custom" type="button">PERSONALIZADO</button>
+        <div id="customRange" class="custom-range" hidden>
+            <label>DESDE<input id="salesFrom" type="date" /></label>
+            <label>HASTA<input id="salesTo" type="date" /></label>
+        </div>
     </div>
 
-    <div
-        id="salesMetrics"
-        class="metrics"
-    ></div>
+    <div id="salesMetrics" class="metrics"></div>
+
+    <div id="paymentBreakdown" class="breakdown"></div>
 
     <div class="table">
         <table>
@@ -221,20 +194,18 @@
                         <form id="pricingForm" class="card">
                             <span class="eyebrow">PRECIOS</span>
                             <h3>TARIFAS POR HORA</h3>
-                            <label>Standard<input id="standardPrice" type="number" value="200" /></label
-                            ><label>Premium<input id="premiumPrice" type="number" value="350" /></label
-                            ><button class="primary">GUARDAR PRECIOS</button>
+                            <p class="settings-description">Lo que cobra el sitio y el panel por hora y simulador, según su tipo. Los martes llevan 50% de descuento automático.</p>
+                            <label>Standard (L)<input id="standardPrice" type="number" min="0" step="1" required /></label
+                            ><label>Premium (L)<input id="premiumPrice" type="number" min="0" step="1" required /></label
+                            ><button class="primary" type="submit">GUARDAR PRECIOS</button>
                         </form>
                         <form id="scheduleForm" class="card">
                             <span class="eyebrow">HORARIOS</span>
-                            <h3>RESTRICCIONES</h3>
-                            <label class="check"><input id="mondayClosed" type="checkbox" checked />Lunes cerrado</label
-                            ><label
-                                >Martes a viernes disponible desde<input
-                                    id="weekdayStart"
-                                    type="time"
-                                    value="14:00" /></label
-                            ><button class="primary">GUARDAR HORARIO</button>
+                            <h3>HORARIO DE ATENCIÓN</h3>
+                            <p class="settings-description">Las horas en que el sitio acepta reservas. Desde el panel se puede reservar fuera de horario.</p>
+                            <div class="hours-head"><span>DÍA</span><span></span><span>ABRE</span><span>CIERRA</span></div>
+                            <div id="hoursTable" class="hours-table"></div>
+                            <button class="primary" type="submit">GUARDAR HORARIO</button>
                         </form>
                     </div>
                     <div class="card lockdown-card">
