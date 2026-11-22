@@ -21,6 +21,9 @@ Pensado para vivir en `/admin` dentro del mismo repo que tu web actual. Usa el `
 
 La lógica que prueban vive en `js/reservation-logic.js` (cálculos puros) y `js/reservation-writes.js` (las dos escrituras a Firestore, que reciben el SDK por parámetro). `js/admin.js` les pasa Firebase de verdad; los tests, el doble en memoria de `tests/helpers/fake-firestore.mjs`.
 
+## Configuración (precios y horario)
+CONFIGURACIÓN guarda en `settings/reservations` con las mismas claves que lee el sitio (`getConfig()` en `api/_lib/reservations.js` de `main`): `prices.{standard,premium}` y `hours` (0 = domingo, `[apertura, cierre]`, `null` = cerrado). Antes guardaba `pricing`/`schedule`, que el sitio nunca leía. El precio por hora de cada rig sale de su tipo en `prices`, igual que en el sitio; el campo `pricePerHour` de los rigs ya no se usa. La lógica está en `js/settings-logic.js`.
+
 ## Comprobante
 El panel intenta: `payment.receiptUrl`, `payment.proofUrl`, `confirmation.receiptUrl`, `receiptUrl`. Si tu campo real usa otro nombre, ajustá `receipt()` en `js/admin.js`.
 
