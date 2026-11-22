@@ -30,6 +30,9 @@ import { auth } from '../firebase-config.js';
 
 import { normalizePhone } from '../lib/phone.js';
 
+// For members, SUSCRIBITE in the navbar becomes their tier (GOLD / PLATINO / ZAFIRO).
+import './nav-membership.js';
+
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
