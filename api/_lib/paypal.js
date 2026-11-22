@@ -191,6 +191,18 @@
         return rate;
     }
 
+    // The same HNL-per-USD rate as getPaypalRate() (settings/payments first,
+    // then PAYPAL_HNL_USD_RATE), but only for showing prices: it never
+    // throws, and ignores the kill switch, so the membership page can still
+    // list plans in lempiras while PayPal is turned off. null when unset.
+    export async function getDisplayRate() {
+        const settings = await readPaymentSettings();
+        const rate =
+            Number(settings?.paypal?.hnlPerUsd || 0) ||
+            Number(process.env.PAYPAL_HNL_USD_RATE || 0);
+        return Number.isFinite(rate) && rate > 0 ? rate : null;
+    }
+
     export function hnlToUsd(totalHnl, hnlPerUsd) {
         const value = Number(totalHnl) / Number(hnlPerUsd);
         if (!Number.isFinite(value) || value <= 0) {
