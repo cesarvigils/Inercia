@@ -476,6 +476,9 @@ a.ghost {
     margin: -8px 0 16px;
     padding: 4px 10px;
     border: 1px solid var(--c);
+    /* admin.css's bare .pending/.approved/.noshow (calendar dots) paint a
+       solid fill that would otherwise hide this same-colored text. */
+    background: transparent;
     color: var(--c);
     font-family: var(--display);
     font-size: 14px;
